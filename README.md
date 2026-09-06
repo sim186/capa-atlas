@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Capa Atlas 🗺️
 
-## Getting Started
+Interactive knowledge graph of **Caparezza's** lyrics annotations (the "keywords"):
+every Genius highlight per song, its annotation, and the recurring themes/figures
+that connect songs and albums across his discography.
 
-First, run the development server:
+**Data source:** the public Genius web endpoints (no API token needed — verified
+working). Lyrics pages embed the referent ids; `genius.com/api/referents/{id}`
+returns the highlighted fragment + annotation.
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run fetch      # harvest seed songs (5) → data/raw/referents.jsonl + public/graphData.json
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Full crawl (all ~367 tracks on the artist page — a few minutes):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run fetch:all
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pipeline
 
-## Learn More
+| Phase | Script | Output |
+|---|---|---|
+| 1. Harvest | `scripts/fetch_capa.py` | `data/raw/referents.jsonl` (resumable) |
+| 2. Graph | `scripts/build_graph.py` | `public/graphData.json`, `data/keywords.csv` |
+| 3. Frontend | Next.js App Router + `react-force-graph-2d` | interactive force graph |
 
-To learn more about Next.js, take a look at the following resources:
+### Node types
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`album` (gray) · `song` (blue) · `keyword` (amber — the highlighted fragment +
+annotation) · `figure` (red — Vincent van Gogh, alter-ego…) · `concept` (green —
+"Consumismo e massificazione", "Cattolicesimo", "Rinascita"…)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Links
 
-## Deploy on Vercel
+- `on` — song → album
+- `contains` — song → keyword
+- `refers` — keyword → figure/concept (regex classification, `data/concepts.json`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## How it works (data side)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. `genius.com/api/artists/24580/songs?per_page=50&page=N` → song list
+2. each song's lyrics page → `window.__PRELOADED_STATE__` → referent ids +
+   song/album metadata
+3. `genius.com/api/referents/{id}?text_format=plain` → `fragment` + annotation body
+
+Polite 0.35s delay, browser User-Agent (Genius 403s on default UAs), resume via
+`data/raw/done_ids.json`.
+
+## Next steps
+
+- [ ] full crawl + dedupe (features, live/remix versions appear on the artist page)
+- [ ] LLM-assisted keyword → concept classification (replace regex seeds in `data/concepts.json`)
+- [ ] album nodes → album cover art, year badges
+- [ ] swap `react-force-graph-2d` → `react-force-graph-3d` (same API, `ssr: false`)

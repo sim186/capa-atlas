@@ -6,12 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fetch": "python3 scripts/fetch_capa.py --seed && python3 scripts/build_graph.py",
+    "fetch:all": "python3 scripts/fetch_capa.py --all && python3 scripts/build_graph.py"
   },
   "dependencies": {
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-force-graph-2d": "^1.29.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

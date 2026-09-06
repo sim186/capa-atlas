@@ -1,0 +1,15 @@
+{
+  "_comment": "Seed concept/figure hubs. Each entry's `patterns` are regexes matched (casefold) against a keyword's fragment + annotation. First hit wins; every keyword maps to at most one concept here. Extend with LLM-assisted classification later.",
+  "concepts": [
+    { "id": "van_gogh", "label": "Vincent van Gogh", "group": "figure", "patterns": ["van gogh", "vincent"] },
+    { "id": "genio_incompreso", "label": "Genio incompreso / follia", "group": "concept", "patterns": ["dare del pazzo", "fuori di senno", "malato", "epilettic", "crisi"] },
+    { "id": "canone_letterario", "label": "Canone letterario", "group": "concept", "patterns": ["zola", "shakespeare", "dickens"] },
+    { "id": "consumismo", "label": "Consumismo e massificazione", "group": "concept", "patterns": ["megastore", "discoteche", "massificazione", "succubi", "dandy", "trendy", "divertimento", "multiplex", "tapis roulant", "stipendio"] },
+    { "id": "cattolicesimo", "label": "Cattolicesimo e Chiesa", "group": "concept", "patterns": ["mea culpa", "ego me absolvo", "clero", "monastero", "paradiso", "cattolic"] },
+    { "id": "mitologia", "label": "Mitologia antica", "group": "concept", "patterns": ["lamia", "zeus", "mitolog"] },
+    { "id": "rinascita", "label": "Introspezione e rinascita", "group": "concept", "patterns": ["rito iniziat", "neonato", "pancia all'aria", "scavando", "petrolio", "larva", "exuvia", "abisso"] },
+    { "id": "polemica_ortica", "label": "Polemica / legge dell'ortica", "group": "concept", "patterns": ["ortica", "irrita", "carne da macello", "polemica", "cazzate"] },
+    { "id": "societa_italiana", "label": "Società italiana", "group": "concept", "patterns": ["adolescente italiano", "italiano medio", "giovani di oggi"] },
+    { "id": "gioco_di_parole", "label": "Gioco di parole", "group": "concept", "patterns": ["sticazzi", "assonanza", "mona.?stero"] }
+  ]
+}

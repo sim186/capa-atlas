@@ -1,0 +1,1892 @@
+{
+ "nodes": [
+  {
+   "id": "album:Prisoner 709",
+   "label": "Prisoner 709",
+   "group": "album",
+   "val": 2.0
+  },
+  {
+   "id": "album:Museica",
+   "label": "Museica",
+   "group": "album",
+   "val": 2.0
+  },
+  {
+   "id": "album:VeritÃ  Supposte",
+   "label": "VeritÃ  Supposte",
+   "group": "album",
+   "val": 2.6245047927124707
+  },
+  {
+   "id": "album:Exuvia",
+   "label": "Exuvia",
+   "group": "album",
+   "val": 2.0
+  },
+  {
+   "id": "song:3169744",
+   "label": "Una Chiave",
+   "group": "song",
+   "val": 9,
+   "album": "Prisoner 709",
+   "release": "September 15, 2017",
+   "url": "https://genius.com/Caparezza-una-chiave-lyrics",
+   "art": "https://images.genius.com/421e697c44cf7075b01d9e37849582fd.599x599x1.jpg"
+  },
+  {
+   "id": "song:416170",
+   "label": "Mica van gogh",
+   "group": "song",
+   "val": 9,
+   "album": "Museica",
+   "release": "April 22, 2014",
+   "url": "https://genius.com/Caparezza-mica-van-gogh-lyrics",
+   "art": "https://images.genius.com/623f9ab2707c1041cc98a16e3d640c15.1000x1000x1.jpg"
+  },
+  {
+   "id": "song:157221",
+   "label": "Fuori dal tunnel",
+   "group": "song",
+   "val": 9,
+   "album": "VeritÃ  Supposte",
+   "release": "June 13, 2003",
+   "url": "https://genius.com/Caparezza-fuori-dal-tunnel-lyrics",
+   "art": "https://images.genius.com/106269bd1e2adb0fb3c1d300b286456a.300x300x1.jpg"
+  },
+  {
+   "id": "song:1289646",
+   "label": "La legge dellâortica",
+   "group": "song",
+   "val": 5.655536721746079,
+   "album": "VeritÃ  Supposte",
+   "release": "June 13, 2003",
+   "url": "https://genius.com/Caparezza-la-legge-dellortica-lyrics",
+   "art": "https://images.genius.com/3925fe8cd24e69179f82462bf98adbd7.1000x1000x1.jpg"
+  },
+  {
+   "id": "song:6653350",
+   "label": "Exuvia",
+   "group": "song",
+   "val": 9,
+   "album": "Exuvia",
+   "release": "March 31, 2021",
+   "url": "https://genius.com/Caparezza-exuvia-lyrics",
+   "art": "https://images.genius.com/eadf71940e05f046aa2f945104068334.1000x1000x1.jpg"
+  },
+  {
+   "id": "kw:13826470",
+   "label": "Ti riconosco dai capelli, crespi come cipressi",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Ti riconosco dai capelli, crespi come cipressi",
+   "annotation": "Chiaro riferimento alla propria folta chioma, tratto distintivo del rapper, che lo caratterizzava anche da bambino, come è evidente dalla foto in copertina di Saghe mentali. In effetti, “Caparezza” è proprio un soprannome che gli era stato dato da bambino:\n\n“Caparezza”, così mi chiamavano da piccolo per via della mia chioma riccia.\n\n– Caparezza, Saghe mentali, p.18\n\n\n\nLa capigliatura è per Caparezza un segno di riconoscimento assoluto, a tal punto da renderlo noto solo per tale caratteristica: egli espresse più volte la frustrazione derivante, ad esempio in “Fai Da Tela”:\n\nCome se non meritassi ciò che ho\nCome se contassi, ma per quante ciocche ho",
+   "url": "https://genius.com/13826470/Caparezza-una-chiave/Ti-riconosco-dai-capelli-crespi-come-cipressi",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:22893918",
+   "label": "Da come cammini, come ti vesti",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Da come cammini, come ti vesti",
+   "annotation": "Caparezza riconoscerebbe se stesso da piccolo anche dall'abbigliamento che lo differenziava dagli altri, come ripreso nella strofa successiva:\n\nTutti bardati, cavalli da condottieri\nTu maglioni slabbrati, pacchiani, ben poco seri.\n\nIn effetti, anche in età adulta ha più volte dichiarato la sua indifferenza rispetto alle grandi marche, ad esempio nella traccia “Ti Fa Stare Bene”:\n\nSnobbo le firme perché faccio musica, non défilé.\n\nL'identificarsi “da come cammina”, riferito presumibilmente ad una camminata particolare e riconoscibile da lontano, potrebbe trovare giustificazione in una dichiazione del 2010 a Focus Junior:\n\nMentre intorno a me molti ragazzi erano stracolmi di soprannomi, io non ne avevo, a parte “Caparezza” da piccolo; allora me li davo io, a seconda d[elle circostanze]: Passo Pesante, Egiziano, Micsalvé. Ce n'erano veramente tantissimi.",
+   "url": "https://genius.com/22893918/Caparezza-una-chiave/Da-come-cammini-come-ti-vesti",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12698004",
+   "label": "Dagli occhi spalancati come i libri di fumetti",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Dagli occhi spalancati come i libri di fumetti che leggi",
+   "annotation": "Il suo amore per i fumetti era già stato dichiarato in più di una occasione:\n\n\nIo, immune al pattume della TV di costume\nIn volo senza piume\nIn un volume di fumetti sotto il lume\n– “Fuori Dal Tunnel”\n\nPer i fumetti il primo dei miei tragitti\nSignora Janis mi dia le strips di Cheap Thrills\n– “Cover”\n\n\nInoltre, fare il disegnatore per fumetti è stato un sogno della sua infanzia.\n\nhttps://youtu.be/jOGuj2KbY9g?t=1m29s\n\nGli occhi spalancati indicano lo stupore e l'entusiasmo del Caparezza bambino che si immerge nelle sue letture preferite; il paragone è con i fumetti stessi, che devono essere aperti per essere letti. Contemporanemente, potrebbe essere richiamata la rappresentazione degli occhi, spesso esageratamente grandi, nei manga, i fumetti giapponesi.\n\n\n\nCaparezza scriverà un proprio fumetto nel 2025, Orbit orbit.",
+   "url": "https://genius.com/12698004/Caparezza-una-chiave/Dagli-occhi-spalancati-come-i-libri-di-fumetti-che-leggi",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:14694861",
+   "label": "Dall’invisibile che indossi tutte le mattine",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Dall’invisibile che indossi tutte le mattine",
+   "annotation": "“L'invisibile” potrebbe essere un tipo di apparecchio dentale semitrasparente. L'interpretazione potrebbe essere confermata dal verso successivo, in cui si parla di incisivi che mordono matite.\n\nAlternativamente, “l'invisibile” potrebbe indicare l'atteggiamento tipicamente infantile di indossare una sorta di “mantello dell'invisibilità”, per passare inosservato dagli altri e nascondere il mondo che si ha dentro.\n\nInfine, “l'invisibile” potrebbe fare riferimento anche a dei modi di fare, un insieme di comportamenti fisici e non verbali che ti rendono meno “visibile” in un gruppo di persone, in questo caso in un ambiente scolastico.",
+   "url": "https://genius.com/14694861/Caparezza-una-chiave/Dallinvisibile-che-indossi-tutte-le-mattine",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:14617210",
+   "label": "Potessi abbattere lo schermo degli anni Ti don",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Potessi abbattere lo schermo degli anni\n Ti donerei l’inconsistenza dello scherno degli altri\n So che siamo tanto presenti quanto distanti\n So bene come ti senti e so quanto ti sbagli, credimi",
+   "annotation": "Caparezza, parlando con se stesso da giovane, non gli nega che vorrebbe fortemente abbattere questa barriera temporale pur di aiutarlo a crescere, dimostrandogli che le offese ricevute non avevano valore e che il suo stato d'animo non aveva ragion d'essere, perché non era fondato su qualcosa di realmente importante.",
+   "url": "https://genius.com/14617210/Caparezza-una-chiave/Potessi-abbattere-lo-schermo-degli-anni-ti-donerei-linconsistenza-dello-scherno-degli-altri-so-che-siamo-tanto-presenti-quanto-distanti-so-bene-come-ti-senti-e-so-quanto-ti-sbagli-credimi",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12702655",
+   "label": "No, non è vero Che non sei capace Che non c’è ",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "No, non è vero\n Che non sei capace\n Che non c’è una chiave\n No, non è vero\n Che non sei capace\n Che non c’è una chiave",
+   "annotation": "Caparezza gioca sul doppio senso della parola “chiave”, intesa sia come lo strumento fisico – che può fare uscire il rapper dalla cella della prigione mentale, filo conduttore dell'album – sia, in senso metaforico, la soluzione, la via d'uscita da una determinata situazione, in questo caso l'emarginazione e “lo scherno degli altri”.\n\nSi tratta di un concetto che riporta al videoclip de “La mia parte intollerante”, caratterizzato da un Caparezza rinchiuso in gabbia in mezzo alla gente. All'inizio del video, Capa mostra allo psicologo una chiave che potrebbe aprire la gabbia ma non la usa subito per scappare perché all'esterno sarebbe esposto e senza difese.",
+   "url": "https://genius.com/12702655/Caparezza-una-chiave/No-non-e-vero-che-non-sei-capace-che-non-ce-una-chiave-no-non-e-vero-che-non-sei-capace-che-non-ce-una-chiave",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:22893938",
+   "label": "Sguardo basso, cerchi il motivo per un altro p",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Sguardo basso, cerchi il motivo per un altro passo",
+   "annotation": "La tristezza e la mancanza di motivazione espresse da uno sguardo basso vengono rafforzate qualche verso dopo in “Chi dice che il mondo è meraviglioso non ha visto quello che ti stai creando per restarci”. Per il cantante è la fantasia, la creatività, a dissipare la tristezza della vita e servire come fonte motivazionale, come dice anche nel pezzo “China Town”:\n\nNon è la fede che ha cambiato la mia vita, ma l'inchiostro.\n\nIn questa prima fase del brano, non ne ha ancora colto l'importanza – momento descritto nel seguito come “incendio”: è pertanto ancora alla ricerca di una ragione per non chiudersi completamente in sé ma fare “passi” avanti.",
+   "url": "https://genius.com/22893938/Caparezza-una-chiave/Sguardo-basso-cerchi-il-motivo-per-un-altro-passo",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12695903",
+   "label": "Ma dietro c’è l’uncino e davanti lo squalo bia",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Ma dietro c’è l’uncino e davanti lo squalo bianco",
+   "annotation": "Troviamo un duplice riferimento al mondo dei pirati. Capa infatti cita sia i noti messaggi in bottiglia che le esecuzioni tra pirati, dove, secondo la leggenda, i malcapitati erano costretti a saltare giù in mare aperto.\n\nNel caso dell'artista, l'alternativa sarebbe probabilmente tra il gettarsi indifeso in pasto a chi lo circonda (“squalo bianco”) o il chiudersi in se stesso, nel suo “labirinto senza pareti” che come “l'uncino” lo pungola dall'interno senza dargli pace.  Un concetto simile era stato espresso nella traccia “Cammina Solo”:\n\nSe mi ritrovo sull'incudine, sotto un martello di solitudine\n\nLe bottiglie lasciate in mare con dei messaggi sono d'altra parte, nell'immaginario collettivo, il modo che ha un naufrago di chiedere aiuto. Figurativamente, in questa frase, le richieste d'aiuto del giovane Caparezza naufrago vengono inviate, però prive di messaggi poiché “rimane zitto”, “a capofitto nel [s]uo limbo, in preda ai pensieri”, non sapendo esprimere a parole il suo disagio.\n\nÈ inoltre possibile un riferimento alla canzone “Message In A Bottle” dei Police.",
+   "url": "https://genius.com/12695903/Caparezza-una-chiave/Ma-dietro-ce-luncino-e-davanti-lo-squalo-bianco",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:18856231",
+   "label": "E ti fai solitario quando tutti fanno branco T",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "E ti fai solitario quando tutti fanno branco\n Ti senti libero, ma intanto ti stai ancorando",
+   "annotation": "Capa intende che da bambino era timido e riservato e meno propenso a socializzare, rispondendo cioè allo “scherno degli altri” e all'incomunicabilità attraverso l'autoesclusione dal gruppo di pari. Questo comportamento lo faceva sentire libero da ogni compromesso e condizionamento, tuttavia il Caparezza adulto osserva dall'esterno come questa sia solo una sensazione soggettiva e momentanea, perché in realtà il ragazzino “si sta ancorando”, cioè aggrappando ad un appiglio sicuro che non permette vera libertà: la sua comfort zone.\n\nL'immagine dell'ancora è poi l'ennesimo rimando all'immaginario dei pirati.\n\nQueste barre fanno trasparire note autobiografiche nel già citato videoclip de “La mia parte intollerante”: in particolare, all'inizio del video, si vede un professore dirgli:\n\n[…] Bisogna socializzare, adeguarsi! Se fai così, starai da solo tutta la vita! Ma vai in castigo vai…\"\n\nDopodiché si vede il Capa-adolescente entrare in una gabbia, immagine collegata al titolo di questa canzone: “una chiave”.",
+   "url": "https://genius.com/18856231/Caparezza-una-chiave/E-ti-fai-solitario-quando-tutti-fanno-branco-ti-senti-libero-ma-intanto-ti-stai-ancorando",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12696761",
+   "label": "Sei nato nel Mezzogiorno, però purtroppo vedi ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Sei nato nel Mezzogiorno, però purtroppo vedi\n Solo neve e freddo tutt’intorno come un uomo Yeti",
+   "annotation": "Caparezza è nato a Molfetta, in provincia di Bari, nel Sud Italia. Il Mezzogiorno è conosciuto in tutto il mondo per le sue giornate calde e soleggiate, le quali sono decisamente in contrasto con l'atteggiamento freddo dei soggetti con i quali ha vissuto la propria adolescenza l'artista pugliese.\n\nDifatti, paragona la sua situazione emotiva a quella percepita dallo Yeti, creatura mitologica isolata dal mondo che si nasconde tra le montagne innevate.\n\n\n\nIn “Cammina Solo”, leggiamo:\n\nDetesto l'odio ma l'ho visto venir fuori\nDagli occhi di alcuni interlocutori\nHanno motivi loro e i loro sguardi sono come lastre di ghiaccio\n\nPossibile anche il riferimento al periodo in cui Caparezza ha vissuto e studiato a Milano, dove era frequente trovare gruppi leghisti in atteggiamenti ostili verso i meridionali (come afferma egli stesso nel libro Saghe Mentali).",
+   "url": "https://genius.com/12696761/Caparezza-una-chiave/Sei-nato-nel-mezzogiorno-pero-purtroppo-vedi-solo-neve-e-freddo-tuttintorno-come-un-uomo-yeti",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12699504",
+   "label": "La vita è un cinema, tanto che taci",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "La vita è un cinema, tanto che taci",
+   "annotation": "Metafora con la quale Caparezza descrive il proprio atteggiamento verso la vita in giovinezza: può rappresentare sia passività (un cinema dove puoi guardare il film, puoi viverlo da spettatore, ma non puoi intervenire per cambiarlo), sia timidezza, attraverso l'elemento del silenzio (come quando al cinema si guarda un film, senza dover intervenire).\n\nIl paragone tra vita e cinema era già presente in “Il Silenzio Dei Colpevoli”, come peraltro l'elemento del silenzio, lì omertoso e colpevole:\n\nSulla tela la tua vita intera",
+   "url": "https://genius.com/12699504/Caparezza-una-chiave/La-vita-e-un-cinema-tanto-che-taci",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12702690",
+   "label": "Chi dice che il mondo è meraviglioso Non ha vi",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Chi dice che il mondo è meraviglioso\n Non ha visto quello che ti stai creando per restarci",
+   "annotation": "Come è tipico di chi ha una coscienza emotiva superiore alla norma, l'emarginazione e le riflessioni in solitudine possono portare a terribili momenti di depressione, che sembrano riguardare da vicino il giovane Caparezza dato che definisce tutt'altro che meraviglioso il mondo che lo circonda, tanto da trovare un'unica via di fuga per affrontare la negatività: la creatività.\n\nIn queste barre afferma perciò che chi, con profondo ottimismo, vede il mondo come meraviglioso, non sa che il protagonista lo vede in maniera così opposta da necessitare di evadere nella fantasia, creandosene di fatto uno migliore: chi ha una visione troppo positiva della vita ignora infatti i compromessi messi in atto da chi ne ha una visione più realistica.\n\nIn un'intervista del 2014 l'artista ha affermato:\n\nSecondo me la non accettazione della realtà sfocia in una visione creativa della realtà stessa. Chi subisce una violenza, che può essere anche solo l'inquietudine del vivere, spesso cerca di rifugiarsi in una realtà parallela, e questa realtà viene di solito chiamata “arte”. Diventa un modo per vivere la vita come la vuoi tu, ed è per questo che io sono felice quando sono su un palco, quella è la mia isola felice. Sono ancora più felice quando sono in studio e compongo.\n\nSi tratta di un tema ricorrente nella produzione di Caparezza, affrontato ad esempio nella collaborazione con Lucariello “Fore C'a Capa”, nonché nel brano “Eyes Wide Shut” del successivo album Exuvia.",
+   "url": "https://genius.com/12702690/Caparezza-una-chiave/Chi-dice-che-il-mondo-e-meraviglioso-non-ha-visto-quello-che-ti-stai-creando-per-restarci",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:23097054",
+   "label": "Il tuo soffitto: stelle e pianeti",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Il tuo soffitto: stelle e pianeti",
+   "annotation": "La fantasia del giovane Michele viene paragonata, come nella terza strofa, ad un viaggio nello spazio. L'uso del termine “soffitto” rimanda ad una limitazione verso l'alto: identificare il limite con lo spazio aperto significa ammettere che non esiste alcun limite a tale immaginazione.",
+   "url": "https://genius.com/23097054/Caparezza-una-chiave/Il-tuo-soffitto-stelle-e-pianeti",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12696986",
+   "label": "Procedi nel tuo labirinto senza pareti",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Procedi nel tuo labirinto senza pareti",
+   "annotation": "Il labirinto nel quale il giovane Michele si trova è senza pareti: un ostacolo fittizio generato unicamente dalla sua mente, la quale lo porta a pensare che sia lui stesso il problema.",
+   "url": "https://genius.com/12696986/Caparezza-una-chiave/Procedi-nel-tuo-labirinto-senza-pareti",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12731648",
+   "label": "Noi siamo tali e quali, facciamo viaggi astral",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Noi siamo tali e quali, facciamo viaggi astrali con i crani tra le mani",
+   "annotation": "Riferimento al tipico modo di fantasticare dei bambini, con le mani appoggiate al viso, facendo voli con la fantasia.\n\nIl tema del “viaggio astrale” dell'artista diventerà inoltre centrale nell'album Orbit Orbit, chiusura della trilogia aperta da Prisoner 709.",
+   "url": "https://genius.com/12731648/Caparezza-una-chiave/Noi-siamo-tali-e-quali-facciamo-viaggi-astrali-con-i-crani-tra-le-mani",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:13290650",
+   "label": "Abbiamo planetari tra le ossa parietali",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Abbiamo planetari tra le ossa parietali",
+   "annotation": "Caparezza afferma che la mente del giovane sé, come quella dell'artista, non è affatto limitata.\n\nQuando siamo bambini la fantasia è il nostro principale motore, ma quando cresciamo purtroppo rischiamo di dimenticarcene. Nonostante questo la nostra testa sarà sempre capace di aprirci universi.\n\nPotrebbe anche esserci un gioco di parole in quanto “pari-e-tali” ribadisce il concetto che Caparezza e il se stesso da bambino sono effettivamente la stessa cosa come viene detto nel verso subito successivo.",
+   "url": "https://genius.com/13290650/Caparezza-una-chiave/Abbiamo-planetari-tra-le-ossa-parietali",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12695910",
+   "label": "Siamo la stessa cosa, mica siamo imparentati C",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Siamo la stessa cosa, mica siamo imparentati\n Ci separano solo i calendari",
+   "annotation": "In questo segmento il rapper, dopo tutta una serie di suggerimenti precedenti, ci dà la conferma: sta parlando al se stesso adolescente.",
+   "url": "https://genius.com/12695910/Caparezza-una-chiave/Siamo-la-stessa-cosa-mica-siamo-imparentati-ci-separano-solo-i-calendari",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12702726",
+   "label": "Vai, tallone sinistro verso l’interno",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Vai, tallone sinistro verso l’interno",
+   "annotation": "Potrebbe riferirsi alla posizione dello schermidore che attacca tirando col fioretto. La posizione di attacco prevede appunto, per i destri, di posizionare il tallone del piede sinistro verso l'interno. L'atteggiamento offensivo anticipa il messaggio finale del brano:\n\nfa uno sforzo, e prenditi il cosmo e non aver paura che /\n\nProbabile anche il riferimento al tallone di Achille, l'eroe greco che come narra la leggenda venne immerso fino al tallone nelle acque del fiume Stige che lo resero invulnerabile, con il tallone come unico punto debole. Alcuni ritengono il tallone incriminato fosse il destro, anche se è più facile pensare al sinistro, visto l'accostamento classico tra sinistra e concetto di debolezza. Quindi qui Capa sembra voler dire al se stesso giovane “Vai, ma nascondendo agli altri insicurezze e punti deboli, come per proteggerti dal mondo”.",
+   "url": "https://genius.com/12702726/Caparezza-una-chiave/Vai-tallone-sinistro-verso-linterno",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:13661723",
+   "label": "Caronte, diritto verso l’inferno",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Caronte, diritto verso l’inferno",
+   "annotation": "Nella religione greca e romana, Caronte era il traghettatore delle anime dei morti nell'Ade. La figura venne poi ripresa da Dante Alighieri ed inserita nella sua Divina Commedia.\n\nCaparezza adulto invita il giovane Michele ad affrontare finalmente l'inferno del mondo uscendo dal limbo di incertezze e silenzi in cui viene raffigurato nella strofa precedente:\n\nA capofitto nel tuo limbo, in preda ai pensieri\n\nPeraltro, nella Divina Commedia il Limbo è il primo cerchio dell'Inferno, a cui Dante e Virgilio giungono dopo l'incontro con Caronte.",
+   "url": "https://genius.com/13661723/Caparezza-una-chiave/Caronte-diritto-verso-linferno",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12791266",
+   "label": "Lunghe corse, unghie morse, lune storte Qualch",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Lunghe corse, unghie morse, lune storte\n Qualche notte svanita in un sonno incerto, poi l’incendio",
+   "annotation": "Lunghe corse, unghie morse, lune storte\n\nCon un'allitterazione, Capa delinea una condizione di vita alquanto stressante e ansiosa, fatta di notti passate senza dormire, probabilmente per i troppi dubbi e pensieri.\n\n“L'incendio” indica l'emergere della sua passione per la musica che l'ha travolto poi: è stata difatti la chiave grazie alla quale è riuscito a trovare conforto e sicurezza.",
+   "url": "https://genius.com/12791266/Caparezza-una-chiave/Lunghe-corse-unghie-morse-lune-storte-qualche-notte-svanita-in-un-sonno-incerto-poi-lincendio",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:13142023",
+   "label": "Potessi apparirti come uno spettro lo farei ad",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Potessi apparirti come uno spettro lo farei adesso\n Ma ti spaventerei perché sarei lo spettro di me stesso\n E mi diresti: ”Guarda, tutto a posto\n Da quel che vedo, invece, tu l’opposto",
+   "annotation": "Caparezza nel finale del testo inverte le posizioni dei personaggi all'interno della canzone – non è più il “Michele di adesso” a rivolgersi al “Michele del passato”, bensì il contrario.\n\nIn questo modo il rapper sottolinea come egli non sia “migliorato” nel corso degli anni, non abbia cioè superato tutte le difficoltà. Egli sta semplicemente attraversando diversi stadi della sua vita; dunque, non può permettersi di dare consigli al sé stesso del passato: che oggi, come allora, egli debba affrontare momenti di sconforto lo dimostra il fatto stesso di aver scritto questo testo.\n\nIl “Michele del passato”, dopo aver ricevuto incoraggiamenti per tutto il brano, appare qui più saggio del “Michele del presente”: lo invita a lasciarlo stare e ad andare avanti, fino a prendersi il cosmo.\n\nIl cosmo sarà, ironicamente, il tema del futuro album Orbit Orbit.\n\nPotrebbe esserci un secondo riferimento all'Amleto, in particolare alle apparizioni del re morto (“apparirti come uno spettro”) nella tragedia.\n\nCaparezza ha espresso le proprie insicurezze del presente descrivendole come manifestazioni della sindrome dell'impostore:\n\nQuando ho scritto “Una Chiave” ho pensato: ho raggiunto dei risultati, la gente viene a vedermi, c'è entusiasmo intorno a me, perché do ancora voce alla sindrome dell'impostore? Cosa c'è che non va in me? Non riuscivo a capire perché non l'ho mai risolta questa cosa qui. L'ho risolta in parte: adesso per me non ha più senso appartenere a qualcosa. Ho già fatto le mie battaglie, le ho condotte, forse le ho anche vinte, ma adesso non voglio scendere in campo e combattere. Voglio scendere in campo ed esprimermi. Tutte queste cose rendono vivo il processo creativo. Secondo me il conflitto è necessario.\n\n– Caparezza, intervista per Treccani, 2025",
+   "url": "https://genius.com/13142023/Caparezza-una-chiave/Potessi-apparirti-come-uno-spettro-lo-farei-adesso-ma-ti-spaventerei-perche-sarei-lo-spettro-di-me-stesso-e-mi-diresti-guarda-tutto-a-posto-da-quel-che-vedo-invece-tu-lopposto",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:12723833",
+   "label": "Sono sopravvissuto al bosco ed ho battuto l’or",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Sono sopravvissuto al bosco ed ho battuto l’orco",
+   "annotation": "Potrebbe essere un riferimento al primo livello del videogioco Ghosts ‘n Goblins, in cui il protagonista, dopo aver attraversato una foresta piena di ostacoli e sconfitto un orco, riceve una chiave con cui poter accedere al secondo livello. Il giovane Michele alla fine è riuscito a superare le avversità ed ora chi ha bisogno della chiave è il Michele adulto, perciò il se stesso giovane lo sprona nei versi seguenti. Il videogioco è citato da Capa anche in “Abiura di Me”.\n\nIl bosco e l'orco sono elementi spesso presenti nelle fiabe, simbolo delle prove da superare (il “rito di iniziazione” secondo l'analisi di Propp). Il bosco poi è rimasto come simbolo di un momento di passaggio significativo in molte opere letterarie, ad esempio la notte di Renzo ne I Promessi Sposi o la selva oscura della Divina Commedia; in tutto il testo della canzone ci sono in effetti vari altri riferimenti alla Divina Commedia: il Limbo, Caronte, l'Inferno. Così come Dante nella Divina Commedia, anche Caparezza, per raggiungere il proprio Paradiso, deve prima uscire dal “Limbo” della sua prigione e attraversare l'Inferno, metafora delle difficoltà che si incontrano durante la vita.\n\nTale immagine diverrà inoltre il concept narrativo dell'album seguente, Exuvia.",
+   "url": "https://genius.com/12723833/Caparezza-una-chiave/Sono-sopravvissuto-al-bosco-ed-ho-battuto-lorco",
+   "song": "Una Chiave"
+  },
+  {
+   "id": "kw:3647545",
+   "label": "Prima di dare del pazzo a Van Gogh Sappi che l",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Prima di dare del pazzo a Van Gogh\n Sappi che lui è terrazzo, tu ground floor",
+   "annotation": "Primo paragone tra Van Gogh e l'adolescente Italiano medio. Il terrazzo è la parte più in alto dell'edificio, dove si può vedere una bella vista, il paesaggio urbano o rurale che sia. Mentre il secondo viene paragonato a ground floor, ovvero il pian terreno. Già dal primo verso si intuisce la preferenza di Caparezza, e che l'adolescente non è all'altezza di Van Gogh.",
+   "url": "https://genius.com/3647545/Caparezza-mica-van-gogh/Prima-di-dare-del-pazzo-a-van-gogh-sappi-che-lui-e-terrazzo-tu-ground-floor",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8705149",
+   "label": "Prima di dire che era fuori di senno Fammi un ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Prima di dire che era fuori di senno\n Fammi un disegno con fogli di carta e crayon",
+   "annotation": "Si dice che Van Gogh fosse malato, avesse comportamenti strani, crisi epilettiche ed allucinazioni che lo facevano piombare in forti depressioni e periodi di forte stato confusionale. Nonostante ciò, non si dovrebbe sminuire la tecnica artistica, pensando che fosse usata senza razionalità, anzi, tutt'altro. L'adolescente odierno non pittura come Van Gogh, anzi, Caparezza lo sminuisce sfidandolo con i Crayon, ovvero i pastelli che usano i bambini per disegnare.",
+   "url": "https://genius.com/8705149/Caparezza-mica-van-gogh/Prima-di-dire-che-era-fuori-di-senno-fammi-un-disegno-con-fogli-di-carta-e-crayon",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8719743",
+   "label": "Van Gogh, mica “quel tizio là” Ma uno che alla",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Van Gogh, mica “quel tizio là”\n Ma uno che alla tua età libri di Émile Zola\n Shakespeare nelle corde, Dickens nelle corde\n Tu: leggi manuali di DVD recorder",
+   "annotation": "Oggigiorno viene sminuita la figura di Van Gogh, ma Caparezza ci fa capire la grandezza di questo artista dicendoci che, già in giovane età, era solito leggere Émile Zola, scrittore e giornalista francese ammirato da Van Gogh (tanto che, nell'opera Natura morta con Bibbia di Van Gogh, il libro raffigurato in primo piano è “La joie de vivre” di Émile Zola), William Shakespeare,  drammaturgo e poeta inglese, considerato come il più importante scrittore di tutti i tempi, e Charles Dickens, scrittore, giornalista e reporter di viaggio britannico.\n\nL'italiano medio al massimo legge le istruzioni del lettore DVD.\n\nEssere nelle corde è un modo di dire per intendere “amare, che piace molto”.",
+   "url": "https://genius.com/8719743/Caparezza-mica-van-gogh/Van-gogh-mica-quel-tizio-la-ma-uno-che-alla-tua-eta-libri-di-emile-zola-shakespeare-nelle-corde-dickens-nelle-corde-tu-leggi-manuali-di-dvd-recorder",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:3928262",
+   "label": "Lui: trecento lettere letteratura fine Tu: cen",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: trecento lettere letteratura fine\n Tu: centosessanta caratteri due faccine, fine",
+   "annotation": "Durante la sua vita, Vincent Van Gogh scrisse delle lettere a suo fratello Theo, il quale aiutò Vincent sia moralmente che economicamente. Si attesta che l'artista abbia scritto più di seicento lettere al fratello, e quest'ultimo abbia scritto quaranta lettere a Van Gogh. Gran parte di ciò che oggi sappiamo dell'artista è grazie alle lettere scritte da lui.\n\n\n\nCaparezza constata come oggi, invece, molti adolescenti si limitano a scrivere messaggi: centosessanta caratteri è il limite massimo di un SMS.\n\nIn un'intervista del 2025, l'artista tornerà su questa critica aggiungendo che:\n\nIl semplicismo è il grave problema di questo momento storico. E non era così nel passato: per esempio le lettere che Van Gogh scriveva al fratello Théo (a un certo punto sono andato in fissa per Van Gogh) erano di una profondità e di una valenza narrativa fortissima. Si ambiva alla complessità, ora si ambisce al semplicismo, che, attenzione, non è la semplicità. La semplicità è un valore, soprattutto nella divulgazione, è il semplicismo il problema.",
+   "url": "https://genius.com/3928262/Caparezza-mica-van-gogh/Lui-trecento-lettere-letteratura-fine-tu-centosessanta-caratteri-due-faccine-fine",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8723088",
+   "label": "Lui: London, Paris, Anverse Tu: Megastore, ipe",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: London, Paris, Anverse\n Tu: Megastore, iper, multiplex",
+   "annotation": "Van Gogh durante la sua vita ha viaggiato molto: Dall'Aia (terra di origine nei Paesi Bassi), l'artista si stabilì tra Parigi e Londra per lavoro; Parigi in particolare fu fonte di grande ammirazione in quanto capitale artistica dell'epoca: qui fu influenzato dalla pittura impressionista. Nei suoi viaggi, colse anche l'occasione per visitare musei e chiese, dai quali rimase affascinato. Anverse sarà destinazione di svolta per l'artista: vi si trasferì nel novembre del 1885, frequentando assiduamente gli ambienti artistici della città dove scoprì le stampe giapponesi e ammirò il colorismo di Rubens.\n\n\n\nVincent Van Gogh, Porta nei bastioni di Parigi. Olio su tela, 1887\n\nNel XIX secolo, viaggiare così tanto era una ricchezza culturale inestimabile e rara, ed un grande onore, dato che non c'erano le comodità attuali (aereo, treni, macchine). Nonostante oggi ci siamo evoluti tecnologicamente, Caparezza accusa l'adolescente medio di non aver voglia di viaggiare e scoprire, ma al massimo uscire di casa per andare al cinema e ai centri commerciali.",
+   "url": "https://genius.com/8723088/Caparezza-mica-van-gogh/Lui-london-paris-anverse-tu-megastore-iper-multiplex",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:4483916",
+   "label": "Lui: distante, ma sa tutto del fratello Théo T",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: distante, ma sa tutto del fratello Théo\n Tu: convivi e non sai nulla del fratello tuo",
+   "annotation": "Qui Caparezza si riferisce alla fitta relazione epistolare che intrattenne con il fratello Théo tra il 1872 e il 1890. Queste lettere possono essere considerate un'importantissima fonte per la comprensione dell'artista. Caparezza vuole far vedere la netta differenza tra Van Gogh e l'italiano medio nella relazione con il fratello: il primo, nonostante la distanza, si scrivevano molto per sapere l'uno dell'altro, mentre l'adolescente medio, preso magari dalle tecnologie moderne come videogame e smartphone, dimentica di avere un fratello e della sua importanza.",
+   "url": "https://genius.com/4483916/Caparezza-mica-van-gogh/Lui-distante-ma-sa-tutto-del-fratello-theo-tu-convivi-e-non-sai-nulla-del-fratello-tuo",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8723424",
+   "label": "Lui: a piedi per i campi, lo stimola Tu: rinch",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: a piedi per i campi, lo stimola\n Tu: rinchiuso con i crampi sul tapis roulant",
+   "annotation": "La Provenza fu fonte d'ispirazione per lui e i suoi ritratti: amava passeggiare per i campi per trovare stimoli, cogliere la vera essenza della natura per poi riprodurla sui suoi quadri. Ed è questo anche che lo porta a sviluppare quella che oggi chiameremmo en plein air. L'adolescente medio va in palestra per camminare, o addirittura non si muove da casa.",
+   "url": "https://genius.com/8723424/Caparezza-mica-van-gogh/Lui-a-piedi-per-i-campi-lo-stimola-tu-rinchiuso-con-i-crampi-sul-tapis-roulant",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:3647555",
+   "label": "Tu sei pazzo, mica Van Gogh Mica Van Gogh, mic",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Tu sei pazzo, mica Van Gogh\n Mica Van Gogh, mica Van Gogh\n Tu, tu sei pazzo, mica Van Gogh\n Mica Van Gogh, mica Van Gogh\n Tu, tu sei pazzo\n Mica Van Gogh\n Mica Van Gogh\n Mica Van Gogh\n Tu sei pazzo, mica Van Gogh\n Tu sei pazzo, mica Van Gogh",
+   "annotation": "Si dice che Van Gogh avesse svariati disturbi mentali, che soffrisse di epilessia, difatti alternava stati di gioia a crisi epilettiche che lo portarono a stati di depressione. Tutto ciò lo portò addirittura a tagliarsi l'orecchio sinistro e in preda ad allucinazioni, lo incartò, e lo consegnò ad una prostituta di un bordello.\n\n\n\nNonostante il pittore venga considerato pazzo, Caparezza prende le sue difese affermando che in realtà è la persona media di oggi a esserlo veramente a sua insaputa, per tutti i motivi elencati nelle strofe.",
+   "url": "https://genius.com/3647555/Caparezza-mica-van-gogh/Tu-sei-pazzo-mica-van-gogh-mica-van-gogh-mica-van-gogh-tu-tu-sei-pazzo-mica-van-gogh-mica-van-gogh-mica-van-gogh-tu-tu-sei-pazzo-mica-van-gogh-mica-van-gogh-mica-van-gogh-tu-sei-pazzo-mica-van-gogh-tu-sei-pazzo-mica-van-gogh",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725480",
+   "label": "A sedici anni girò tra collezioni d’arte Tu: s",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "A sedici anni girò tra collezioni d’arte\n Tu: sedici anni, Yu-Gi-Oh, collezioni carte",
+   "annotation": "Durante la sua adolescenza, Van Gogh smise di studiare e andò a lavorare nella casa d'arte Goupil & Co. Il lavoro consisteva nel vendere le riproduzioni di opere d'arte, il quale portò Van Gogh ad approfondire le tematiche artistiche frequentando musei e collezioni d'arte.\n\n\n\nI ragazzi di oggi, in particolare gli adolescenti, l'unica collezione che conoscono è quella di carte, come Yu-Gi-Oh.",
+   "url": "https://genius.com/8725480/Caparezza-mica-van-gogh/A-sedici-anni-giro-tra-collezioni-darte-tu-sedici-anni-yu-gi-oh-collezioni-carte",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8494451",
+   "label": "A vent’anni nel salon del Louvre e tu Nell’aut",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "A vent’anni nel salon del Louvre e tu\n Nell’autosalon nel SUV rimani in mutande",
+   "annotation": "Come abbiamo detto nel verso precedente, grazie alla Goupil & Co., Van Gogh nella sua adolescenza riuscì a visitare molte mostre d'arte e musei. A soli 20 anni riuscì a visitare Parigi e il Louvre, dove rimase sbalordito dalle  esposizioni dei quadri al Salon. Il giovane italiano medio, invece, pensa ad apparire, essere cool, e l'unico Salon che visita è quello delle macchine, comprandosi i macchinoni anche se, citando lo stesso Capa, Non se lo può permettere.",
+   "url": "https://genius.com/8494451/Caparezza-mica-van-gogh/A-ventanni-nel-salon-del-louvre-e-tu-nellautosalon-nel-suv-rimani-in-mutande",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725582",
+   "label": "Lui: olio su tela e creò dipinti Tu: olio su m",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: olio su tela e creò dipinti\n Tu: olio su muscoli, gare di bodybuilding",
+   "annotation": "Quasi tutte le opere di Vincent Van Gogh sono olio su tela, o, più precisamente, una tecnica pittorica che utilizza pigmenti in polvere mescolati con oli.\n\n\n\nVincent Van Gogh, Campo di grano con volo di corvi. Olio su tela, 1890.\n\nCaparezza denuncia come oggi un olio molto più in voga tra i giovani rispetto a quello per dipingere sia quello da posa per il bodybuilding, per far risaltare la perfezione muscolare durante le competizioni.",
+   "url": "https://genius.com/8725582/Caparezza-mica-van-gogh/Lui-olio-su-tela-e-creo-dipinti-tu-olio-su-muscoli-gare-di-bodybuilding",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725667",
+   "label": "Lui: paesane, modelle, prostitute Tu: passi le",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: paesane, modelle, prostitute\n Tu: passi le notti nel letto con il computer",
+   "annotation": "Sia in ambito artistico che privato, Van Gogh era molto a contatto con le donne, le dipingeva, le ammirava, le amava. In particolare, si innamorò di una modella, sarta e prostituta di nome Sien (al secolo Clasina Maria Hoornik): madre di una bambina e in attesa di un altro figlio, la ritrasse nel dipinto Dolore e da lì i due si frequentarono, ma la famiglia di lui lo ostacolò in ogni modo in questa relazione, allontanandosi da lui moralmente ed economicamente, tentando addirittura di farlo internare. Successivamente, è noto anche come, con Gauguin, erano soliti a frequentare dei bordelli, come testimoniato anche dalle lettere tra i due.\n\n\n\nVincent Van Gogh, Dolore. Matita, penna e inchiostro su carta, 1882.\n\nA differenza di Van Gogh, gli adolescenti di oggi vanno sul computer per vedere donne nude e rapporti sessuali grazie ad internet; Caparezza aveva già criticato l'abuso della pornografia (mettendolo in contrasto con i movimenti di liberazione sessuale del 1968) nella traccia “La Rivoluzione Del Sessintutto”.",
+   "url": "https://genius.com/8725667/Caparezza-mica-van-gogh/Lui-paesane-modelle-prostitute-tu-passi-le-notti-nel-letto-con-il-computer",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725717",
+   "label": "Lui: ha talento e lo sai, tu: è un po’ che non",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Lui: ha talento e lo sai, tu: è un po’ che non l’hai\n Lui: scommette su di sé, tu: poker online",
+   "annotation": "L'artista sapeva in cuor suo di avere del talento e si impegnava per coltivarlo (“scommetteva su di sé”): approfondiva la sua cultura, studiava, visitava musei e città, viaggiava, faceva nuove conoscenze, sperimentava. Secondo il rapper, le uniche scommesse a cui si interessa il ragazzo medio di oggi sono relative ai giochi d'azzardo come il Poker Online, senza avere obiettivi nella vita: investe cioè il proprio denaro senza investire sul proprio futuro.",
+   "url": "https://genius.com/8725717/Caparezza-mica-van-gogh/Lui-ha-talento-e-lo-sai-tu-e-un-po-che-non-lhai-lui-scommette-su-di-se-tu-poker-online",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725758",
+   "label": "Lui: esaltato per aver incontrato Gauguin Tu: ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: esaltato per aver incontrato Gauguin\n Tu: esaltato per avere pippato cocaine",
+   "annotation": "Vincent Van Gogh aveva il desiderio di incontrare Paul Gauguin, pittore francese post-impressionista, per la cui arte egli nutriva una grande stima, ai limiti della venerazione. I due si conobbero nel 1886 a Montmartre e nacque una profonda amicizia; nel 1888, Théo contatto Gauguin proponendogli di pagargli il soggiorno ad Arles, città della Provenza dove risedeva Vincent, e garantendogli l'acquisto di dodici suoi quadri all'anno per la cifra di 150 franchi. L'artista accettò e Van Gogh fu entusiasta.\n\n\n\nCaparezza mette a confronto l'“esaltazione” di Van Gogh, intesa come entusiasmo per aver stretto amicizia con un artista così importante per lui, con l'“esaltazione” intesa come euforia e alterazione mentale dopo un tiro di cocaina.",
+   "url": "https://genius.com/8725758/Caparezza-mica-van-gogh/Lui-esaltato-per-aver-incontrato-gauguin-tu-esaltato-per-avere-pippato-cocaine",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725791",
+   "label": "Lui: assenzio e poesia, tu: senza poesia",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: assenzio e poesia, tu: senza poesia",
+   "annotation": "L'assenzio è un distillato ad alta gradazione alcolica (45-75 gradi), solitamente di colore verde smeraldo. Ideato nel 1792, divenne particolarmente popolare in Europa nella seconda metà del XIX Secolo, grazie alla fama che ebbe tra gli artisti e gli scrittori di Parigi (da qui, “assenzio e poesia”). Consumato talvolta con rituali elaborati e accessori stravaganti, divenne uno dei simboli dello stile di vita bohémien.\n\n\n\nUno dei dipinti iconici dell'epoca bohémien parigina, opera di un contemporaneo di Van Gogh: Edgar Degas, L'Assenzio, olio su tela, 1875-1876. \n\nAnche qui Caparezza mostra un suo punto di vista rispetto agli adolescenti odierni, il cui stile di vita è giudicato “senza poesia”, cioè piatto, banale e mediocre.",
+   "url": "https://genius.com/8725791/Caparezza-mica-van-gogh/Lui-assenzio-e-poesia-tu-senza-poesia",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725809",
+   "label": "Lui: ha fede, tu: ti senti il messia",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Lui: ha fede, tu: ti senti il messia",
+   "annotation": "Cristiano devoto e membro della Chiesa Riformata Olandese, Van Gogh nel 1876 si dedicò interamente allo studio della Bibbia. I ragazzi di oggi invece neanche ci pensano lontanamente, anzi, spesso si fanno grandi anche quando non sono nessuno.\n\nUn'ode all'umiltà e alla voglia di perfezionamento continuo, valore caro sia a Caparezza che a Van Gogh, il quale scriveva a Théo:\n\nHo una passione pressoché irresistibile per i libri e sento continuamente il bisogno di istruirmi, così come ho bisogno di mangiare il pane. […] Se non studio, se non cerco più, allora sono perduto.",
+   "url": "https://genius.com/8725809/Caparezza-mica-van-gogh/Lui-ha-fede-tu-ti-senti-il-messia",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:5152446",
+   "label": "Van Gogh, una lama e si taglia l’orecchio Io t",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Van Gogh, una lama e si taglia l’orecchio\n Io ti sento parlare, sto per fare lo stesso",
+   "annotation": "Si riferisce alla mutilazione dell'orecchio sinistro che Van Gogh si autoinflisse per motivi mai del tutto chiariti ma comunque imputabili alla sua malattia mentale.\n\nCaparezza riprende il folle gesto del pittore allo scopo di mettere in luce l'ignoranza dell'italiano medio: l'autore ricorre metaforicamente al taglio delle orecchie per evitare l'ascolto di ulteriori idiozie.\n\n\n\n\nAutoritratto con l'orecchio bendato di van Gogh",
+   "url": "https://genius.com/5152446/Caparezza-mica-van-gogh/Van-gogh-una-lama-e-si-taglia-lorecchio-io-ti-sento-parlare-sto-per-fare-lo-stesso",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:16756389",
+   "label": "Ho il rasoio tra le dita, ma non ti ammazzo Av",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Ho il rasoio tra le dita, ma non ti ammazzo\n Avrò pietà di te perché",
+   "annotation": "Van Gogh ospitò ad Arles l'amico Gauguin, che arrivò il 29 ottobre 1888. La convivenza però non fu facile: i due pittori litigavano spesso, a causa di diversi gusti pittorici e per le disordinate abitudini di Vincent, nonostante la profonda ammirazione che quest'ultimo nutriva per l'amico. Il 23 dicembre 1888 Van Gogh, perso il proprio controllo dopo un violento litigio, cercò di uccidere Gauguin con un rasoio, inseguendolo per le strade di Arles. Con lo stesso rasoio Vincent, febbricitante e in preda alle allucinazioni, diresse verso sé stesso la sua furia lesionista tagliandosi l'orecchio sinistro.\nCaparezza, immedesimandosi in Van Gogh in uno dei momenti di pazzia più noti, rinuncia a uccidere l'immaginario interlocutore con il rasoio, riconoscendo, come si afferma nel ritornello, di essere il meno pazzo dei due.",
+   "url": "https://genius.com/16756389/Caparezza-mica-van-gogh/Ho-il-rasoio-tra-le-dita-ma-non-ti-ammazzo-avro-pieta-di-te-perche",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725851",
+   "label": "Spacchi tutto quando fan goal Fai la coda per ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Spacchi tutto quando fan goal\n Fai la coda per lo smartphone\n Tu sei pazzo, mica Van Gogh\n Tu sei pazzo, mica Van Gogh",
+   "annotation": "Caparezza ha sempre criticato aspramente la celebrazione esagerata delle frivolezze.\n\nIl calcio è seguito da milioni di italiani appassionatamente, e quando c'è da esultare, addirittura fanno feste e cortei. Inoltre, negli ultimi anni, la mania di avere l'ultimo modello di smartphone uscito è dilagata, tanto da fare file interminabili sin dal giorno prima.\n\nE poi il pazzo sarebbe Van Gogh…\n\n\n\nFesteggiamenti a Milano per la vittoria dell'Italia agli Europei di calcio nel 2021.",
+   "url": "https://genius.com/8725851/Caparezza-mica-van-gogh/Spacchi-tutto-quando-fan-goal-fai-la-coda-per-lo-smartphone-tu-sei-pazzo-mica-van-gogh-tu-sei-pazzo-mica-van-gogh",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:10433491",
+   "label": "Mangiava tubi di colore ed altre cose assurde",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Mangiava tubi di colore ed altre cose assurde",
+   "annotation": "Vincent van Gogh era solito mangiare il colore utilizzato per realizzare i suoi dipinti direttamente dal tubetto, mosso da un'evidente stato di insania mentale.\n\n\n\nSi è ipotizzato che i sintomi neurologici di Van Gogh fossero imputabili all'arsenico contenuto nel verde smeraldo, al piombo della biacca e al mercurio del vermiglio.",
+   "url": "https://genius.com/10433491/Caparezza-mica-van-gogh/Mangiava-tubi-di-colore-ed-altre-cose-assurde",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:11626111",
+   "label": "Probabilmente meno tossiche del tuo cheeseburg",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Probabilmente meno tossiche del tuo cheeseburger",
+   "annotation": "Caparezza paragona i tubetti di colore e i cheeseburger dei fast-food, definendoli “probabilmente” più tossici dei colori stessi; nonostante infatti non siano mai stati realmente riscontrati additivi tossici nel junk food delle grandi catene, è noto come questo tipo di alimentazione possa causare uno stato infiammatorio  e problemi di salute nel breve e nel lungo termine.\n\n\n\nL'artista vuole sottolineare come, mentre Van Gogh era considerato pazzo anche per la sua stramba abitudine alimentare, oggi mangiare abitualmente ai fast food non desta nessun clamore.",
+   "url": "https://genius.com/11626111/Caparezza-mica-van-gogh/Probabilmente-meno-tossiche-del-tuo-cheeseburger",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:12424869",
+   "label": "Allucinazioni che alterano la vista",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Allucinazioni che alterano la vista",
+   "annotation": "Van Gogh soffriva spesso di allucinazioni. In alcune delle lettere al fratello Théo, descrive i seguenti sintomi: “una sensazione di debolezza in tutto il corpo e spossatezza”, arrivando ad essere negli ultimi anni di vita “esausto, irrequieto, ansioso, debole, profondamente confuso”. Inoltre, il pittore descrive dolori allo stomaco, febbre a ridosso delle crisi, le quali sfociavano anche in allucinazioni e perdita di lucidità. Analizzando queste descrizioni e gli stati emozionali che traspaiono dalle sue opere, alcuni medici ritengono oggi che Van Gogh fosse affetto da porfiria acuta intermittente, una rara malattia metabolica.",
+   "url": "https://genius.com/12424869/Caparezza-mica-van-gogh/Allucinazioni-che-alterano-la-vista",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:10433510",
+   "label": "Tu ti fai di funghi ad Amsterdam, ma ciò non f",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Tu ti fai di funghi ad Amsterdam, ma ciò non fa di te un artista",
+   "annotation": "L'assunzione di sostanze stupefacenti atte ad amplificare le percezioni sensoriali fu una pratica molto comune durante il periodo del decadentismo.\n\n\n\nCaparezza ritiene tuttavia che questo metodo non costituisca una facile scorciatoia per il raggiungimento dello slancio creativo.\n\nUn pensiero condiviso con lo scrittore Baudelaire, contemporaneo di Van Gogh, che nello scritto “Paradisi Artificiali” scrive:\n\n“Ammettiamo per un istante che l'hashish dia, o quanto meno aumenti la genialità; essi dimenticano che la natura propria dell'hashish è quella di diminuire la volontà; e così, esso concede con una mano ciò che toglie con l'altra, cioè l'immaginazione senza la facoltà di approfittarne.”\n\nLa citazione ad Amsterdam non è casuale: proprio lì si trova il Van Gogh Museum, che contiene la collezione più grande al mondo di opere del pittore. Una parte del video musicale è ambientata proprio lì.",
+   "url": "https://genius.com/10433510/Caparezza-mica-van-gogh/Tu-ti-fai-di-funghi-ad-amsterdam-ma-cio-non-fa-di-te-un-artista",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:8725871",
+   "label": "(Tu:) in fissa con i cellulari, lui: coi giras",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "(Tu:) in fissa con i cellulari, lui: coi girasoli\n Girare con te è un po’ come quando si gira soli",
+   "annotation": "L'artista critica come l'adolescente del 2014 (anno di uscita del brano) sia preso totalmente dagli smartphone e da tutto ciò ad essi collegato. Van Gogh invece era catturato dalla bellezza dei girasoli, tanto che esistono due serie di dipinti a tema, una di Parigi e l'altra di Arles.\n\n\n\nCaparezza gioca con la parola “girasoli”, dividendola: chi usa troppo il telefono si discosta totalmente dalla realtà, per questo chi esce con lui è come se “girasse da solo”.",
+   "url": "https://genius.com/8725871/Caparezza-mica-van-gogh/Tu-in-fissa-con-i-cellulari-lui-coi-girasoli-girare-con-te-e-un-po-come-quando-si-gira-soli",
+   "song": "Mica van gogh"
+  },
+  {
+   "id": "kw:12300971",
+   "label": "Sono fuori dal tunnel-el-el-el del divertiment",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Sono fuori dal tunnel-el-el-el del divertimento\n Sono fuori dal tunnel-el-el-el del divertimento",
+   "annotation": "L'espressione “fuori dal tunnel” si usa per fare riferimento ad una persona che è uscita dalla dipendenza da una droga pesante.\nCaparezza esprime quindi un'opinione negativa su discoteche e altri divertimenti canonici definendoli “un tunnel del divertimento”. In altre parole, secondo l'artista, è possibile essere felici e divertirsi anche senza cadere nella macchina del divertimentificio più becero.",
+   "url": "https://genius.com/12300971/Caparezza-fuori-dal-tunnel/Sono-fuori-dal-tunnel-el-el-el-del-divertimento-sono-fuori-dal-tunnel-el-el-el-del-divertimento",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8215834",
+   "label": "Quando esco di casa e mi annoio sono molto con",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Quando esco di casa e mi annoio sono molto contento\n Quando esco di casa e mi annoio sono molto più contento",
+   "annotation": "Capa è più contento quando si annoia se l'alternativa è divertirsi come fanno i giovani di oggi.",
+   "url": "https://genius.com/8215834/Caparezza-fuori-dal-tunnel/Quando-esco-di-casa-e-mi-annoio-sono-molto-contento-quando-esco-di-casa-e-mi-annoio-sono-molto-piu-contento",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:5153095",
+   "label": "Di te che spendi stipendi stipato in posti stu",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Di te che spendi stipendi stipato in posti stupendi\n Tra culi, su cubi, succubi di beat orrendi",
+   "annotation": "Caparezza critica le discoteche come luogo simbolo della massificazione (infatti usa il termine “stipati” riferito alle persone). L'unico obiettivo dei frequentatori sembra quello di vedere “culi su cubi” a ritmo di musica pessima.",
+   "url": "https://genius.com/5153095/Caparezza-fuori-dal-tunnel/Di-te-che-spendi-stipendi-stipato-in-posti-stupendi-tra-culi-su-cubi-succubi-di-beat-orrendi",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8215852",
+   "label": "Succhi brandy e ti stendi, dandy, non mi compr",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Succhi brandy e ti stendi, dandy, non mi comprendi\n Senti, tu non ti offendi se ti dico che sei trendy",
+   "annotation": "“Dandy” è un termine inglese nato nei primi anni dell'Ottocento, che designò nei primi decenni di quel secolo un gruppo di giovani dell'alta società londinese che attribuivano grande importanza al proprio aspetto, dando valore soprattutto allo stile, al buon gusto, alle belle maniere, e ostentando fastidio per i modi e i costumi borghesi.\n\nCaparezza ne riconosce i tratti nei classici “fighetti” da discoteca di cui si parla, soliti ubriacarsi con superalcolici (il brandy viene citato più per la rima che per altro, non essendo un alcolico tipico delle serate nei club) e vestirsi con grandi firme sentendosi “trendy”, cioè “alla moda”.",
+   "url": "https://genius.com/8215852/Caparezza-fuori-dal-tunnel/Succhi-brandy-e-ti-stendi-dandy-non-mi-comprendi-senti-tu-non-ti-offendi-se-ti-dico-che-sei-trendy",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:12300933",
+   "label": "Prendi me, per esempio, non mi stempio Per un ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Prendi me, per esempio, non mi stempio\n Per un tempio del divertimento",
+   "annotation": "Caparezza dice di prendere lui come esempio che non si stempia, verbo usato per indicare una perdita di capelli in corrispondenza delle tempie. In questo contesto la stempiatura è una metafora per l'espressione “strapparsi i capelli”, ovvero disperarsi, e rappresenta l'indifferenza dell'artista nei confronti delle discoteche (tempio del divertimento).",
+   "url": "https://genius.com/12300933/Caparezza-fuori-dal-tunnel/Prendi-me-per-esempio-non-mi-stempio-per-un-tempio-del-divertimento",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:4437581",
+   "label": "Essendo amico di Baldan Bembo Sono “un silenzi",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Essendo amico di Baldan Bembo\n Sono “un silenzio che può diventare musica”",
+   "annotation": "Il buon Capa in questa rima cita una canzone storica intitolata “L'Amico è” del cantante Dario Baldan Bembo.In questo brano Bembo afferma appunto che l'amico è' come un “silenzio che può diventare musica”, cosa che può succedere anche a Caparezza, essendo lui stesso amico di Baldan Bembo.",
+   "url": "https://genius.com/4437581/Caparezza-fuori-dal-tunnel/Essendo-amico-di-baldan-bembo-sono-un-silenzio-che-puo-diventare-musica",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8215884",
+   "label": "Se rimo sghembo su qualsiasi tempo che sfreque",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Se rimo sghembo su qualsiasi tempo che sfrequenzo",
+   "annotation": "Capa “diventa musica” quando inizia a rappare, ma per prendersi gioco del gergo in voga tra i giovani usa una serie di espressioni stravaganti per descrivere questo.\nVuole anche mettere in evidenza come il suo stile si differenzi dalla musica orecchiabile e fin troppo regolare e comoda che al giorno d'oggi si preferisce.",
+   "url": "https://genius.com/8215884/Caparezza-fuori-dal-tunnel/Se-rimo-sghembo-su-qualsiasi-tempo-che-sfrequenzo",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8215904",
+   "label": "Faccia a faccia con una focaccia, altro che la",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Faccia a faccia con una focaccia, altro che lauto pasto",
+   "annotation": "Nel mettere in enfasi la semplicità della sua vita in contrasto col lusso sfrenato che i giovani sfoggiano, Capa spiega che tutto ciò che mangia è una semplice focaccia.",
+   "url": "https://genius.com/8215904/Caparezza-fuori-dal-tunnel/Faccia-a-faccia-con-una-focaccia-altro-che-lauto-pasto",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:12733980",
+   "label": "Com’è che si finisce a parlare di Jeeg Robot e",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Com’è che si finisce a parlare di Jeeg Robot e delle Strade di San Francisco",
+   "annotation": "Jeeg Robot d'Acciaio è un manga giapponese a tematica mecha, pubblicato per la prima volta nell'aprile del 1975.\nDal manga è stata tratta una serie televisiva anime di 46 episodi.\n\n\n\n\n\nLe Strade di San Francisco è una serie televisiva statunitense di genere poliziesco, trasmessa dalla ABC per 5 stagioni dal 1972 al 1977.\n\n\n\nEntrambe le serie sono legate a ricordi d'infanzia e sono quelle che alimentano i discorsi ai “banchetti”, intesi come riunioni di amici, che Caparezza allestisce.",
+   "url": "https://genius.com/12733980/Caparezza-fuori-dal-tunnel/Come-che-si-finisce-a-parlare-di-jeeg-robot-e-delle-strade-di-san-francisco",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:6780896",
+   "label": "Mi piace il cinema e parecchio, per questo mi ",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Mi piace il cinema e parecchio, per questo mi chiamano vecchio",
+   "annotation": "In questa società criticata da Caparezza anche essere appassionati di cinema è considerato “noioso” e “obsoleto”.",
+   "url": "https://genius.com/6780896/Caparezza-fuori-dal-tunnel/Mi-piace-il-cinema-e-parecchio-per-questo-mi-chiamano-vecchio",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:13826769",
+   "label": "È da giovani spumarsi e laccarsi davanti allo ",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "È da giovani spumarsi e laccarsi davanti allo specchio?\n Sono vecchio, punto, e prendo spunto dal tuo unto ciuffo",
+   "annotation": "Caparezza risponde alle critiche dei versi precedenti con ironia, facendo notare che i comportamenti attribuiti ai “giovani” sono inconsistenti e banali e dicendo che, piuttosto che adeguarsi a queste vacuità, accetta di buon grado l'attributo di “vecchio”.",
+   "url": "https://genius.com/13826769/Caparezza-fuori-dal-tunnel/E-da-giovani-spumarsi-e-laccarsi-davanti-allo-specchio-sono-vecchio-punto-e-prendo-spunto-dal-tuo-unto-ciuffo",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:2559556",
+   "label": "(”Oh, io odio Caparezza...”)",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "(”Oh, io odio Caparezza...”)",
+   "annotation": "Il puffo in questione parrebbe proprio Brontolone.\nSempre a lamentarsi…",
+   "url": "https://genius.com/2559556/Caparezza-fuori-dal-tunnel/Oh-io-odio-caparezza",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8215939",
+   "label": "Sbuffo pensando a serate tipo del tipo: “Che f",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Sbuffo pensando a serate tipo del tipo: “Che facciamo?”",
+   "annotation": "A Caparezza infastidisce anche solo il pensiero di dover passare una “serata tipo” dei giovani, dove nella maggior parte dei casi i ragazzi si ritrovano la sera solo per poi chiedersi cosa potrebbero fare, per passare così a divertimenti effimeri.",
+   "url": "https://genius.com/8215939/Caparezza-fuori-dal-tunnel/Sbuffo-pensando-a-serate-tipo-del-tipo-che-facciamo",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:7847970",
+   "label": "In volo senza piume in un volume di fumetti so",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "In volo senza piume in un volume di fumetti sotto il lume",
+   "annotation": "L'autore qui si riferisce al fatto che sia possibile, semplicemente leggendo un fumetto, volare senza piume grazie alla fantasia.\n\nIl tema diventerà centrale nella poetica del rapper due decenni dopo, nell'album del 2025 Orbit Orbit.",
+   "url": "https://genius.com/7847970/Caparezza-fuori-dal-tunnel/In-volo-senza-piume-in-un-volume-di-fumetti-sotto-il-lume",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8216008",
+   "label": "Non c’è paragone, basta una birra in fermentaz",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Non c’è paragone, basta una birra in fermentazione\n E la tipa in fibrillazione per la nuova posizione\n M’attizza la zizza piena, mi delizia la tizia oscena\n Ho fame, no problema se mi sfizia la pizza a cena\n Serate a tema ben accette, salame a fette spesse\n VHS e, se non bastasse, su le casse",
+   "annotation": "Dopo l'idea di leggere fumetti, Caparezza prosegue nel descrivere le tante alternative che preferisce per divertirsi invece del tunnel a cui ricorrono i giovani. Dunque una birra, una “tizia oscena”, una pizza, magari una serata a tema, del salame, un film in VHS e soprattutto buona musica a palla.",
+   "url": "https://genius.com/8216008/Caparezza-fuori-dal-tunnel/Non-ce-paragone-basta-una-birra-in-fermentazione-e-la-tipa-in-fibrillazione-per-la-nuova-posizione-mattizza-la-zizza-piena-mi-delizia-la-tizia-oscena-ho-fame-no-problema-se-mi-sfizia-la-pizza-a-cena-serate-a-tema-ben-accette-salame-a-fette-spesse-vhs-e-se-non-bastasse-su-le-casse",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8709483",
+   "label": "Gli incontri, gli scontri, lo scambio di opini",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Gli incontri, gli scontri, lo scambio di opinioni\n Persone che son fatte di nomi e cognomi",
+   "annotation": "Capa preferisce incontrare persone con cui scambiare opinioni ed anche scontrarsi, senza dimenticarsele il giorno dopo.",
+   "url": "https://genius.com/8709483/Caparezza-fuori-dal-tunnel/Gli-incontri-gli-scontri-lo-scambio-di-opinioni-persone-che-son-fatte-di-nomi-e-cognomi",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8216016",
+   "label": "Venghino signori, che qui c’è il vino buono Le",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Venghino signori, che qui c’è il vino buono\n Le pagine del libro e le melodie del suono",
+   "annotation": "La gente sembra aver dimenticato il piacere di leggere un buon libro o di ascoltare buona musica (in contrasto con quella da discoteca) così Caparezza invita tutti a provare di persona.\n\nNel libretto del CD Verità Supposte la parola “venghino” è segnata da Caparezza come una “Licenzina Poetichina”.",
+   "url": "https://genius.com/8216016/Caparezza-fuori-dal-tunnel/Venghino-signori-che-qui-ce-il-vino-buono-le-pagine-del-libro-e-le-melodie-del-suono",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8216021",
+   "label": "Si vive di ricordi, signori, e di giochi Di ab",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Si vive di ricordi, signori, e di giochi\n Di abbracci sinceri, di baci e di fuochi",
+   "annotation": "Il bello della vita è assaporare ogni momento vivendolo in maniera significativa, con giochi, abbracci e baci, fuochi, questi ultimi intesi come anche le passioni, che in questa società sembrano essere subordinate agli interessi e aver perso la loro genuinità.",
+   "url": "https://genius.com/8216021/Caparezza-fuori-dal-tunnel/Si-vive-di-ricordi-signori-e-di-giochi-di-abbracci-sinceri-di-baci-e-di-fuochi",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:8216026",
+   "label": "Di tutti i momenti, tristi e divertenti E non ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Di tutti i momenti, tristi e divertenti\n E non di momenti tristemente divertenti",
+   "annotation": "Piuttosto di vivere il divertimento più ridicolo e quindi i “momenti tristemente divertenti” vanno vissuti momenti “tristi e divertenti”: non bisogna andare costantemente alla ricerca di svago anche a costo di scegliere quello più malsano o meno voluto.",
+   "url": "https://genius.com/8216026/Caparezza-fuori-dal-tunnel/Di-tutti-i-momenti-tristi-e-divertenti-e-non-di-momenti-tristemente-divertenti",
+   "song": "Fuori dal tunnel"
+  },
+  {
+   "id": "kw:12751033",
+   "label": "Ma quanti cantanti educati (’Ste casse!)",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Ma quanti cantanti educati (’Ste casse!)",
+   "annotation": "Gioco di parole che deriva dall'assonanza con l'espressione “sticazzi”.\n\nA Caparezza non interessa essere educato, al contrario: egli vuole essere urticante e irritare con la propria musica.",
+   "url": "https://genius.com/12751033/Caparezza-la-legge-dellortica/Ma-quanti-cantanti-educati-ste-casse",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:12751054",
+   "label": "Se parlo di cazzate, tutti dicono “che bello” ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Se parlo di cazzate, tutti dicono “che bello”\n Se faccio polemica, sono carne da macello",
+   "annotation": "La maggior parte degli artisti propone contenuti banali e sempre uguali e il pubblico è contento così.\nChi parla di argomenti scomodi o fa critica alla società, invece, viene disdegnato. Si tratta di un'immagine analoga al “capro espiatorio” citato in “Dagli All'Untore”.",
+   "url": "https://genius.com/12751054/Caparezza-la-legge-dellortica/Se-parlo-di-cazzate-tutti-dicono-che-bello-se-faccio-polemica-sono-carne-da-macello",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:22884882",
+   "label": "Per sette, per otto, biscotto",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Per sette, per otto, biscotto",
+   "annotation": "Il verso fa parte di una conta per bambini per decidere chi “sta sotto” a nascondino:\n\nMi lavo le mani\nper fare la pappa\nper uno, per due,\nper tre, per quattro,\nper cinque, per sei,\nper sette, per otto\nbiscotto.\n\nLa barra allude al fatto che a causa del “condom che si è rotto” poco prima, tra i lamenti dei futuri genitori, è poi effettivamente nato un bambino.",
+   "url": "https://genius.com/22884882/Caparezza-la-legge-dellortica/Per-sette-per-otto-biscotto",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:12751066",
+   "label": "È per questo che seguo la legge dell’ortica, a",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "È per questo che seguo la legge dell’ortica, ah-ah\n Che ogni giorno mi incita\n Quando butto giù il testo, che vuoi che ti dica, ah-ah\n Non c’è gusto se non irrita\n È per questo che seguo la legge dell’ortica, ah-ah\n Che ogni giorno mi incita\n Quando butto giù il testo, che vuoi che ti dica, ah-ah\n Non c’è gusto se non irrita",
+   "annotation": "Caparezza nella scrittura dei testi dichiara di usare una legge di sua invenzione, la cosiddetta “legge dell'ortica”: tanto più essi sono pungenti ed irritano l'ascoltatore, quanto più lo soddisfano, perché avrà raggiunto il suo obiettivo di infastidire con contenuti sagaci e politicamente scorretti le orecchie abituate ai soliti temi scontati della musica pop.\n\nL'ortica è infatti una pianta che possiede peli i quali, se toccati, espellono un fluido che causa bruciore e prurito a uomini e animali.",
+   "url": "https://genius.com/12751066/Caparezza-la-legge-dellortica/E-per-questo-che-seguo-la-legge-dellortica-ah-ah-che-ogni-giorno-mi-incita-quando-butto-giu-il-testo-che-vuoi-che-ti-dica-ah-ah-non-ce-gusto-se-non-irrita-e-per-questo-che-seguo-la-legge-dellortica-ah-ah-che-ogni-giorno-mi-incita-quando-butto-giu-il-testo-che-vuoi-che-ti-dica-ah-ah-non-ce-gusto-se-non-irrita",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:12751079",
+   "label": "Parla d’amore, signore Dell’amore che non muor",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Parla d’amore, signore\n Dell’amore che non muore\n Ma non concludi un legame, le tue dame ti danno dell’infame\n Per te si fanno suore",
+   "annotation": "La maggior parte degli artisti pop abusa dell'argomento “amore” nelle sue canzoni, nonostante, a detta di Caparezza (con un fondo di verità), non siano poi in grado di avere delle relazioni piene e profonde come viene descritto nei loro pezzi.\n\nL'amore che non muore è inoltre il titolo di un film di Patrice Leconte del 2000.",
+   "url": "https://genius.com/12751079/Caparezza-la-legge-dellortica/Parla-damore-signore-dellamore-che-non-muore-ma-non-concludi-un-legame-le-tue-dame-ti-danno-dellinfame-per-te-si-fanno-suore",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:12751098",
+   "label": "La cantante con la voce buona vada in monaster",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "La cantante con la voce buona vada in monastero\n Nel coro del clero",
+   "annotation": "Nella canzone Caparezza fa una piccola pausa tra “mona” e “stero”, creando un gioco di parole: “va' in mona” è, infatti, un modo di dire veneto che sta per “vai a quel paese”.",
+   "url": "https://genius.com/12751098/Caparezza-la-legge-dellortica/La-cantante-con-la-voce-buona-vada-in-monastero-nel-coro-del-clero",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:12751111",
+   "label": "Cantano giulivi motivi mordi e fuggi Costruiti",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Cantano giulivi motivi mordi e fuggi\n Costruiti con più calcoli che a Fiuggi",
+   "annotation": "Gli artisti moderni si aggrappano tutti al “tormentone”, che regala successo per un lasso di tempo limitato per poi cadere nel dimenticatoio ed è costruito a tavolino (con molti “calcoli”) proprio per piacere alle masse.\n\nFiuggi è un paesino del Lazio in provincia di Frosinone, famoso per la produzione di un'acqua che si dice molto efficace per distruggere i calcoli renali.",
+   "url": "https://genius.com/12751111/Caparezza-la-legge-dellortica/Cantano-giulivi-motivi-mordi-e-fuggi-costruiti-con-piu-calcoli-che-a-fiuggi",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:12740204",
+   "label": "Si lavora e si fatica per la legge dell’ortica",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Si lavora e si fatica per la legge dell’ortica",
+   "annotation": "Chiaro riferimento al detto popolare\n\nSi lavora e si fatica per il pane e per la fica",
+   "url": "https://genius.com/12740204/Caparezza-la-legge-dellortica/Si-lavora-e-si-fatica-per-la-legge-dellortica",
+   "song": "La legge dellâortica"
+  },
+  {
+   "id": "kw:22608190",
+   "label": "È una notte che ispira, è una notte che chiama",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "È una notte che ispira, è una notte che chiama nel bosco\n È una notte che spia, è una notte di sguardi che ho addosso\n Di ricordi che latrano come avessero visto il demonio",
+   "annotation": "La “notte” è l’elemento ispiratore che attraverso l'oscurità, suggerita dal “bosco”, chiama a riflettere e permette di scavare dentro sé stessi. Lo stesso elemento del “bosco” è sempre stato, nella letteratura, un luogo d'ispirazione, come confermato dallo stesso Caparezza:\n\nIl nuovo album parte da quel momento: la prigione è alle mie spalle e la foresta è davanti a me, pronta ad accogliermi. Da sempre la foresta è un luogo di ispirazione letteraria basti pensare al bosco di Charles Perrault o alla selva oscura di Dante Alighieri.\n\nNella sua discografia, vediamo l'uso di tale immagine anche in “Una Chiave”:\n\nSono sopravvissuto al bosco ed ho battuto l'orco\n\nLa notte assume anche una funzione meta-narrativa: è idealmente la notte del 31 marzo 2021 in cui è stato annunciato Exuvia, e in cui Caparezza sa di aver attirato su di sé gli “sguardi” dei fan che scrutano attenti. Una notte in cui riaffiorano vecchi ricordi, come fossero urla rabbiose di qualcuno che ha visto il “demonio”, in senso figurato la parte di sé da cui Caparezza fugge.\n\nLa “chiamata del bosco” di inizio strofa è analoga a quella del romanzo Il richiamo della foresta di Jack London, dal titolo assimilabile. In tale romanzo, il cane meticcio protagonista Buck alla fine non riesce più ad ignorare il richiamo che proviene dal cuore della foresta, un luogo ignoto ed oscuro eppure così invitante e stimolante. Anche in quel caso si trattava di una rinascita, di un'exuvia, dalla pelle dell'animale domestico a quella di lupo selvaggio.",
+   "url": "https://genius.com/22608190/Caparezza-exuvia/E-una-notte-che-ispira-e-una-notte-che-chiama-nel-bosco-e-una-notte-che-spia-e-una-notte-di-sguardi-che-ho-addosso-di-ricordi-che-latrano-come-avessero-visto-il-demonio",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606691",
+   "label": "Sto scavando dentro di me così tanto che schiz",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Sto scavando dentro di me così tanto che schizzo petrolio",
+   "annotation": "L'introspezione di Caparezza si è protratta così tanto da aver scavato in lui solchi profondi e non più rimarginabili, allo stesso modo delle trivelle delle compagnie petrolifere che perforano il suolo alla ricerca di preziosi idrocarburi.\n\nAlternativamente, l'artista vuole intendere che l'esplorazione del suo mondo interiore lo porta inevitabilmente a scrivere, esigenza espressa in vari modi e in diverse canzoni. Il petrolio, in particolare, è una metafora che richiama l'inchiostro che gli scorre (nelle vene) al posto del sangue, come dice in “China Town”.",
+   "url": "https://genius.com/22606691/Caparezza-exuvia/Sto-scavando-dentro-di-me-cosi-tanto-che-schizzo-petrolio",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22607565",
+   "label": "È il mio rito iniziatico, ma non ho aculei nel",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "È il mio rito iniziatico, ma non ho aculei nel corpo",
+   "annotation": "L'iniziazione è\n\nl'insieme dei riti e delle cerimonie con i quali si sancisce il passaggio di un individuo o di un gruppo da uno status a un altro.\n\nTali riti prevedono il più delle volte delle prove fisiche, a cui si allude con “aculei”, che metaforicamente si è sottoposto per rinascere. Gli esempi di riti iniziatici che prevedono tali prove, anche comprendenti aculei, sono molteplici: dalla tucandeira dell'etnia amazzonica dei Sateré Mawé, che utilizza le formiche proiettile, alla consuetudine di pungersi l'indice, pratica utilizzata anche da Cosa Nostra.",
+   "url": "https://genius.com/22607565/Caparezza-exuvia/E-il-mio-rito-iniziatico-ma-non-ho-aculei-nel-corpo",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22603734",
+   "label": "Vado da “Mea culpa” ad “Ego me absolvo”",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Vado da “Mea culpa” ad “Ego me absolvo”",
+   "annotation": "Caparezza utilizza due formule cattoliche per descrivere il rapporto conflittuale che ha con sé stesso: nella liturgia, la prima\n\nMea culpa, mea culpa, mea maxima culpa\n\npermette ai fedeli di ammettere le proprie colpe, mentre la seconda, qui rivisitata, è l'assoluzione\n\nEgo te absolvo a peccatis tuis in nomine Patris et Filii et Spiritus Sancti, amen\n\ncon la quale il confessore assolve i peccati del penitente.\n\nProbabilmente, data la tematica del brano (una metamorfosi compiuta), il verso suggerisce che il suo percorso artistico attuale, cominciato con “Mea culpa”, primo brano del suo primo album da Caparezza, è da considerarsi concluso.\nL'artista, avendo ripercorso e finalmente accettato il proprio passato in “Campione Dei Novanta”, ha compiuto la sua personale “espiazione del peccato originale”, ovvero l'aver venduto la sua originalità per assumere le vesti di Mikimix, e adesso si autoassolve (notare l'utilizzo del pronome latino “me” in luogo di “te”), forse perché stancatosi anche della sua nuova identità. A questo proposito dichiarerà nel 2026:\n\n[Mikimix] non è più uno spettro adesso. Ecco, uno dei grandi vantaggi di crescere è questo, che fai pace con le [cose], fai pace col te [stesso del passato]. Allora, lo dico a tutti: dobbiamo fare un esercizio, perché secondo me tutti hanno un loro Mikimix. […] Dobbiamo imparare a fare questa cosa difficilissima, a ogni tanto perdonarci, è un esercizio e lo facciamo verso gli altri, non lo facciamo mai verso noi stessi. Ogni tanto bisogna perdonare, qualche stupidaggine si fa nella vita, fa parte dell'essere, grazie al cielo, anche giovani. […] Grazie al cielo, esistono cose che si fanno in ogni età e in ogni età si commettono errori. Quindi niente, se dovessi tornare a vent'anni rivoglio essere Mikimix, voglio fare i miei errori.\n\nLe formule religiose rimandano forse al “rito iniziatico” a cui fa riferimento alla barra precedente, conferendo la dovuta religiosità al rito di passaggio, l'exuvia appunto.",
+   "url": "https://genius.com/22603734/Caparezza-exuvia/Vado-da-mea-culpa-ad-ego-me-absolvo",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22604063",
+   "label": "Sono una larva sporca del mondo Faccio Manolo ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Sono una larva sporca del mondo\n Faccio Manolo sopra quel tronco, rischio un bel tonfo",
+   "annotation": "Metaforicamente, come una larva di insetto, Caparezza si trova a “scalare” un tronco e si paragona a Maurizio Zanolla detto Manolo, uno dei pionieri dell'arrampicata libera in Italia.\n\n\n\nLa scalata del tronco potrebbe riferirsi al raggiungimento della vetta per poter vedere più lontano, e magari trovare una via di fuga dalla foresta.\n\nLa “larva sporca” potrebbe essere anche quella della cicala nel bridge, che è appena uscita da sottoterra per arrampicarsi su di un tronco e trasformarsi da larva a cicala vera e propria.\n\nL'artista aveva usato l'espressione “sporco del mondo” già in un'intervista del 2018, per esprimere un concetto simile alla rinascita narrata in “Exuvia”, sottolineando come il percorso di cambiamento fosse già iniziato con l'album precedente:\n\nNoi siamo dei sistemi operativi vergini alla nascita, e poi veniamo in qualche modo insozzati con tutto quello che succede, siamo “sporchi di mondo”, e quello che ci è capitato finora non possiamo più recuperarlo, non possiamo diventare altro così da un giorno all'altro, abbiamo subito vari condizionamenti, le nostre esperienze di vita ci hanno portato già ad essere prigionieri del nostro stesso ruolo. Io ho cercato di liberarmi da questo ruolo, cambiando proprio strada in questo album.\n\nCurioso inoltre l'accostamento “sporca”/“mondo”, in quanto “mondo” viene dal latino “mŭndus”, che significa pulito, dunque il contrario di sporco. Tra l'altro essere “mondi”/“mondati” si colloca assolutamente all'interno del contesto introdotto nel verso precedente, in cui si parla di un rito iniziatico che porta da una colpa ad una assoluzione.",
+   "url": "https://genius.com/22604063/Caparezza-exuvia/Sono-una-larva-sporca-del-mondo-faccio-manolo-sopra-quel-tronco-rischio-un-bel-tonfo",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22607627",
+   "label": "E sarà tutto nuovo come da neonato con la panc",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "E sarà tutto nuovo come da neonato con la pancia all’aria\n Dopo il mio passaggio dalla pancia all’aria",
+   "annotation": "Caparezza si riferisce alla nascita di un bimbo che quando viene posato su un letto con la pancia all'aria vede il mondo per la prima volta e nel verso dopo si riferisce alla nascita quando si esce dalla pancia della madre all'aria.\n\nIl secondo verso è un riferimento all'atto del canto o a quello della scrittura, che a partire dal suo precedente album è diventata più personale e magari più spontanea, quindi “di pancia”.\n\nUn'altra possibile interpretazione è la metamorfosi della larva dei versi precedenti (che striscia sulla pancia ed in generale è lo stadio della vita di un insetto dove esso ha solamente il compito di nutrirsi il più possibile, quindi riempire la “pancia”) in una farfalla (che invece si libra in volo nell'aria), richiamando in questo modo anche il titolo della canzone e il concetto della muta degli insetti.",
+   "url": "https://genius.com/22607627/Caparezza-exuvia/E-sara-tutto-nuovo-come-da-neonato-con-la-pancia-allaria-dopo-il-mio-passaggio-dalla-pancia-allaria",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22603987",
+   "label": "Schizzo gli occhi fuori dalla faccia, Lamia",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Schizzo gli occhi fuori dalla faccia, Lamia",
+   "annotation": "Lamia, nella mitologia greca, era un'amante di Zeus, dal quale aveva ricevuto il potere di togliersi i bulbi oculari a piacimento dopo che Era, gelosa ed invidiosa del suo fascino, uccise i figli avuti con Zeus; Lamia, lacerata dal dolore, iniziò a divorare i figli di altre donne ed il suo comportamento iracondo la trasformò da una donna stupefacente in un mostro mutaforme.\n\n\n\nCaparezza “schizza gli occhi fuori dalla faccia” per completare la sua metamorfosi ed uscire finalmente dalla sua vecchia pelle, come afferma al verso successivo.\n\nInoltre, continuando la narrazione del parto dei versi precedenti, questo verso potrebbe anche fare riferimento al pianto che fa ogni bambino appena nato.\n\nIl verso potrebbe far riferimento inoltre al fatto che molti insetti o artropodi iniziano ad uscire dalla propria esuvia iniziando dal capo.",
+   "url": "https://genius.com/22603987/Caparezza-exuvia/Schizzo-gli-occhi-fuori-dalla-faccia-lamia",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606852",
+   "label": "Non sto più nella pelle, mama",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Non sto più nella pelle, mama",
+   "annotation": "Caparezza utilizza la frase idiomatica “non stare più nella pelle” per indicare la sua eccitazione e impaziente attesa già anticipata nei versi precedenti.\nLa frase qui è particolarmente calzante dato il parallelo con l'exuvia, processo che porta l'insetto proprio ad uscire dalla propria pelle.\n\nIl verso potrebbe essere una citazione a “Mama” dei Genesis:\n\nI can’t see you mama\nBut I can hardly wait\n\n\n\nOltre alla citazione ai Genesis, “mama” può essere ancora una volta visto sotto la prospettiva del parto. Caparezza è nato, è uscito dalla placenta, dalla pancia, di conseguenza “non sta più nella pelle”, e questa interpretazione è esplicitata proprio da “mama”, parola posizionata qui in questo verso non solo in quanto citazione ma in quanto elemento contestuale alla narrazione, alla sua rinascita o nascita vera e propria.",
+   "url": "https://genius.com/22606852/Caparezza-exuvia/Non-sto-piu-nella-pelle-mama",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606651",
+   "label": "Fuori di me, exuvia, spiego le ali, au revoir",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Fuori di me, exuvia, spiego le ali, au revoir",
+   "annotation": "L'exuvia è la pelle di alcuni insetti ma anche per esempio, credo, degli scorpioni e dei granchi. Io ho voluto prendere l'exuvia come esempio di passaggio dal passato alla contemporaneità perché, contrariamente alla muta, non si sfalda e rimane lì come un calco preciso di quello che si era, quindi è una sorta di scultura vuota, l'anima di quella struttura è andata oltre. Quando io rivedo le cose del passato, a volte le si vede quasi da esterni e non ci si riconosce.\n\n– Caparezza, Deejay Chiama Italia\n\nNel caso di molti insetti, come ad esempio le libellule e le cicale, l'esuvia è un esoscheletro che viene abbandonato proprio nel momento in cui l'animale diventa in grado di utilizzare le sue nuove ali, cresciute durante la fase di cambiamento e sviluppo completo.\n\n\n\nLa stessa cosa vale per Caparezza che, liberandosi della sua vecchia “pelle”, può nuovamente spiccare un metaforico volo. La locuzione “fuori di me”, in questo senso, è ambivalente e densa, come spesso sono le espressioni del cantante. Può avere da un lato un significato concreto, ovvero l'uscire fuori di sé, l'atto dell'insetto che esce dalla sua vecchia pelle; ma dall'altro può avere anche il significato metaforico del perdere il senno, ovvero dell'andare “fuori di sé”: in quest'ultimo senso, potrebbe essere interpretato come un raptus di fuga.",
+   "url": "https://genius.com/22606651/Caparezza-exuvia/Fuori-di-me-exuvia-spiego-le-ali-au-revoir",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:23272706",
+   "label": "Un’altra chance escludila, gioco alla pari con",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Un’altra chance escludila, gioco alla pari con l’età",
+   "annotation": "In questo verso Caparezza sottolinea come la mutazione sia irreversibile: l'exuvia viene abbandonata per sempre, non è un abito che si può re-indossare. Difficile dire come sarà la “rinascita”, l'unica cosa certa è che una nuova fase artistica vedrà la luce, e che già adesso Caparezza si è evoluto “al pari con l'età”, ovvero seguendo la sensibilità che lo contraddistingue in quanto persona adulta.",
+   "url": "https://genius.com/23272706/Caparezza-exuvia/Unaltra-chance-escludila-gioco-alla-pari-con-leta",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22604024",
+   "label": "Passati appassiti, appassiti come quadranti di",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Passati appassiti, appassiti come quadranti di Dalí",
+   "annotation": "Riferimento ai quadranti degli orologi presenti nel dipinto La persistenza della memoria di Salvador Dalí, i quali risultano flosci e molli, quindi appassiti.\n\n\n\nCaparezza afferma che anche il proprio passato è “appassito”, poiché ormai cessato del tutto: rivolgendosi anche a sé stesso, egli cerca una nuova identità, per l'appunto slegata da quella passata.\n\nIl passato potrebbe essere “appassito” non solo in quanto “cessato, concluso” ma, proprio come gli orologi di Dalì, indefinito: un tempo non circoscrivibile con precisione, ad indicare una trasformazione graduale e fluida di sé anziché un taglio netto col passato.\nInoltre “passati appassiti” sembra un contrasto con l'espressione “i tempi sono maturi”: avrebbe potuto trasformarsi prima, ma “ha lasciato che il tempo fuggisse”.",
+   "url": "https://genius.com/22604024/Caparezza-exuvia/Passati-appassiti-appassiti-come-quadranti-di-dali",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606600",
+   "label": "Passati parassiti, parassiti, fame di me, cann",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Passati parassiti, parassiti, fame di me, cannibali",
+   "annotation": "Le exuvie vengono consumate talvolta da parassiti, talvolta dagli stessi insetti che le hanno lasciate.\n\nCaparezza si riferisce all'influenza del suo passato sul suo presente: il personaggio che lo tiene prigioniero vorrebbe inghiottire il suo vero sé, tenerlo ancora nascosto, non farlo scappare; il passato vive sulle sue spalle come un “parassita”. Ne consengue una necessaria voglia di rinnovamento, che si compie “fuggendo da sé stesso”, come affermava già in “Autoipnotica”:\n\nFuggo da me stesso come se\nCostui mi volesse un po' come sé\n\nLa rima tra “appassiti” e “parassiti” è inoltre un possibile richiamo al brano “Contronatura”, che contiene la stessa rima.",
+   "url": "https://genius.com/22606600/Caparezza-exuvia/Passati-parassiti-parassiti-fame-di-me-cannibali",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606769",
+   "label": "Guardo i video che ho fatto, ho la voce e l’as",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Guardo i video che ho fatto, ho la voce e l’aspetto di un altro",
+   "annotation": "Riguardando i video della sua carriera, Caparezza afferma che non si riconosce né nella voce, né nell'aspetto. Affermava un concetto simile in “Prosopagnosia”, brano del 2017 contenuto nell'album Prisoner 709: ad esempio, l'inizio della terza strofa recita:\n\nNon mi riconosco più, prosopagnosia\n\nPotrebbe essere inoltre un riferimento al fatto che inizialmente usava una voce nasale, che gradualmente ha smesso di usare.\n\nInfine, benché possa non essere inerente al verso, un dato è anche che il videoclip di “Exuvia” è il primo video di Caparezza dove egli non è protagonista.",
+   "url": "https://genius.com/22606769/Caparezza-exuvia/Guardo-i-video-che-ho-fatto-ho-la-voce-e-laspetto-di-un-altro",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22608090",
+   "label": "Il mio autoritratto ha i colori in eterno cont",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Il mio autoritratto ha i colori in eterno contrasto",
+   "annotation": "Caparezza ha più volte trattato il tema della contraddizione e dell'evoluzione artistica nelle sue canzoni, come “Chi Se Ne Frega Della Musica” o “Prosopagnosia”, dimostrando la propria tendenza a evolvere e cambiare costantemente.\n\nChi volesse tentare di compiere un ritratto dell'artista, dovrebbe quindi tenere conto delle sue metamorfosi. Il risultato finale avrebbe in sé forti contrasti di colori, dati dalla mutazione personale del rapper nel corso del tempo e dai binomi enunciati in Prisoner 709, destinati, proprio a causa del cambiamento costante, a rimanere per sempre irrisolti.\n\nIl suo autoritratto potrebbe riferirsi anche alla copertina di Prisoner 709, in cui appunto i colori sono bianco e nero.\n\n\n\nInfine, è importante notare che il tema del dualismo e del contrasto emerge prepotente nell'ottavia traccia dell'album, “Eterno Paradosso”, il cui titolo ammicca alle parole “eterno contrasto”.",
+   "url": "https://genius.com/22608090/Caparezza-exuvia/Il-mio-autoritratto-ha-i-colori-in-eterno-contrasto",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22607807",
+   "label": "Mi sono preso i miei spazi, ma ho lasciato che",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Mi sono preso i miei spazi, ma ho lasciato che il tempo fuggisse",
+   "annotation": "Qui Caparezza affronta un classico dualismo, quello tra spazio e tempo.\n\nAffermarsi come cantautore impegnato, realizzando testi e album di un certo livello, richiede sicuramente un notevole dispendio di tempo: tra un disco di Caparezza e il successivo, infatti, sono soliti passare di norma tre o quattro anni. D'altro canto, la scelta di intraprendere questo tipo di carriera musicale ha sicuramente giovato alla sua figura, dato che dopo tanto tempo è riuscito ad affermarsi come artista a livello nazionale (“mi sono preso i miei spazi”).\n\n“Ho lasciato che il tempo fuggisse”: forse Caparezza sente che questa metamorfosi sarebbe potuta accadere prima, sente cioè di aver perso del tempo prezioso. Il concetto potrebbe essere legato a “passati appassiti”: non si è trasformato quando “i tempi erano maturi”, li ha lasciati appassire, ciononostante ora è pronto per il cambiamento: “è troppo tardi, ma non mi fermerò” (“È tardi”, Museica, 2014, canzone ispirata proprio al quadro La persistenza della Memoria di Dalì).",
+   "url": "https://genius.com/22607807/Caparezza-exuvia/Mi-sono-preso-i-miei-spazi-ma-ho-lasciato-che-il-tempo-fuggisse",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606586",
+   "label": "Faccio un mucchio di cambi, quindi adesso chia",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Faccio un mucchio di cambi, quindi adesso chiamatemi mister",
+   "annotation": "La carriera di Caparezza è sempre stata caratterizzata da un notevole numero di cambiamenti a livello sia stilistico sia di contenuti. Nasce di conseguenza il paragone con gli allenatori delle squadre di calcio, spesso ribattezzati come “mister”, poiché essi sono incaricati di effettuare le sostituzioni, cioè i “cambi”, nel corso delle partite delle loro squadre.\n\nI “cambi” sono qui intesi anche come cambi di tempo visto che nel pezzo c'è l'alternanza tra un 7/8 e un 4/4.\n\nInfine, “mister” potrebbe essere un ulteriore indizio circa la sua metamorfosi in una nuova fase della sua vita, certo più matura, per cui è lui stesso ad invitare il suo interlocutore a chiamarlo “signor”.",
+   "url": "https://genius.com/22606586/Caparezza-exuvia/Faccio-un-mucchio-di-cambi-quindi-adesso-chiamatemi-mister",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22607571",
+   "label": "Sono ancora alla guida, tengo il piede alzato ",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Sono ancora alla guida, tengo il piede alzato da quel freno",
+   "annotation": "Il videoclip del brano mostra, in corrispondenza di questo verso, la cifra 709. Ciò in riferimento all'album precedente Prisoner 709: si osservi in particolare come in “Il Testo Che Avrei Voluto Scrivere” Caparezza affermi, come qui, che non è ancora giunto il momento di smettere di cantare poiché deve ancora giungere a ciò che sta cercando e in “Autoipnotica” utilizzi la stessa metafora dell'automobile.\n\nUna possibile interpretazione di questo verso, in luce del riferimento soprariportato, potrebbe indicare che il viaggio cominciato in Prisoner 709 non è concluso e Caparezza è ancora alla guida, in viaggio verso la definizione della propria identità.",
+   "url": "https://genius.com/22607571/Caparezza-exuvia/Sono-ancora-alla-guida-tengo-il-piede-alzato-da-quel-freno",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22611556",
+   "label": "Anche se della vita prendo sempre il lato pass",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Anche se della vita prendo sempre il lato passeggero",
+   "annotation": "Gioco di parole tra il lato del passeggero presente in ogni automobile e la tendenza di Caparezza ad assaporare il lato passeggero della vita, ossia il momento, conscio che il presente è l'unica dimensione in cui l'artista è soddisfatto e coerente con se stesso.\n\nAlternativamente, potrebbe significare che, essendo nel lato del passeggero e non guidando, si lascia trasportare dalla vita.",
+   "url": "https://genius.com/22611556/Caparezza-exuvia/Anche-se-della-vita-prendo-sempre-il-lato-passeggero",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22607911",
+   "label": "Quello che è stato l’ho già silurato",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Quello che è stato l’ho già silurato",
+   "annotation": "Caparezza vuole lasciar intendere che il suo essere persona e artista è in continuo divenire, come aveva già ampiamente sottolineato nel suo brano “Prosopagnosia”:\n\nNon sono più lo stesso di un secondo fa\nNel mio caso, fidati, pure un secondo fa\n\nQuesto verso, quindi, rimarca ancora più fortemente l'abbandono dell'exuvia (del passato) per proiettarsi in maniera sempre più decisa verso il futuro, artistico e umano.\n\n\n\nA conferma di questo, si potrebbe citare una sua intervista a Esse magazine:\n\nNon è che se io penso, a tutti i costi, come a vent'anni, questo fa di me una persona coerente. Farà di me una persona ostinata […], quindi io cerco di essere coerente nel momento in cui sto vivendo.",
+   "url": "https://genius.com/22607911/Caparezza-exuvia/Quello-che-e-stato-lho-gia-silurato",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22616993",
+   "label": "Ogni mio scatto è di prassi bruciato",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Ogni mio scatto è di prassi bruciato",
+   "annotation": "Caparezza si riferisce allo scatto fotografico e alle vecchie pellicole le quali, se esposte alla luce, venivano bruciate e quindi rovinate. Analogamente il suo passato non rimane impresso come una fotografia ma l'artista “di prassi” lo brucia per non rimanervi ancorato e progredire verso qualcosa di nuovo.\nPossiamo trovare, inoltre, un'analogia con l'espressione “scatto bruciante”, tipica della corsa e del ciclismo: l'autore ci dà quindi l'idea di come questa continua evoluzione avvenga, un'evoluzione dinamica e proiettata all'avanzamento, come la corsa ad esempio.",
+   "url": "https://genius.com/22616993/Caparezza-exuvia/Ogni-mio-scatto-e-di-prassi-bruciato",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606625",
+   "label": "Non dimentico le radici perché tengo alle mie ",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Non dimentico le radici perché tengo alle mie radici\n Ma ci ritornerò quando sarò inumato",
+   "annotation": "Caparezza non rinnega le sue origini ma dichiara che ci ritornerà solo alla fine della sua vita. Per fare ciò, l'artista gioca sul doppio significato del termine radici che ben si accompagna al tema della sepoltura sotto terra.",
+   "url": "https://genius.com/22606625/Caparezza-exuvia/Non-dimentico-le-radici-perche-tengo-alle-mie-radici-ma-ci-ritornero-quando-saro-inumato",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22766424",
+   "label": "I miei dubbi hanno dei modi barbari Invadenti ",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "I miei dubbi hanno dei modi barbari\n Invadenti e sono troppi",
+   "annotation": "Le popolazioni barbariche si caratterizzano storicamente e nell'immaginario comune per le invasioni di massa in nuovi territori: gli interrogativi e le incertezze di Caparezza irrompono nei suoi pensieri allo stesso modo.",
+   "url": "https://genius.com/22766424/Caparezza-exuvia/I-miei-dubbi-hanno-dei-modi-barbari-invadenti-e-sono-troppi",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606638",
+   "label": "Il segreto è fare come gli alberi Prima cerchi",
+   "group": "keyword",
+   "val": 2.0,
+   "fragment": "Il segreto è fare come gli alberi\n Prima cerchi, dopo tronchi",
+   "annotation": "Se si è attanagliati da continui interrogativi la soluzione è solo una: dopo aver “cercato” la soluzione bisogna lasciarseli alle spalle ed andare avanti, “troncando” di netto tali dubbi. Per descrivere questo approccio, Caparezza gioca con i doppi significati delle parole e sfrutta il paragone con gli alberi, i cui fusti, in sezione, sembrano costituiti da numerosi cerchi concentrici che ne indicano la crescita continua.\n\n\n\nUn'altra interpretazione potrebbe essere il prendere le cose con calma, sapendo di non poter costruire il proprio tronco, la propria stabilità e/o persona dall'oggi al domani, ma solamente dopo un percorso, passo dopo passo, cerchio dopo cerchio.\n\nVa anche sottolineato come nella seconda strofa gli alberi vengono prima evocati tramite il riferimento alle radici e poi con quello ai cerchi e ai tronchi.",
+   "url": "https://genius.com/22606638/Caparezza-exuvia/Il-segreto-e-fare-come-gli-alberi-prima-cerchi-dopo-tronchi",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22616504",
+   "label": "Chi ti spinge dopo quella soglia? Se non è la ",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "Chi ti spinge dopo quella soglia?\n Se non è la noia, sarà il tuo dolore",
+   "annotation": "Qui Caparezza spiega come lo “spingersi oltre quella soglia” – quindi lasciare un'exuvia, rinnovarsi – sia stata una necessità dovuta alla noia e al dolore: è infatti dall'acufene, quindi da un disturbo fisico, che ebbe inizio il periodo introspettivo di Caparezza con l'album Prisoner 709; inoltre, il periodo di inattività dell'artista durato quattro anni è perfettamente associabile a un tempo di “noia”.\n\nAlternativamente, lo “spingersi dopo quella soglia”, “andare altrove, tipo fuori”, è interpretabile, più letteralmente, come una sorta di coming out, uscire fuori, dove fuori è inteso come pubblico, uscire allo scoperto in quanto persona e mostrarsi al pubblico, cosa che Caparezza ha fatto con Prisoner 709.\n\nProseguendo, il dolore, che diventa poi soprattutto interiore, può essere paragonato allo sforzo fisico che compiono gli insetti per spiegare le ali e uscire dal proprio esoscheletro.\n\nLa questione era già stata affrontata in filosofia: ad esempio, Blaise Pascal sosteneva che è la noia a indurci verso la soluzione delle problematiche esistenziali attraverso la riflessione; per Kierkegaard, similmente, sono noia e ripetitività che mettono in luce il vuoto esistenziale della vita estetica, imponendo quindi un cambiamento. Chi legò indissolubilmente noia e dolore fu però Schopenhauer, secondo il quale noia e dolore regolano tutta la vita dell'uomo se non per brevi e fugaci momenti di gioia, o l'illusione di essi:\n\nLa sua vita oscilla quindi come un pendolo, di qua e di là, tra il dolore e la noia, che sono in realtà i suoi veri elementi costitutivi.\n\nIl tema della noia costituisce inoltre un possibile collegamento, nella trama dell'album, a “Il Mondo Dopo Lewis Carroll”, che tratta della perdita della meraviglia:\n\nDove sei, Meraviglia?\nLa noia mi tiene la briglia",
+   "url": "https://genius.com/22616504/Caparezza-exuvia/Chi-ti-spinge-dopo-quella-soglia-se-non-e-la-noia-sara-il-tuo-dolore",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22606708",
+   "label": "E comincio a cantare il mio nuovo disco",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "E comincio a cantare il mio nuovo disco",
+   "annotation": "Le cicale, insetti il cui canto accompagna spesso le ultime ore delle giornate estive, trascorrano la prima fase della loro vita sotto terra sotto forma di larva. Dopo alcuni, gli esemplari emergono dal terreno ed effettuano la muta abbandonando il loro vecchio esoscheletro sotto forma di exuvia. Solo allora gli esemplari adulti iniziano la ricerca di un esemplare disponibile all'accoppiamento attirando l'attenzione dei loro compagni con il caratteristico canto.\n\n\n\nRisulta quindi evidente il paragone con l'artista che dopo anni di inattività è tornato sulla scena con una rinnovata voglia di cantare e di raccontarsi.\n\nInfine, non bisogna dimenticare che essendo l'ultima traccia pare molto strano che “cominci a cantare il nuovo disco”. Un'ipotesi è che il “nuovo disco” sia effettivamente il suo prossimo lavoro discografico. Nella presentazione di Exuvia, Caparezza ha scritto infatti:\n\nLa mia Exuvia è dunque un rito di passaggio in quattordici brani, il percorso di un fuggiasco che evade dalla prigionia dei tempi andati per lasciarsi inghiottire dalla selva e far perdere le proprie tracce.\n\nCiò è coerente con l'aver messo il singolo “Exuvia” come ultima traccia, culmine di questo percorso. I riferimenti alla selva/bosco sono molteplici, e tutto fa pensare che la “fuga” finisca qui, per lasciare spazio alla rinascita vera e propria che avverrà nel disco successivo. Caparezza si dice quindi pronto a ripartire, in futuro, con un “disco allegro” (vedi anche il verso finale che si auto-appone a mo' di promemoria, come Fellini), un disco che sicuramente rappresenterà un nuovo inizio per l'artista, liberato definitivamente dalla prigionia raccontata a partire da Prisoner 709. Il canto delle cicale sembra perfettamente il linea con questa intenzione.",
+   "url": "https://genius.com/22606708/Caparezza-exuvia/E-comincio-a-cantare-il-mio-nuovo-disco",
+   "song": "Exuvia"
+  },
+  {
+   "id": "kw:22604288",
+   "label": "(Ricordati che è un disco allegro)",
+   "group": "keyword",
+   "val": 2.6245047927124707,
+   "fragment": "(Ricordati che è un disco allegro)",
+   "annotation": "Il messaggio cifrato, che potrebbe sembrare solo rumore bianco, è udibile ascoltando senza cuffie o, alternativamente, dopo aver mixato le due tracce stereo del brano in una traccia mono.\n\nIl rumore bianco viene inoltre utilizzato per alleviare i sintomi dell'acufene di cui l'autore soffre. Suggerisce quindi una continuità con il suo precedente album, Prisoner 709, forse la fine di un percorso introspettivo iniziato con l'insorgere di questo disturbo.\n\nCaparezza ironizza sulla canzone appena conclusa, contemporaneamente dichiarandone la leggerezza e, al contrario, mettendone in luce tutta l'inquietudine, consapevole che una rinascita porta necessariamente con sé anche la fine della precedente identità.\n\nSi tratta, inoltre, di una citazione a Federico Fellini che, durante le riprese del celebre 8½, come monito applicò alla macchina da presa un'etichetta con scritto “Ricordati che è un film comico”. Caparezza, affermando in un post su Instagram di essersi immedesimato in Guido Anselmi, il protagonista di 8½, sembra confermare la citazione:\n\nDurante le riprese di questo film pare che Fellini, forse per scongiurare una deriva malinconica, abbia attaccato sulla macchina da presa un foglio con su scritto: “Ricordati che è un film comico”.\nAnalogie?\n\nInfine, è interessante notare come non sia la prima volta che Caparezza si immedesima in Guido Anselmi. Nel brano “Prosopagnosia”, pubblicato nel già citato Prisoner 709, afferma:\n\nPasso gli anni come Mastroianni in Otto e mezzo\n\n“Prosopagnosia” ha costituito l'inizio del percorso, la presa di coscienza della prigionia, mentre “Exuvia” è presumibilmente il compimento finale della fuga, in quanto ultima traccia.",
+   "url": "https://genius.com/22604288/Caparezza-exuvia/Ricordati-che-e-un-disco-allegro",
+   "song": "Exuvia"
+  },
+  {
+   "id": "concept:mitologia",
+   "label": "Mitologia antica",
+   "group": "concept",
+   "val": 2.6245047927124707
+  },
+  {
+   "id": "concept:rinascita",
+   "label": "Introspezione e rinascita",
+   "group": "concept",
+   "val": 7.342925711719625
+  },
+  {
+   "id": "concept:cattolicesimo",
+   "label": "Cattolicesimo e Chiesa",
+   "group": "concept",
+   "val": 3.157669279974593
+  },
+  {
+   "id": "concept:van_gogh",
+   "label": "Vincent van Gogh",
+   "group": "figure",
+   "val": 9
+  },
+  {
+   "id": "concept:consumismo",
+   "label": "Consumismo e massificazione",
+   "group": "concept",
+   "val": 4.505144086407192
+  },
+  {
+   "id": "concept:societa_italiana",
+   "label": "Società italiana",
+   "group": "concept",
+   "val": 2.0
+  },
+  {
+   "id": "concept:polemica_ortica",
+   "label": "Polemica / legge dell'ortica",
+   "group": "concept",
+   "val": 3.6390158215457884
+  }
+ ],
+ "links": [
+  {
+   "source": "song:3169744",
+   "target": "album:Prisoner 709",
+   "kind": "on"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:13826470",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:22893918",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12698004",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:14694861",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:14617210",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12702655",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:22893938",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12695903",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:18856231",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12696761",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12696761",
+   "target": "concept:mitologia",
+   "kind": "refers"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12699504",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12702690",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12702690",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:23097054",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12696986",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12731648",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:13290650",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12695910",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12702726",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:13661723",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12791266",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:13142023",
+   "kind": "contains"
+  },
+  {
+   "source": "song:3169744",
+   "target": "kw:12723833",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12723833",
+   "target": "concept:cattolicesimo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "album:Museica",
+   "kind": "on"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:3647545",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:3647545",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8705149",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8705149",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8719743",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8719743",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:3928262",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:3928262",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8723088",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8723088",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:4483916",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:4483916",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8723424",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8723424",
+   "target": "concept:consumismo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:3647555",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:3647555",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725480",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725480",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8494451",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8494451",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725582",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725582",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725667",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725667",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725717",
+   "kind": "contains"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725758",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725758",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725791",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725791",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725809",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725809",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:5152446",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:5152446",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:16756389",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:16756389",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725851",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725851",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:10433491",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:10433491",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:11626111",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:11626111",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:12424869",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12424869",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:10433510",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:10433510",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:416170",
+   "target": "kw:8725871",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8725871",
+   "target": "concept:van_gogh",
+   "kind": "refers"
+  },
+  {
+   "source": "song:157221",
+   "target": "album:VeritÃ  Supposte",
+   "kind": "on"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:12300971",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12300971",
+   "target": "concept:consumismo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8215834",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8215834",
+   "target": "concept:societa_italiana",
+   "kind": "refers"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:5153095",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:5153095",
+   "target": "concept:consumismo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8215852",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8215852",
+   "target": "concept:consumismo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:12300933",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12300933",
+   "target": "concept:consumismo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:4437581",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8215884",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8215904",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:12733980",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:6780896",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:13826769",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:2559556",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8215939",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:7847970",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8216008",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8709483",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8216016",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8216021",
+   "kind": "contains"
+  },
+  {
+   "source": "song:157221",
+   "target": "kw:8216026",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:8216026",
+   "target": "concept:consumismo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:1289646",
+   "target": "album:VeritÃ  Supposte",
+   "kind": "on"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12751033",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12751033",
+   "target": "concept:polemica_ortica",
+   "kind": "refers"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12751054",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12751054",
+   "target": "concept:polemica_ortica",
+   "kind": "refers"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:22884882",
+   "kind": "contains"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12751066",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12751066",
+   "target": "concept:polemica_ortica",
+   "kind": "refers"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12751079",
+   "kind": "contains"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12751098",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12751098",
+   "target": "concept:cattolicesimo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12751111",
+   "kind": "contains"
+  },
+  {
+   "source": "song:1289646",
+   "target": "kw:12740204",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:12740204",
+   "target": "concept:polemica_ortica",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "album:Exuvia",
+   "kind": "on"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22608190",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22608190",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606691",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22606691",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22607565",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22607565",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22603734",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22603734",
+   "target": "concept:cattolicesimo",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22604063",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22604063",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22607627",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22607627",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22603987",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22603987",
+   "target": "concept:mitologia",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606852",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22606852",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606651",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22606651",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:23272706",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:23272706",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22604024",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606600",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606769",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22606769",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22608090",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22607807",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606586",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22607571",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22611556",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22607911",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22607911",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22616993",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606625",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22766424",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606638",
+   "kind": "contains"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22616504",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22616504",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22606708",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22606708",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  },
+  {
+   "source": "song:6653350",
+   "target": "kw:22604288",
+   "kind": "contains"
+  },
+  {
+   "source": "kw:22604288",
+   "target": "concept:rinascita",
+   "kind": "refers"
+  }
+ ]
+}

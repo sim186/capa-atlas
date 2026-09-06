@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# harvested Genius data (regenerate with: npm run fetch)
+data/raw/
