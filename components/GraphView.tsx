@@ -5,25 +5,33 @@ import type { ForceGraphMethods } from "react-force-graph-3d";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   GraphData,
-  GraphLink,
   GraphNode,
   Group,
-  GROUP_COLOR,
   GROUP_LABEL,
-  LINK_COLOR,
 } from "@/lib/graph";
 import { sound } from "@/lib/sound";
 
-// react-force-graph-3d relies on Three.js (browser APIs) → never SSR it.
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
 });
 
 const ALL_GROUPS: Group[] = ["album", "song", "keyword", "figure", "concept"];
-// Keyword nodes are ~90% of the graph (the individual lyric annotations) —
-// hidden by default so the physics sim + render stay smooth; toggle them on
-// when you actually want to browse citations, not just structure.
 const DEFAULT_VISIBLE: Group[] = ["album", "song", "figure", "concept"];
+const COLORS = {
+  background: "#2e00aa",
+  backgroundDeep: "#240083",
+  gold: "#ffdc91",
+  lavender: "#a88bd0",
+  muted: "#7554ad",
+  line: "rgba(255, 220, 145, 0.24)",
+};
+
+function endpointId(endpoint: unknown) {
+  if (typeof endpoint === "object" && endpoint !== null && "id" in endpoint) {
+    return String(endpoint.id);
+  }
+  return String(endpoint);
+}
 
 export default function GraphView({ data }: { data: GraphData }) {
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
@@ -33,6 +41,7 @@ export default function GraphView({ data }: { data: GraphData }) {
   const [visibleGroups, setVisibleGroups] = useState<Set<Group>>(
     () => new Set(DEFAULT_VISIBLE)
   );
+  const [controlsOpen, setControlsOpen] = useState(false);
   const [muted, setMuted] = useState(false);
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -45,46 +54,47 @@ export default function GraphView({ data }: { data: GraphData }) {
     [muted]
   );
 
-  // node → neighbors map, built once from the FULL dataset (panel links work
-  // regardless of what's currently toggled visible on the canvas).
   const neighbors = useMemo(() => {
-    const byId = new Map(data.nodes.map((n) => [n.id, n]));
+    const byId = new Map(data.nodes.map((node) => [node.id, node]));
     const map = new Map<string, GraphNode[]>();
-    for (const l of data.links) {
-      const s = byId.get(String(l.source));
-      const t = byId.get(String(l.target));
-      if (!s || !t || s.id === t.id) continue;
-      map.set(s.id, [...(map.get(s.id) ?? []), t]);
-      map.set(t.id, [...(map.get(t.id) ?? []), s]);
+    for (const link of data.links) {
+      const source = byId.get(String(link.source));
+      const target = byId.get(String(link.target));
+      if (!source || !target || source.id === target.id) continue;
+      map.set(source.id, [...(map.get(source.id) ?? []), target]);
+      map.set(target.id, [...(map.get(target.id) ?? []), source]);
     }
-    for (const v of map.values()) {
-      v.sort((a, b) => (b.val ?? 1) - (a.val ?? 1));
+    for (const nodes of map.values()) {
+      nodes.sort((a, b) => (b.val ?? 1) - (a.val ?? 1));
     }
     return map;
   }, [data]);
 
+  const selectedNeighbors = useMemo(
+    () => (selected ? neighbors.get(selected.id) ?? [] : []),
+    [neighbors, selected]
+  );
+  const highlightedIds = useMemo(
+    () => new Set([selected?.id, ...selectedNeighbors.map((node) => node.id)]),
+    [selected?.id, selectedNeighbors]
+  );
   const visibleData = useMemo(() => {
-    // A searched annotation joins the map by itself. Revealing all 3,607 lyric
-    // fragments just to inspect one result turns the atlas into visual noise.
+    // A searched citation enters the map on its own. Turning on all 3,607
+    // citations to inspect one result makes the graph impossible to read.
     const nodes = data.nodes.filter(
-      (n) => visibleGroups.has(n.group) || n.id === selected?.id
+      (node) => visibleGroups.has(node.group) || node.id === selected?.id
     );
-    const ids = new Set(nodes.map((n) => n.id));
+    const ids = new Set(nodes.map((node) => node.id));
     const links = data.links
-      .filter(
-        (l: GraphLink) => ids.has(String(l.source)) && ids.has(String(l.target))
-      )
-      // force-graph resolves source/target ids to node objects in place. Keep
-      // that mutation out of the source dataset so later filter changes retain
-      // their links instead of treating every endpoint as "[object Object]".
-      .map((l) => ({ ...l }));
+      .filter((link) => ids.has(String(link.source)) && ids.has(String(link.target)))
+      // force-graph resolves endpoints to objects in place. Its working links
+      // must not mutate the source dataset or subsequent filtering loses links.
+      .map((link) => ({ ...link }));
     return { nodes, links };
   }, [data, selected?.id, visibleGroups]);
 
-  // Reframing is deliberately an explicit action. Automatically fitting when
-  // the physics engine settles or a filter changes was overriding user zoom.
   const fit = useCallback(() => {
-    fgRef.current?.zoomToFit(650, 90);
+    fgRef.current?.zoomToFit(650, 110);
   }, []);
 
   useEffect(() => {
@@ -94,10 +104,14 @@ export default function GraphView({ data }: { data: GraphData }) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelected(null);
+      if (event.key === "Escape") {
+        setSelected(null);
+        setControlsOpen(false);
+      }
       if (event.key === "/" && document.activeElement !== searchRef.current) {
         event.preventDefault();
-        searchRef.current?.focus();
+        setControlsOpen(true);
+        window.setTimeout(() => searchRef.current?.focus(), 0);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -105,26 +119,26 @@ export default function GraphView({ data }: { data: GraphData }) {
   }, []);
 
   const stats = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const n of data.nodes) c[n.group] = (c[n.group] ?? 0) + 1;
-    return c;
+    const counts: Record<string, number> = {};
+    for (const node of data.nodes) counts[node.group] = (counts[node.group] ?? 0) + 1;
+    return counts;
   }, [data]);
 
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return [];
     return data.nodes
-      .filter((n) => n.label.toLowerCase().includes(q))
+      .filter((node) => node.label.toLowerCase().includes(normalized))
       .slice(0, 8);
   }, [data, query]);
 
   const toggleGroup = useCallback(
-    (g: Group) => {
-      setVisibleGroups((prev) => {
-        const next = new Set(prev);
-        const willShow = !next.has(g);
-        if (willShow) next.add(g);
-        else next.delete(g);
+    (group: Group) => {
+      setVisibleGroups((previous) => {
+        const next = new Set(previous);
+        const willShow = !next.has(group);
+        if (willShow) next.add(group);
+        else next.delete(group);
         play(() => sound.toggle(willShow));
         return next;
       });
@@ -133,19 +147,30 @@ export default function GraphView({ data }: { data: GraphData }) {
   );
 
   const focusNode = useCallback(
-    (n: GraphNode) => {
-      setSelected(n);
+    (node: GraphNode) => {
+      setSelected(node);
       setQuery("");
       setSearchFocused(false);
+      setControlsOpen(false);
       play(sound.select);
 
-      // Let a newly revealed node receive simulation coordinates, then move the
-      // camera toward it. This preserves the visitor's context rather than
-      // fitting the whole graph (or a single giant node) after every selection.
-      window.setTimeout(() => {
-        const x = n.x ?? 0;
-        const y = n.y ?? 0;
-        const z = n.z ?? 0;
+      // Never fit after selecting. The point of view belongs to the visitor;
+      // selection only makes a short, intentional move toward its node.
+      let attempts = 0;
+      const moveToNode = () => {
+        // A search result may have been hidden until this selection. Wait for
+        // force-graph to assign it a position; focusing its default (0,0,0)
+        // would leave the visitor looking into empty space.
+        if (
+          (node.x === undefined || node.y === undefined || node.z === undefined) &&
+          attempts++ < 5
+        ) {
+          window.setTimeout(moveToNode, 120);
+          return;
+        }
+        const x = node.x ?? 0;
+        const y = node.y ?? 0;
+        const z = node.z ?? 0;
         const distance = Math.max(Math.hypot(x, y, z), 1);
         const ratio = 1 + 110 / distance;
         fgRef.current?.cameraPosition(
@@ -153,7 +178,8 @@ export default function GraphView({ data }: { data: GraphData }) {
           { x, y, z },
           700
         );
-      }, 100);
+      };
+      window.setTimeout(moveToNode, 100);
     },
     [play]
   );
@@ -164,182 +190,201 @@ export default function GraphView({ data }: { data: GraphData }) {
     prevHoveredId.current = id;
   }, [hovered, play]);
 
-  const selectedNeighbors = selected ? (neighbors.get(selected.id) ?? []) : [];
   const title = selected?.fragment ?? selected?.label ?? "";
 
   return (
-    <div className="relative flex h-full overflow-hidden bg-[#ececec] text-[#171717]">
-      {/* graph */}
+    <div className="relative flex h-full overflow-hidden bg-[#2e00aa] text-[#ffdc91]">
       <div className="relative flex-1">
         <ForceGraph3D
           ref={fgRef}
           graphData={visibleData}
           width={undefined}
           height={undefined}
-          backgroundColor="#ececec"
+          backgroundColor={COLORS.background}
           showNavInfo={false}
-          nodeOpacity={0.9}
+          nodeOpacity={0.88}
           nodeRelSize={4}
-          nodeVal={(n) => n.val ?? 2}
-          nodeColor={(n) => GROUP_COLOR[n.group as Group] ?? "#888"}
-          nodeLabel={(n) =>
-            `${n.label}\n${GROUP_LABEL[n.group as Group] ?? n.group}` +
-            (n.song ? `\n— ${n.song}` : "")
+          nodeVal={(node) =>
+            highlightedIds.has(String(node.id)) ? (node.val ?? 2) * 1.35 : node.val ?? 2
           }
-          linkColor={(l) => LINK_COLOR[l.kind as keyof typeof LINK_COLOR] ?? "#777"}
-          linkWidth={(l) => (l.kind === "on" ? 0.35 : 0.8)}
-          linkOpacity={0.35}
-          onNodeClick={(n) => focusNode(n as GraphNode)}
-          onNodeHover={(n) => setHovered(n as GraphNode | null)}
+          nodeColor={(node) =>
+            highlightedIds.has(String(node.id))
+              ? COLORS.gold
+              : String(node.id) === hovered?.id
+                ? COLORS.lavender
+                : COLORS.muted
+          }
+          nodeLabel={(node) =>
+            `${node.label}\n${GROUP_LABEL[node.group as Group] ?? node.group}` +
+            (node.song ? `\n— ${node.song}` : "")
+          }
+          linkColor={(link) =>
+            highlightedIds.has(endpointId(link.source)) ||
+            highlightedIds.has(endpointId(link.target))
+              ? COLORS.line
+              : "rgba(168, 139, 208, 0.09)"
+          }
+          linkWidth={(link) =>
+            highlightedIds.has(endpointId(link.source)) ||
+            highlightedIds.has(endpointId(link.target))
+              ? 0.8
+              : 0.2
+          }
+          linkOpacity={0.8}
+          onNodeClick={(node) => focusNode(node as GraphNode)}
+          onNodeHover={(node) => setHovered(node as GraphNode | null)}
         />
 
-        {/* Atlas controls: intentionally quiet, so the map remains the hero. */}
-        <div className="absolute left-5 top-5 z-10 w-72 space-y-3 border border-black/15 bg-[#ececec]/92 p-4 font-mono text-[11px] text-[#171717] shadow-[8px_8px_0_rgba(23,23,23,0.08)] backdrop-blur">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="mb-1 text-[9px] uppercase tracking-[0.24em] text-black/45">
-                Caparezza × Genius
-              </p>
-              <h1 className="text-lg font-semibold uppercase leading-none tracking-[-0.06em]">
-                The Capa Atlas
-              </h1>
-            </div>
-            <button
-              onClick={() => setMuted((m) => !m)}
-              aria-label={muted ? "Attiva audio" : "Disattiva audio"}
-              className="border border-black/15 px-1.5 py-1 text-black/55 transition hover:border-black hover:text-black"
-            >
-              {muted ? "audio off" : "audio on"}
-            </button>
-          </div>
-          <p className="border-y border-black/10 py-2 text-[10px] leading-relaxed text-black/55">
-            Trascina per ruotare <span className="px-1 text-black/30">·</span> scorri per zoomare
-          </p>
-
-          {/* search */}
-          <div className="relative">
-            <input
-              ref={searchRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
-              placeholder="cerca nel catalogo  /"
-              aria-label="Cerca nel catalogo"
-              className="w-full border border-black/15 bg-transparent px-2.5 py-2 text-[#171717] outline-none placeholder:text-black/35 focus:border-black"
-            />
-            {searchFocused && matches.length > 0 && (
-              <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto border border-black/15 bg-[#f6f5f1] shadow-xl">
-                {matches.map((n) => (
-                  <li key={n.id}>
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => focusNode(n)}
-                      className="flex w-full items-center gap-2 px-2.5 py-2 text-left hover:bg-black hover:text-white"
-                    >
-                      <span
-                        className="inline-block h-2 w-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: GROUP_COLOR[n.group] }}
-                      />
-                      <span className="truncate">{n.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* group toggles */}
-          <div className="flex flex-wrap gap-1.5">
-            {ALL_GROUPS.map((g) => {
-              const on = visibleGroups.has(g);
-              const color = GROUP_COLOR[g];
-              return (
-                <button
-                  key={g}
-                  onClick={() => toggleGroup(g)}
-                  className="border px-2 py-1 transition-colors"
-                  style={{
-                    borderColor: on ? color : "rgba(23, 23, 23, 0.15)",
-                    backgroundColor: on ? color + "18" : "transparent",
-                    color: on ? "#171717" : "rgba(23, 23, 23, 0.45)",
-                  }}
-                >
-                  {GROUP_LABEL[g]} · {stats[g] ?? 0}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-black/45">
-            <span>{visibleData.nodes.length} / {data.nodes.length} nodi</span>
-            <button onClick={fit} className="text-[#171717] underline underline-offset-2 hover:no-underline">
-              inquadra tutto
-            </button>
-          </div>
+        <div className="absolute left-7 top-7 z-10 flex gap-3">
+          <button
+            onClick={() => {
+              setControlsOpen(true);
+              window.setTimeout(() => searchRef.current?.focus(), 0);
+            }}
+            aria-label="Cerca nel catalogo"
+            className="grid h-14 w-14 place-items-center rounded-full border border-[#ffdc91]/35 text-2xl text-[#ffdc91] transition hover:border-[#ffdc91] hover:bg-[#ffdc91]/10"
+          >
+            ⌕
+          </button>
+          <button
+            onClick={() => setControlsOpen((open) => !open)}
+            aria-label="Apri filtri"
+            aria-expanded={controlsOpen}
+            className="grid h-14 w-14 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-xs uppercase tracking-widest text-[#ffdc91] transition hover:border-[#ffdc91] hover:bg-[#ffdc91]/10"
+          >
+            index
+          </button>
         </div>
 
-        <div className="pointer-events-none absolute bottom-5 left-5 z-10 font-mono text-[10px] uppercase tracking-[0.14em] text-black/40">
-          Esplora liberamente · il punto di vista resta tuo
+        {(controlsOpen || searchFocused) && (
+          <section className="absolute left-7 top-24 z-20 w-80 border border-[#ffdc91]/25 bg-[#240083]/90 p-5 font-mono text-xs text-[#ffdc91] shadow-[0_16px_50px_rgba(12,0,58,0.35)] backdrop-blur">
+            <div className="relative">
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
+                placeholder="cerca nell'atlante  /"
+                aria-label="Cerca nel catalogo"
+                className="w-full border-b border-[#ffdc91]/45 bg-transparent px-0 py-3 text-[#ffdc91] outline-none placeholder:text-[#ffdc91]/40 focus:border-[#ffdc91]"
+              />
+              {searchFocused && matches.length > 0 && (
+                <ul className="absolute left-0 right-0 top-full z-30 max-h-64 overflow-y-auto border border-[#ffdc91]/25 bg-[#240083]">
+                  {matches.map((node) => (
+                    <li key={node.id}>
+                      <button
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => focusNode(node)}
+                        className="w-full border-b border-[#ffdc91]/10 px-3 py-3 text-left text-[#ffdc91] transition hover:bg-[#ffdc91] hover:text-[#2e00aa]"
+                      >
+                        {node.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="mt-5 border-t border-[#ffdc91]/20 pt-4">
+              <p className="mb-3 uppercase tracking-[0.18em] text-[#ffdc91]/55">Mostra</p>
+              <div className="flex flex-wrap gap-2">
+                {ALL_GROUPS.map((group) => {
+                  const enabled = visibleGroups.has(group);
+                  return (
+                    <button
+                      key={group}
+                      onClick={() => toggleGroup(group)}
+                      className={`rounded-full border px-3 py-1.5 transition ${
+                        enabled
+                          ? "border-[#ffdc91]/70 bg-[#ffdc91]/10 text-[#ffdc91]"
+                          : "border-[#ffdc91]/20 text-[#ffdc91]/40"
+                      }`}
+                    >
+                      {GROUP_LABEL[group]} · {stats[group] ?? 0}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between border-t border-[#ffdc91]/20 pt-4 text-[#ffdc91]/55">
+              <span>{visibleData.nodes.length} / {data.nodes.length} nodi</span>
+              <button onClick={fit} className="text-[#ffdc91] hover:underline">
+                inquadra tutto
+              </button>
+            </div>
+          </section>
+        )}
+
+        {hovered && !selected && (
+          <div className="pointer-events-none absolute left-1/2 top-8 z-10 -translate-x-1/2 border border-[#ffdc91]/25 bg-[#240083]/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.16em] text-[#ffdc91]">
+            {hovered.label}
+          </div>
+        )}
+
+        <div className="pointer-events-none absolute bottom-8 left-8 z-10 font-mono">
+          <p className="text-lg font-semibold tracking-[-0.06em] text-[#ffdc91]">THE CAPA ATLAS</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[#ffdc91]/55">
+            Trascina per ruotare · scorri per zoomare
+          </p>
+        </div>
+
+        <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 gap-3">
+          <button
+            onClick={() => setMuted((value) => !value)}
+            aria-label={muted ? "Attiva audio" : "Disattiva audio"}
+            className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-[10px] uppercase text-[#ffdc91] transition hover:border-[#ffdc91]"
+          >
+            {muted ? "off" : "on"}
+          </button>
+          <button
+            onClick={fit}
+            aria-label="Inquadra tutto il grafo"
+            className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 text-lg text-[#ffdc91] transition hover:border-[#ffdc91]"
+          >
+            ⟲
+          </button>
         </div>
       </div>
 
-      {/* slide-over panel */}
       <aside
-        className={`absolute right-0 top-0 z-20 h-full w-[26rem] max-w-[85vw] overflow-y-auto border-l border-black/15 bg-[#f6f5f1]/97 p-6 text-[#171717] shadow-[-12px_0_0_rgba(23,23,23,0.06)] transition-transform duration-500 ${
+        className={`absolute right-0 top-0 z-20 h-full w-[34%] min-w-[25rem] max-w-[42rem] border-l border-[#ffdc91]/20 bg-[#240083]/88 p-9 text-[#ffdc91] shadow-[-18px_0_45px_rgba(12,0,58,0.2)] backdrop-blur-md transition-transform duration-500 ${
           selected ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {selected ? (
-          <div>
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <span
-                  className="mb-2 inline-block border px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em]"
-                  style={{
-                    backgroundColor: GROUP_COLOR[selected.group] + "22",
-                    color: GROUP_COLOR[selected.group],
-                  }}
-                >
-                  {GROUP_LABEL[selected.group] ?? selected.group}
-                </span>
-                <h2 className="text-2xl font-semibold leading-[1.05] tracking-[-0.04em]">
-                  {title}
-                </h2>
-              </div>
+        {selected && (
+          <div className="flex h-full flex-col overflow-y-auto pr-1">
+            <div className="flex items-center justify-between border-b border-[#ffdc91]/20 pb-6 font-mono text-xs uppercase tracking-[0.2em] text-[#ffdc91]/60">
+              <span>{GROUP_LABEL[selected.group] ?? selected.group}</span>
               <button
                 onClick={() => {
                   play(sound.close);
                   setSelected(null);
                 }}
-                className="border border-black/15 px-2 py-1 font-mono text-xs text-black/55 hover:border-black hover:text-black"
+                className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 text-xl text-[#ffdc91] transition hover:border-[#ffdc91]"
                 aria-label="Chiudi pannello"
               >
-                ✕
+                ×
               </button>
             </div>
 
+            <h2 className="mt-10 text-5xl font-semibold leading-[0.95] tracking-[-0.07em] text-[#ffdc91]">
+              {title}
+            </h2>
+
             {selected.group === "song" && (
-              <dl className="mb-5 space-y-1.5 border-y border-black/10 py-4 text-sm text-black/75">
-                {selected.album && (
-                  <div>
-                    <dt className="inline text-black/45">Album: </dt>
-                    <dd className="inline">{selected.album}</dd>
-                  </div>
-                )}
-                {selected.release && (
-                  <div>
-                    <dt className="inline text-black/45">Uscita: </dt>
-                    <dd className="inline">{selected.release}</dd>
-                  </div>
-                )}
+              <dl className="mt-8 border-y border-[#ffdc91]/20 py-6 text-lg leading-relaxed text-[#ffdc91]/80">
+                {selected.album && <div>Album · {selected.album}</div>}
+                {selected.release && <div>Uscita · {selected.release}</div>}
                 {selected.url && (
                   <a
                     href={selected.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-block font-mono text-xs text-[#005dcc] underline underline-offset-2 hover:no-underline"
+                    className="mt-3 inline-block font-mono text-xs uppercase tracking-wider text-[#ffdc91] underline underline-offset-4 hover:no-underline"
                   >
-                    Genius ↗
+                    Apri su Genius ↗
                   </a>
                 )}
               </dl>
@@ -347,11 +392,11 @@ export default function GraphView({ data }: { data: GraphData }) {
 
             {selected.group === "keyword" && (
               <>
-                <p className="whitespace-pre-wrap border-l-2 border-[#ff0080] bg-black/[0.035] p-4 text-sm italic leading-relaxed text-black/80">
+                <p className="mt-8 border-l-2 border-[#ffdc91] bg-[#ffdc91]/10 p-5 text-lg italic leading-relaxed text-[#ffdc91]">
                   {selected.fragment}
                 </p>
                 {selected.annotation && (
-                  <p className="mt-4 text-sm leading-relaxed text-black/75">
+                  <p className="mt-6 text-lg leading-relaxed text-[#ffdc91]/85">
                     {selected.annotation}
                   </p>
                 )}
@@ -360,7 +405,7 @@ export default function GraphView({ data }: { data: GraphData }) {
                     href={selected.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-4 inline-block font-mono text-xs text-[#005dcc] underline underline-offset-2 hover:no-underline"
+                    className="mt-6 inline-block font-mono text-xs uppercase tracking-wider text-[#ffdc91] underline underline-offset-4 hover:no-underline"
                   >
                     Vedi annotazione su Genius ↗
                   </a>
@@ -368,40 +413,23 @@ export default function GraphView({ data }: { data: GraphData }) {
               </>
             )}
 
-            <div className="mt-5">
-              <div className="mb-2 border-t border-black/10 pt-5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-black/45">
-                Collegato a ({selectedNeighbors.length})
-              </div>
-              <ul className="space-y-1">
-                {selectedNeighbors.slice(0, 40).map((n) => (
-                  <li key={n.id}>
+            <div className="mt-10 border-t border-[#ffdc91]/20 pt-7">
+              <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-[#ffdc91]/55">
+                Collegato a · {selectedNeighbors.length}
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {selectedNeighbors.slice(0, 40).map((node) => (
+                  <li key={node.id}>
                     <button
-                      onClick={() => focusNode(n)}
-                      className="flex w-full items-baseline gap-2 border-b border-black/5 px-1 py-2 text-left text-sm text-black/75 hover:bg-black hover:px-2 hover:text-white"
+                      onClick={() => focusNode(node)}
+                      className="rounded-full border border-[#ffdc91]/30 px-3 py-2 text-sm text-[#ffdc91] transition hover:bg-[#ffdc91] hover:text-[#2e00aa]"
                     >
-                      <span
-                        className="inline-block h-2 w-2 shrink-0 self-center rounded-full"
-                        style={{ backgroundColor: GROUP_COLOR[n.group] }}
-                      />
-                      <span className="truncate">{n.label}</span>
+                      {node.label}
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
-        ) : (
-          <div className="text-center text-sm text-neutral-500">
-            {hovered ? (
-              <p className="pt-40 text-neutral-400">
-                Seleziona <span className="text-neutral-200">{hovered.label}</span>{" "}
-                per i dettagli
-              </p>
-            ) : (
-              <p className="pt-40">
-                Clicca un nodo per vedere la citazione annotata e i collegamenti
-              </p>
-            )}
           </div>
         )}
       </aside>
