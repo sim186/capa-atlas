@@ -75,10 +75,10 @@ def parse_preloaded(html: str) -> dict | None:
         return None
     s = m.group(1)
     s = s.replace(r"\/", "/").replace("\\'", "'")
-    s = s.encode("utf-8").decode("unicode_escape")
     try:
+        s = s.encode("utf-8").decode("unicode_escape")
         return json.loads(s)
-    except json.JSONDecodeError as e:
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
         print(f"    [warn] preloaded state parse failed: {e}", file=sys.stderr)
         return None
 

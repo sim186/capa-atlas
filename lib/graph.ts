@@ -5,6 +5,10 @@ export interface GraphNode {
   label: string;
   group: Group;
   val?: number;
+  // assigned by the force simulation in the browser
+  x?: number;
+  y?: number;
+  z?: number;
   // song
   album?: string;
   release?: string;
@@ -36,16 +40,18 @@ export const GROUP_LABEL: Record<Group, string> = {
   concept: "Tema",
 };
 
+// A restrained paper-atlas palette: high contrast enough to navigate, but
+// quiet enough that the structure—not a rainbow of nodes—remains primary.
 export const GROUP_COLOR: Record<Group, string> = {
-  album: "#8b8b9e",
-  song: "#3b82f6",
-  keyword: "#f59e0b",
-  figure: "#ef4444",
-  concept: "#10b981",
+  album: "#6b3fd1",
+  song: "#005dcc",
+  keyword: "#e02776",
+  figure: "#cf302d",
+  concept: "#168b57",
 };
 
 export const LINK_COLOR: Record<GraphLink["kind"], string> = {
-  on: "rgba(139,139,158,0.35)",
-  contains: "rgba(245,158,11,0.30)",
-  refers: "rgba(16,185,129,0.40)",
+  on: "rgba(107,63,209,0.24)",
+  contains: "rgba(224,39,118,0.18)",
+  refers: "rgba(22,139,87,0.25)",
 };

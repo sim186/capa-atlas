@@ -25,6 +25,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw", "referents.jsonl")
 CONCEPTS = os.path.join(ROOT, "data", "concepts.json")
+REFERENT_OVERRIDES_PATH = os.path.join(ROOT, "data", "referent_overrides.json")
 OUT = os.path.join(ROOT, "public", "graphData.json")
 CSV_OUT = os.path.join(ROOT, "data", "keywords.csv")
 
@@ -37,13 +38,43 @@ def load_referents():
         return [json.loads(line) for line in f if line.strip()]
 
 
-def classify(fragment: str, annotation: str, concepts: list[dict]) -> str | None:
+def load_referent_overrides() -> dict[int, list[str]]:
+    """Per-keyword concept assignments from a manual LLM semantic read of the
+    corpus (paraphrases/one-offs regex can't catch). Keyed by referentId."""
+    if not os.path.exists(REFERENT_OVERRIDES_PATH):
+        return {}
+    with open(REFERENT_OVERRIDES_PATH, encoding="utf-8") as f:
+        return {int(k): v for k, v in json.load(f).items()}
+
+
+# Whole-song semantic overrides: songs read in full where the allegory (not
+# literal keyword matches) makes the theme unambiguous — e.g. "Gli insetti del
+# podere" is a sustained animal-metaphor satire of Berlusconi ("il ragno")
+# that a regex on the word "berlusconi" would mostly miss.
+SONG_OVERRIDES: dict[str, list[str]] = {
+    "Gli insetti del podere": ["berlusconi", "polizia_proteste"],
+    "Gli Arbitri Ti Picchiano": ["polizia_proteste"],
+    "Abiura Di Me": ["videogiochi"],
+    "La Marchetta Di Popolino": ["fumetti"],
+    "Limiti": ["nostalgia_anni80"],
+    "La sindrome di Lorena": ["violenza_di_genere"],
+    "Non Siete Stato Voi": ["stato_e_potere"],
+    "Titoli": ["finanza"],
+}
+
+
+def classify(fragment: str, annotation: str, song_title: str, concepts: list[dict]) -> list[str]:
     hay = f"{fragment}\n{annotation}".casefold()
+    hits = []
     for c in concepts:
         for pat in c["patterns"]:
             if re.search(pat, hay):
-                return c["id"]
-    return None
+                hits.append(c["id"])
+                break
+    for cid in SONG_OVERRIDES.get(song_title, []):
+        if cid not in hits:
+            hits.append(cid)
+    return hits
 
 
 def clean(label: str, maxlen: int = 46) -> str:
@@ -54,6 +85,7 @@ def main() -> int:
     refs = load_referents()
     concepts = json.load(open(CONCEPTS, encoding="utf-8"))["concepts"]
     concept_by_id = {c["id"]: c for c in concepts}
+    referent_overrides = load_referent_overrides()
 
     albums: dict[str, dict] = {}
     songs: dict[str, dict] = {}
@@ -91,8 +123,11 @@ def main() -> int:
         })
         links.append({"source": song["id"], "target": keyword["id"], "kind": "contains"})
 
-        cid = classify(fragment, r["annotation"], concepts)
-        if cid:
+        cids = classify(fragment, r["annotation"], r["songTitle"], concepts)
+        for cid in referent_overrides.get(r["referentId"], []):
+            if cid not in cids:
+                cids.append(cid)
+        for cid in cids:
             c = concept_by_id[cid]
             node_id = f"concept:{cid}"
             concepts_final.setdefault(node_id, {
