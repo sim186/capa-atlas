@@ -3,6 +3,14 @@
 import dynamic from "next/dynamic";
 import type { ForceGraphMethods } from "react-force-graph-3d";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ConfigOptions } from "3d-force-graph";
+import { Object3D, Vector3 } from "three";
+import {
+  CSS2DObject,
+  CSS2DRenderer,
+} from "three/examples/jsm/renderers/CSS2DRenderer.js";
+
+type Renderer = NonNullable<ConfigOptions["extraRenderers"]>[number];
 import {
   GraphData,
   GraphNode,
@@ -16,7 +24,13 @@ const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
 });
 
 const ALL_GROUPS: Group[] = ["album", "song", "keyword", "figure", "concept"];
+// Permanent labels only for the sparse orientation layers — songs and (esp.)
+// keywords number in the thousands and turn the view into text soup.
+const LABELED_GROUPS = new Set<Group>(["album", "figure", "concept"]);
 const DEFAULT_VISIBLE: Group[] = ["album", "song", "figure", "concept"];
+// Labels fade out past this camera distance so the overview isn't a wall of
+// text — they only earn their keep once you've zoomed toward a cluster.
+const LABEL_MAX_DISTANCE = 260;
 const COLORS = {
   background: "#2e00aa",
   backgroundDeep: "#240083",
@@ -46,6 +60,14 @@ export default function GraphView({ data }: { data: GraphData }) {
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const prevHoveredId = useRef<string | null>(null);
+  const labelDivsRef = useRef(new Map<string, { obj: CSS2DObject; div: HTMLDivElement }>());
+  // Read live inside the (identity-stable) tick loop below instead of as
+  // nodeThreeObject closure deps — react-force-graph-3d treats a changed
+  // nodeThreeObject reference as "rebuild every node", and on every
+  // hover/select it was orphaning the old CSS2DObjects (never removed from
+  // the scene), stacking duplicate labels on top of each other forever.
+  const highlightedIdsRef = useRef<Set<string>>(new Set());
+  const hoveredIdRef = useRef<string | null>(null);
 
   const play = useCallback(
     (fn: () => void) => {
@@ -78,6 +100,12 @@ export default function GraphView({ data }: { data: GraphData }) {
     () => new Set([selected?.id, ...selectedNeighbors.map((node) => node.id)]),
     [selected?.id, selectedNeighbors]
   );
+  useEffect(() => {
+    highlightedIdsRef.current = highlightedIds as Set<string>;
+  }, [highlightedIds]);
+  useEffect(() => {
+    hoveredIdRef.current = hovered?.id ?? null;
+  }, [hovered]);
   const visibleData = useMemo(() => {
     // A searched citation enters the map on its own. Turning on all 3,607
     // citations to inspect one result makes the graph impossible to read.
@@ -101,6 +129,31 @@ export default function GraphView({ data }: { data: GraphData }) {
     const frame = requestAnimationFrame(fit);
     return () => cancelAnimationFrame(frame);
   }, [fit]);
+
+  useEffect(() => {
+    let raf = 0;
+    const tmp = new Vector3();
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const camera = fgRef.current?.camera();
+      if (!camera) return;
+      const highlighted = highlightedIdsRef.current;
+      const hoveredId = hoveredIdRef.current;
+      for (const [id, { obj, div }] of labelDivsRef.current.entries()) {
+        obj.getWorldPosition(tmp);
+        // CSS2DRenderer re-derives element.style.display from object.visible
+        // every frame (it only skips fully-hidden branches) — toggling the
+        // DOM style directly gets clobbered on the next render pass.
+        obj.visible = camera.position.distanceTo(tmp) < LABEL_MAX_DISTANCE;
+        div.style.color =
+          highlighted.has(id) || id === hoveredId
+            ? COLORS.gold
+            : "rgba(255, 220, 145, 0.55)";
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -192,6 +245,44 @@ export default function GraphView({ data }: { data: GraphData }) {
 
   const title = selected?.fragment ?? selected?.label ?? "";
 
+  // Node labels rendered permanently (via CSS2D overlay) instead of only on
+  // hover — at rest, a 4px raycast target with no visible anchor is
+  // essentially unclickable inside a dense force-directed cluster.
+  const css2dRenderer = useMemo(() => {
+    if (typeof window === "undefined") return undefined;
+    const renderer = new CSS2DRenderer();
+    renderer.domElement.style.position = "absolute";
+    renderer.domElement.style.top = "0px";
+    renderer.domElement.style.pointerEvents = "none";
+    return renderer;
+  }, []);
+  const extraRenderers = useMemo(
+    () => (css2dRenderer ? [css2dRenderer as unknown as Renderer] : []),
+    [css2dRenderer]
+  );
+
+  // Identity must stay stable across renders: react-force-graph-3d treats a
+  // changed nodeThreeObject reference as "throw away and rebuild every node's
+  // three-object", and its CSS2DObjects were being orphaned rather than
+  // disposed — every hover/select stacked a fresh duplicate label on top of
+  // the old ones. Color/visibility are instead driven live by the tick loop
+  // above via labelDivsRef.
+  const makeNodeThreeObject = useCallback((node: object) => {
+    const n = node as GraphNode;
+    if (!LABELED_GROUPS.has(n.group)) return new Object3D();
+    const div = document.createElement("div");
+    div.textContent = n.label;
+    div.style.fontFamily = "monospace";
+    div.style.fontSize = "5px";
+    div.style.padding = "1px 3px";
+    div.style.color = "rgba(255, 220, 145, 0.55)";
+    div.style.whiteSpace = "nowrap";
+    const obj = new CSS2DObject(div);
+    obj.position.set(0, -6, 0);
+    labelDivsRef.current.set(String(n.id), { obj, div });
+    return obj;
+  }, []);
+
   return (
     <div className="relative flex h-full overflow-hidden bg-[#2e00aa] text-[#ffdc91]">
       <div className="relative flex-1">
@@ -200,10 +291,11 @@ export default function GraphView({ data }: { data: GraphData }) {
           graphData={visibleData}
           width={undefined}
           height={undefined}
+          extraRenderers={extraRenderers}
           backgroundColor={COLORS.background}
           showNavInfo={false}
           nodeOpacity={0.88}
-          nodeRelSize={4}
+          nodeRelSize={7}
           nodeVal={(node) =>
             highlightedIds.has(String(node.id)) ? (node.val ?? 2) * 1.35 : node.val ?? 2
           }
@@ -214,6 +306,11 @@ export default function GraphView({ data }: { data: GraphData }) {
                 ? COLORS.lavender
                 : COLORS.muted
           }
+          // Permanent label under album/figure/concept nodes only — the
+          // orientation layers. Songs and keywords stay hover-only tooltips;
+          // labeling all ~3,600 keywords made the view unreadable.
+          nodeThreeObjectExtend={true}
+          nodeThreeObject={makeNodeThreeObject}
           nodeLabel={(node) =>
             `${node.label}\n${GROUP_LABEL[node.group as Group] ?? node.group}` +
             (node.song ? `\n— ${node.song}` : "")
