@@ -39,6 +39,26 @@ const COLORS = {
   muted: "#7554ad",
   line: "rgba(255, 220, 145, 0.24)",
 };
+// "Colorize" mode retints the whole scene (bg + idle nodes + idle links) to
+// the selected node's category — not a per-node rainbow. Nothing selected
+// falls back to the base COLORS theme. Gold/lavender still win for
+// highlighted/hovered nodes regardless of mode, same as before.
+const CATEGORY_THEME: Record<Group, { bg: string; node: string; line: string }> = {
+  album: { bg: "#0b3d67", node: "#7fb8ea", line: "rgba(127, 184, 234, 0.22)" },
+  song: { bg: "#2e00aa", node: "#a88bd0", line: "rgba(168, 139, 208, 0.22)" },
+  keyword: { bg: "#5c1338", node: "#e58fb5", line: "rgba(229, 143, 181, 0.22)" },
+  figure: { bg: "#0f4a30", node: "#8fd6ab", line: "rgba(143, 214, 171, 0.22)" },
+  concept: { bg: "#5c3208", node: "#f0b273", line: "rgba(240, 178, 115, 0.22)" },
+};
+type ColorMode = "mono" | "group";
+
+function hexToRgba(hex: string, alpha: number) {
+  const value = parseInt(hex.slice(1), 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function endpointId(endpoint: unknown) {
   if (typeof endpoint === "object" && endpoint !== null && "id" in endpoint) {
@@ -57,6 +77,7 @@ export default function GraphView({ data }: { data: GraphData }) {
   );
   const [controlsOpen, setControlsOpen] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [colorMode, setColorMode] = useState<ColorMode>("mono");
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const prevHoveredId = useRef<string | null>(null);
@@ -283,16 +304,36 @@ export default function GraphView({ data }: { data: GraphData }) {
     return obj;
   }, []);
 
+  // Colorize mode retints bg/idle-node/idle-link to the SELECTED node's
+  // category — mirrors the reference site, which recolors its whole scene
+  // per open entry rather than painting every node a different hue at once.
+  const activeTheme =
+    colorMode === "group" && selected ? CATEGORY_THEME[selected.group] : null;
+
   return (
-    <div className="relative flex h-full overflow-hidden bg-[#2e00aa] text-[#ffdc91]">
+    <div
+      className="relative flex h-full overflow-hidden text-[#ffdc91] transition-colors duration-500"
+      style={{ backgroundColor: activeTheme?.bg ?? COLORS.background }}
+    >
       <div className="relative flex-1">
         <ForceGraph3D
           ref={fgRef}
           graphData={visibleData}
           width={undefined}
           height={undefined}
+          // Trackball (the lib default) ships with staticMoving=false, i.e.
+          // built-in momentum on rotate/zoom — the camera keeps drifting for
+          // a dozen-odd frames after you stop scrolling/dragging. Orbit has
+          // no residual motion once input stops.
+          controlType="orbit"
+          // 3d-force-graph's own DragControls (node dragging) is on by
+          // default and fights OrbitControls for the pointer — a click
+          // that starts a drag can crash OrbitControls.onPointerUp on a
+          // stale pointer id. It also contradicts our own "drag to rotate"
+          // hint: dragging a node used to move it, not the camera.
+          enableNodeDrag={false}
           extraRenderers={extraRenderers}
-          backgroundColor={COLORS.background}
+          backgroundColor={activeTheme?.bg ?? COLORS.background}
           showNavInfo={false}
           nodeOpacity={0.88}
           nodeRelSize={7}
@@ -304,7 +345,7 @@ export default function GraphView({ data }: { data: GraphData }) {
               ? COLORS.gold
               : String(node.id) === hovered?.id
                 ? COLORS.lavender
-                : COLORS.muted
+                : activeTheme?.node ?? COLORS.muted
           }
           // Permanent label under album/figure/concept nodes only — the
           // orientation layers. Songs and keywords stay hover-only tooltips;
@@ -319,7 +360,7 @@ export default function GraphView({ data }: { data: GraphData }) {
             highlightedIds.has(endpointId(link.source)) ||
             highlightedIds.has(endpointId(link.target))
               ? COLORS.line
-              : "rgba(168, 139, 208, 0.09)"
+              : activeTheme?.line ?? "rgba(168, 139, 208, 0.09)"
           }
           linkWidth={(link) =>
             highlightedIds.has(endpointId(link.source)) ||
@@ -429,6 +470,22 @@ export default function GraphView({ data }: { data: GraphData }) {
 
         <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 gap-3">
           <button
+            onClick={() => {
+              setColorMode((mode) => {
+                const next = mode === "mono" ? "group" : "mono";
+                play(() => sound.toggle(next === "group"));
+                return next;
+              });
+            }}
+            aria-label={
+              colorMode === "group" ? "Passa a colore uniforme" : "Colora per categoria"
+            }
+            aria-pressed={colorMode === "group"}
+            className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-[10px] uppercase text-[#ffdc91] transition hover:border-[#ffdc91]"
+          >
+            {colorMode === "group" ? "rgb" : "gry"}
+          </button>
+          <button
             onClick={() => setMuted((value) => !value)}
             aria-label={muted ? "Attiva audio" : "Disattiva audio"}
             className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-[10px] uppercase text-[#ffdc91] transition hover:border-[#ffdc91]"
@@ -446,7 +503,12 @@ export default function GraphView({ data }: { data: GraphData }) {
       </div>
 
       <aside
-        className={`absolute right-0 top-0 z-20 h-full w-[34%] min-w-[25rem] max-w-[42rem] border-l border-[#ffdc91]/20 bg-[#240083]/88 p-9 text-[#ffdc91] shadow-[-18px_0_45px_rgba(12,0,58,0.2)] backdrop-blur-md transition-transform duration-500 ${
+        style={{
+          backgroundColor: activeTheme
+            ? hexToRgba(activeTheme.bg, 0.88)
+            : hexToRgba(COLORS.backgroundDeep, 0.88),
+        }}
+        className={`absolute right-0 top-0 z-20 h-full w-[34%] min-w-[25rem] max-w-[42rem] border-l border-[#ffdc91]/20 p-9 text-[#ffdc91] shadow-[-18px_0_45px_rgba(12,0,58,0.2)] backdrop-blur-md transition-[transform,background-color] duration-500 ${
           selected ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -519,7 +581,8 @@ export default function GraphView({ data }: { data: GraphData }) {
                   <li key={node.id}>
                     <button
                       onClick={() => focusNode(node)}
-                      className="rounded-full border border-[#ffdc91]/30 px-3 py-2 text-sm text-[#ffdc91] transition hover:bg-[#ffdc91] hover:text-[#2e00aa]"
+                      title={node.label}
+                      className="max-w-[16rem] truncate whitespace-nowrap rounded-full border border-[#ffdc91]/30 px-3 py-2 text-sm text-[#ffdc91] transition hover:bg-[#ffdc91] hover:text-[#2e00aa]"
                     >
                       {node.label}
                     </button>
