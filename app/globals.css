@@ -1,15 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #2e00aa;
-  --foreground: #ffdc91;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --atlas-bg: #ececec;
+  --atlas-ink: #171717;
+  --atlas-node: #1c1c1c;
+  --atlas-label: rgba(23, 23, 23, 0.55);
+  --atlas-label-hi: #171717;
+  --atlas-hair: color-mix(in oklch, var(--atlas-ink) 16%, transparent);
+  --atlas-hair-strong: color-mix(in oklch, var(--atlas-ink) 30%, transparent);
+  --atlas-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -22,12 +21,413 @@ body {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), sans-serif;
+  background: var(--atlas-bg);
+  color: var(--atlas-ink);
+  font-family: var(--font-geist-sans), "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 ::selection {
-  background: #ffdc91;
-  color: #2e00aa;
+  background: var(--atlas-ink);
+  color: var(--atlas-bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Drawably hand-drawn chrome                                          */
+/* The sketch stroke inherits the atlas ink, so the pen re-colours      */
+/* itself with every category theme (mono or rgb mode).                 */
+/* ------------------------------------------------------------------ */
+
+/* Defaults for surfaces outside the graph container (intro, fallback). */
+:root {
+  --drawably-stroke: var(--atlas-ink);
+  --drawably-fill: var(--atlas-ink);
+  --drawably-paper: var(--atlas-bg);
+}
+
+/* Keep our typography: drawably's defaults are Inter / Geist Mono. */
+.drawably-host,
+.drawably-button,
+.drawably-badge,
+.drawably-card {
+  font-family: inherit;
+}
+
+/* Handwritten chrome text (titles, brand, neighbor pills). */
+.atlas-pen {
+  font-family: "Drawably Pen", var(--font-geist-sans), sans-serif;
+}
+
+/* The search input in the controls card. */
+.atlas-controls .drawably-inputbox {
+  display: block;
+  width: 100%;
+}
+
+.atlas-controls .drawably-inputbox input {
+  padding: 0.75rem 0;
+}
+
+/* Pager arrows are badges, not buttons (they sit inside real buttons). */
+.atlas-pager-arrow {
+  display: grid;
+  place-items: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Circular hairline buttons — the only chrome on the canvas           */
+/* ------------------------------------------------------------------ */
+
+.atlas-circle-btn {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 9999px;
+  border: 1px solid var(--atlas-hair-strong);
+  background: transparent;
+  color: var(--atlas-ink);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
+
+.atlas-circle-btn:hover {
+  border-color: color-mix(in oklch, var(--atlas-ink) 62%, transparent);
+}
+
+.atlas-circle-btn[data-on="true"] {
+  background: var(--atlas-ink);
+  color: var(--atlas-bg);
+  border-color: var(--atlas-ink);
+}
+
+/* the hover pill floats over the 3D canvas with no chrome around it */
+.atlas-hover-pill {
+  color: color-mix(in oklch, var(--atlas-ink) 82%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Pills (filters, neighbor links)                                     */
+/* ------------------------------------------------------------------ */
+
+.atlas-pill {
+  border: 1px solid var(--atlas-hair-strong);
+  border-radius: 9999px;
+  background: transparent;
+  color: color-mix(in oklch, var(--atlas-ink) 82%, transparent);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
+
+.atlas-pill:hover {
+  color: var(--atlas-ink);
+  border-color: color-mix(in oklch, var(--atlas-ink) 60%, transparent);
+}
+
+.atlas-pill[data-on="true"] {
+  background: var(--atlas-ink);
+  color: var(--atlas-bg);
+  border-color: var(--atlas-ink);
+}
+
+/* ------------------------------------------------------------------ */
+/* Staggered reveal choreography (mirrors the node-detail module)      */
+/* ------------------------------------------------------------------ */
+
+@keyframes atlasReveal {
+  from {
+    opacity: 0;
+    transform: translateY(11px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.atlas-reveal {
+  animation: atlasReveal 0.66s var(--atlas-ease) both;
+  animation-delay: calc(var(--i, 0) * 52ms + 260ms);
+}
+
+@keyframes atlasTitleReveal {
+  from {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+}
+
+.atlas-title-reveal {
+  transform-origin: 0 100%;
+  animation: atlasTitleReveal 0.72s var(--atlas-ease) both;
+  animation-delay: 300ms;
+}
+
+@keyframes atlasRuleGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.atlas-rule {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--atlas-hair);
+  transform-origin: 0 50%;
+  animation: atlasRuleGrow 0.7s var(--atlas-ease) both;
+  animation-delay: calc(var(--i, 0) * 52ms + 340ms);
+}
+
+@keyframes atlasSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--dir, 1) * 26px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.atlas-slide {
+  animation: atlasSlideIn 0.5s var(--atlas-ease) both;
+}
+
+/* ------------------------------------------------------------------ */
+/* Node detail — desktop side panel                                    */
+/* ------------------------------------------------------------------ */
+
+.atlas-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: min(33.333vw, 42rem);
+  height: 100dvh;
+  background: var(--atlas-bg);
+  /* the left edge is drawn by the panel's sketch, not a hairline */
+  border-left: 0;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.62s var(--atlas-ease),
+    opacity 0.4s ease,
+    background 0.7s ease;
+}
+
+.atlas-panel[data-open="true"] {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Node detail — mobile bottom sheet                                   */
+/* ------------------------------------------------------------------ */
+
+.atlas-sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  height: 88dvh;
+  background: var(--atlas-bg);
+  border-top: 1px solid var(--atlas-hair);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: 0 -20px 44px -30px rgba(0, 0, 0, 0.45);
+  transform: translateY(100%);
+  transition:
+    transform 0.5s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.7s ease;
+}
+
+.atlas-sheet[data-open="true"] {
+  transform: translateY(0);
+}
+
+.atlas-sheet[data-swiping="true"] {
+  transition: none;
+}
+
+.atlas-grip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: none;
+  padding: 1.1rem 0 0.8rem;
+  cursor: grab;
+  touch-action: none;
+}
+
+.atlas-grip:active {
+  cursor: grabbing;
+}
+
+.atlas-grip-bar {
+  width: 2.4rem;
+  height: 0.25rem;
+  border-radius: 1rem;
+  background: color-mix(in oklch, var(--atlas-ink) 26%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Close button with rotating X                                        */
+/* ------------------------------------------------------------------ */
+
+.atlas-close-mark {
+  position: relative;
+  display: block;
+  width: 0.82rem;
+  height: 0.82rem;
+}
+
+.atlas-close-mark::before,
+.atlas-close-mark::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: color-mix(in oklch, var(--atlas-ink) 62%, transparent);
+  transition:
+    background 0.2s,
+    transform 0.3s var(--atlas-ease);
+}
+
+.atlas-close-mark::before {
+  transform: rotate(45deg);
+}
+
+.atlas-close-mark::after {
+  transform: rotate(-45deg);
+}
+
+.drawably-button:hover .atlas-close-mark::before {
+  transform: rotate(135deg);
+}
+
+.drawably-button:hover .atlas-close-mark::after {
+  transform: rotate(45deg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Roll-over labels (pager, inline links): two stacked cells that      */
+/* slide up on hover                                                   */
+/* ------------------------------------------------------------------ */
+
+.atlas-roll {
+  display: flex;
+  flex-direction: column;
+  height: 1.3em;
+  margin: -0.15em 0;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+.atlas-roll > span {
+  display: block;
+  transition: transform 0.4s var(--atlas-ease);
+}
+
+a:hover > .atlas-roll > span,
+button:hover > .atlas-roll > span,
+button:hover .atlas-roll > span {
+  transform: translateY(-100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Quote bubble for annotated keywords                                 */
+/* ------------------------------------------------------------------ */
+
+.atlas-bubble {
+  max-width: 86%;
+  padding: 0.7rem 0.95rem;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: color-mix(in oklch, var(--atlas-ink) 90%, transparent);
+  border: 1px solid var(--atlas-hair);
+  border-radius: 0.9rem 0.9rem 0.9rem 0.1rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Intro loading screen                                                */
+/* ------------------------------------------------------------------ */
+
+@keyframes atlasIntroWord {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.atlas-intro-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.atlas-intro-word > span {
+  display: inline-block;
+  animation: atlasIntroWord 0.7s var(--atlas-ease) both;
+  animation-delay: calc(var(--i) * 80ms + 100ms);
+}
+
+@keyframes atlasIntroBar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes atlasIntroOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.atlas-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  background: var(--atlas-bg);
+  animation: atlasIntroOut 0.55s ease 1.85s both;
+}
+
+/* ------------------------------------------------------------------ */
+/* Graph canvas & labels                                               */
+/* ------------------------------------------------------------------ */
+
+.atlas-label {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--atlas-label);
 }

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import "drawably/style.css";
+import "drawably/font.css";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex h-full flex-col bg-neutral-950 text-neutral-100">
+      <body className="flex h-full flex-col">
         {children}
       </body>
     </html>

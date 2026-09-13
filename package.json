@@ -11,6 +11,7 @@
     "fetch:all": "python3 scripts/fetch_capa.py --all && python3 scripts/build_graph.py"
   },
   "dependencies": {
+    "drawably": "^0.4.2",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",

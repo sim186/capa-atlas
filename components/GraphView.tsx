@@ -4,7 +4,14 @@ import dynamic from "next/dynamic";
 import type { ForceGraphMethods } from "react-force-graph-3d";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ConfigOptions } from "3d-force-graph";
-import { Object3D, Vector3 } from "three";
+import {
+  CanvasTexture,
+  Group as ThreeGroup,
+  SRGBColorSpace,
+  Sprite,
+  SpriteMaterial,
+  Vector3,
+} from "three";
 import {
   CSS2DObject,
   CSS2DRenderer,
@@ -17,7 +24,16 @@ import {
   Group,
   GROUP_LABEL,
 } from "@/lib/graph";
+import {
+  DrawablyBadge,
+  DrawablyButton,
+  DrawablyCard,
+  DrawablyInput,
+} from "drawably/react";
+import { CATEGORY_THEMES, MONO_THEME, type AtlasTheme } from "@/lib/theme";
 import { sound } from "@/lib/sound";
+import NodeDetail from "@/components/NodeDetail";
+import IntroOverlay from "@/components/IntroOverlay";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
@@ -31,34 +47,8 @@ const DEFAULT_VISIBLE: Group[] = ["album", "song", "figure", "concept"];
 // Labels fade out past this camera distance so the overview isn't a wall of
 // text — they only earn their keep once you've zoomed toward a cluster.
 const LABEL_MAX_DISTANCE = 260;
-const COLORS = {
-  background: "#2e00aa",
-  backgroundDeep: "#240083",
-  gold: "#ffdc91",
-  lavender: "#a88bd0",
-  muted: "#7554ad",
-  line: "rgba(255, 220, 145, 0.24)",
-};
-// "Colorize" mode retints the whole scene (bg + idle nodes + idle links) to
-// the selected node's category — not a per-node rainbow. Nothing selected
-// falls back to the base COLORS theme. Gold/lavender still win for
-// highlighted/hovered nodes regardless of mode, same as before.
-const CATEGORY_THEME: Record<Group, { bg: string; node: string; line: string }> = {
-  album: { bg: "#0b3d67", node: "#7fb8ea", line: "rgba(127, 184, 234, 0.22)" },
-  song: { bg: "#2e00aa", node: "#a88bd0", line: "rgba(168, 139, 208, 0.22)" },
-  keyword: { bg: "#5c1338", node: "#e58fb5", line: "rgba(229, 143, 181, 0.22)" },
-  figure: { bg: "#0f4a30", node: "#8fd6ab", line: "rgba(143, 214, 171, 0.22)" },
-  concept: { bg: "#5c3208", node: "#f0b273", line: "rgba(240, 178, 115, 0.22)" },
-};
-type ColorMode = "mono" | "group";
 
-function hexToRgba(hex: string, alpha: number) {
-  const value = parseInt(hex.slice(1), 16);
-  const r = (value >> 16) & 255;
-  const g = (value >> 8) & 255;
-  const b = value & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
+type ColorMode = "mono" | "group";
 
 function endpointId(endpoint: unknown) {
   if (typeof endpoint === "object" && endpoint !== null && "id" in endpoint) {
@@ -71,6 +61,11 @@ export default function GraphView({ data }: { data: GraphData }) {
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const searchRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<GraphNode | null>(null);
+  // The node rendered inside the detail panel. It survives slightly longer
+  // than `selected` so the panel can play its slide-out transition before
+  // unmounting.
+  const [panelNode, setPanelNode] = useState<GraphNode | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
   const [hovered, setHovered] = useState<GraphNode | null>(null);
   const [visibleGroups, setVisibleGroups] = useState<Set<Group>>(
     () => new Set(DEFAULT_VISIBLE)
@@ -82,11 +77,14 @@ export default function GraphView({ data }: { data: GraphData }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const prevHoveredId = useRef<string | null>(null);
   const labelDivsRef = useRef(new Map<string, { obj: CSS2DObject; div: HTMLDivElement }>());
-  // Read live inside the (identity-stable) tick loop below instead of as
-  // nodeThreeObject closure deps — react-force-graph-3d treats a changed
-  // nodeThreeObject reference as "rebuild every node", and on every
-  // hover/select it was orphaning the old CSS2DObjects (never removed from
-  // the scene), stacking duplicate labels on top of each other forever.
+  // Live-updated flat discs. One shared canvas texture; three shared
+  // materials (idle / hover / highlighted) swapped per node in the tick
+  // loop, so no per-node materials or rebuilds — and crucially, the
+  // nodeThreeObject callback below stays identity-stable (react-force-graph
+  // treats a changed reference as "rebuild every node", orphaning CSS2D
+  // labels forever).
+  const spriteRefs = useRef(new Map<string, { sprite: Sprite; base: number }>());
+  // Read live inside the tick loop instead of as node-object closure deps.
   const highlightedIdsRef = useRef<Set<string>>(new Set());
   const hoveredIdRef = useRef<string | null>(null);
 
@@ -116,6 +114,10 @@ export default function GraphView({ data }: { data: GraphData }) {
   const selectedNeighbors = useMemo(
     () => (selected ? neighbors.get(selected.id) ?? [] : []),
     [neighbors, selected]
+  );
+  const panelNodeNeighbors = useMemo(
+    () => (panelNode ? neighbors.get(panelNode.id) ?? [] : []),
+    [neighbors, panelNode]
   );
   const highlightedIds = useMemo(
     () => new Set([selected?.id, ...selectedNeighbors.map((node) => node.id)]),
@@ -151,6 +153,57 @@ export default function GraphView({ data }: { data: GraphData }) {
     return () => cancelAnimationFrame(frame);
   }, [fit]);
 
+  // ---- shared flat-disc texture + state materials --------------------
+  const discTexture = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const size = 128;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    // Solid fill; the outer ring is a lighter pass of the same tint, so a
+    // single white texture can be colorized per theme via material color.
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = size * 0.03;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size * 0.46, 0, Math.PI * 2);
+    ctx.stroke();
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    return texture;
+  }, []);
+
+  const materials = useMemo(() => {
+    if (!discTexture) return null;
+    const make = (opacity: number) =>
+      new SpriteMaterial({
+        map: discTexture,
+        transparent: true,
+        opacity,
+        depthWrite: false,
+      });
+    return { idle: make(0.55), hover: make(0.9), hi: make(1) };
+  }, [discTexture]);
+
+  // Colorize mode retints the whole scene (bg + idle nodes + idle links) to
+  // the selected node's category. Nothing selected falls back to mono.
+  const theme: AtlasTheme =
+    colorMode === "group" && selected
+      ? CATEGORY_THEMES[selected.group]
+      : MONO_THEME;
+
+  useEffect(() => {
+    if (!materials) return;
+    for (const material of Object.values(materials)) {
+      material.color.set(theme.node);
+    }
+  }, [materials, theme.node]);
+
   useEffect(() => {
     let raf = 0;
     const tmp = new Vector3();
@@ -158,8 +211,19 @@ export default function GraphView({ data }: { data: GraphData }) {
       raf = requestAnimationFrame(tick);
       const camera = fgRef.current?.camera();
       if (!camera) return;
+      const mats = materials;
+      if (!mats) return;
       const highlighted = highlightedIdsRef.current;
       const hoveredId = hoveredIdRef.current;
+      for (const [id, { sprite, base }] of spriteRefs.current.entries()) {
+        const state = highlighted.has(id) ? "hi" : id === hoveredId ? "hover" : "idle";
+        const material = mats[state];
+        if (sprite.material !== material) sprite.material = material;
+        const factor = state === "hi" ? 1.3 : 1;
+        if (sprite.scale.x !== base * factor) {
+          sprite.scale.set(base * factor, base * factor, 1);
+        }
+      }
       for (const [id, { obj, div }] of labelDivsRef.current.entries()) {
         obj.getWorldPosition(tmp);
         // CSS2DRenderer re-derives element.style.display from object.visible
@@ -168,18 +232,25 @@ export default function GraphView({ data }: { data: GraphData }) {
         obj.visible = camera.position.distanceTo(tmp) < LABEL_MAX_DISTANCE;
         div.style.color =
           highlighted.has(id) || id === hoveredId
-            ? COLORS.gold
-            : "rgba(255, 220, 145, 0.55)";
+            ? "var(--atlas-label-hi)"
+            : "var(--atlas-label)";
       }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [materials]);
+
+  const closeDetail = useCallback(() => {
+    play(sound.close);
+    setSelected(null);
+    // Keep the node mounted through the slide-out transition (~620ms).
+    closeTimerRef.current = window.setTimeout(() => setPanelNode(null), 700);
+  }, [play]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setSelected(null);
+        if (selected) closeDetail();
         setControlsOpen(false);
       }
       if (event.key === "/" && document.activeElement !== searchRef.current) {
@@ -190,7 +261,7 @@ export default function GraphView({ data }: { data: GraphData }) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [selected, closeDetail]);
 
   const stats = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -223,6 +294,11 @@ export default function GraphView({ data }: { data: GraphData }) {
   const focusNode = useCallback(
     (node: GraphNode) => {
       setSelected(node);
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      setPanelNode(node);
       setQuery("");
       setSearchFocused(false);
       setControlsOpen(false);
@@ -245,10 +321,21 @@ export default function GraphView({ data }: { data: GraphData }) {
         const x = node.x ?? 0;
         const y = node.y ?? 0;
         const z = node.z ?? 0;
-        const distance = Math.max(Math.hypot(x, y, z), 1);
-        const ratio = 1 + 110 / distance;
+
+        // Approach from wherever the camera already is, not from a vantage
+        // picked off the origin-to-node ray.
+        const camera = fgRef.current?.camera();
+        const curPos = camera
+          ? { x: camera.position.x, y: camera.position.y, z: camera.position.z }
+          : { x: 0, y: 0, z: 400 };
+        const dx = curPos.x - x;
+        const dy = curPos.y - y;
+        const dz = curPos.z - z;
+        const distance = Math.max(Math.hypot(dx, dy, dz), 1);
+        const standoff = 110;
+        const ratio = standoff / distance;
         fgRef.current?.cameraPosition(
-          { x: x * ratio, y: y * ratio, z: z * ratio },
+          { x: x + dx * ratio, y: y + dy * ratio, z: z + dz * ratio },
           { x, y, z },
           700
         );
@@ -264,10 +351,8 @@ export default function GraphView({ data }: { data: GraphData }) {
     prevHoveredId.current = id;
   }, [hovered, play]);
 
-  const title = selected?.fragment ?? selected?.label ?? "";
-
   // Node labels rendered permanently (via CSS2D overlay) instead of only on
-  // hover — at rest, a 4px raycast target with no visible anchor is
+  // hover — at rest, a raycast target with no visible anchor is
   // essentially unclickable inside a dense force-directed cluster.
   const css2dRenderer = useMemo(() => {
     if (typeof window === "undefined") return undefined;
@@ -283,37 +368,68 @@ export default function GraphView({ data }: { data: GraphData }) {
   );
 
   // Identity must stay stable across renders: react-force-graph-3d treats a
-  // changed nodeThreeObject reference as "throw away and rebuild every node's
-  // three-object", and its CSS2DObjects were being orphaned rather than
-  // disposed — every hover/select stacked a fresh duplicate label on top of
-  // the old ones. Color/visibility are instead driven live by the tick loop
-  // above via labelDivsRef.
-  const makeNodeThreeObject = useCallback((node: object) => {
-    const n = node as GraphNode;
-    if (!LABELED_GROUPS.has(n.group)) return new Object3D();
-    const div = document.createElement("div");
-    div.textContent = n.label;
-    div.style.fontFamily = "monospace";
-    div.style.fontSize = "5px";
-    div.style.padding = "1px 3px";
-    div.style.color = "rgba(255, 220, 145, 0.55)";
-    div.style.whiteSpace = "nowrap";
-    const obj = new CSS2DObject(div);
-    obj.position.set(0, -6, 0);
-    labelDivsRef.current.set(String(n.id), { obj, div });
-    return obj;
-  }, []);
+  // changed nodeThreeObject reference as "throw away and rebuild every
+  // node's three-object", orphaning CSS2DObjects (duplicated labels
+  // stacking forever). Colors/visibility are instead driven live by the
+  // tick loop via spriteRefs/labelDivsRef.
+  const makeNodeThreeObject = useCallback(
+    (node: object) => {
+      const n = node as GraphNode;
+      const group = new ThreeGroup();
 
-  // Colorize mode retints bg/idle-node/idle-link to the SELECTED node's
-  // category — mirrors the reference site, which recolors its whole scene
-  // per open entry rather than painting every node a different hue at once.
-  const activeTheme =
-    colorMode === "group" && selected ? CATEGORY_THEME[selected.group] : null;
+      // Flat disc, billboarded (a Sprite always faces the camera), tinted
+      // by the shared materials — no shading, no specular: flat editorial.
+      if (materials) {
+        const sprite = new Sprite(materials.idle);
+        // Visual radius follows the node weight, same spirit as the old
+        // cbrt(val) sizing of the shaded spheres.
+        const base = 9 + Math.cbrt(n.val ?? 2) * 5;
+        sprite.scale.set(base, base, 1);
+        sprite.userData.base = base;
+        group.add(sprite);
+        spriteRefs.current.set(String(n.id), { sprite, base });
+      }
+
+      if (LABELED_GROUPS.has(n.group)) {
+        const div = document.createElement("div");
+        div.className = "atlas-label";
+        div.textContent = n.label;
+        const obj = new CSS2DObject(div);
+        const base = 9 + Math.cbrt(n.val ?? 2) * 5;
+        obj.position.set(0, -(base / 2 + 5), 0);
+        group.add(obj);
+        labelDivsRef.current.set(String(n.id), { obj, div });
+      }
+
+      return group;
+    },
+    [materials]
+  );
+
+  const handleNavigate = useCallback(
+    (node: GraphNode) => {
+      focusNode(node);
+    },
+    [focusNode]
+  );
 
   return (
     <div
-      className="relative flex h-full overflow-hidden text-[#ffdc91] transition-colors duration-500"
-      style={{ backgroundColor: activeTheme?.bg ?? COLORS.background }}
+      className="relative flex h-full overflow-hidden transition-colors duration-700"
+      style={{
+        backgroundColor: theme.bg,
+        color: theme.ink,
+        "--atlas-bg": theme.bg,
+        "--atlas-ink": theme.ink,
+        "--atlas-node": theme.node,
+        "--atlas-label": `color-mix(in oklch, ${theme.ink} 55%, transparent)`,
+        "--atlas-label-hi": theme.ink,
+        // The pen strokes follow the theme ink/paper, so sketches recolour
+        // together with the canvas when the rgb mode kicks in.
+        "--drawably-stroke": theme.ink,
+        "--drawably-fill": theme.ink,
+        "--drawably-paper": theme.bg,
+      } as React.CSSProperties}
     >
       <div className="relative flex-1">
         <ForceGraph3D
@@ -322,82 +438,70 @@ export default function GraphView({ data }: { data: GraphData }) {
           width={undefined}
           height={undefined}
           // Trackball (the lib default) ships with staticMoving=false, i.e.
-          // built-in momentum on rotate/zoom — the camera keeps drifting for
-          // a dozen-odd frames after you stop scrolling/dragging. Orbit has
-          // no residual motion once input stops.
+          // built-in momentum on rotate/zoom. Orbit has no residual motion
+          // once input stops.
           controlType="orbit"
-          // 3d-force-graph's own DragControls (node dragging) is on by
-          // default and fights OrbitControls for the pointer — a click
-          // that starts a drag can crash OrbitControls.onPointerUp on a
-          // stale pointer id. It also contradicts our own "drag to rotate"
-          // hint: dragging a node used to move it, not the camera.
           enableNodeDrag={false}
           extraRenderers={extraRenderers}
-          backgroundColor={activeTheme?.bg ?? COLORS.background}
+          backgroundColor={theme.bg}
           showNavInfo={false}
-          nodeOpacity={0.88}
-          nodeRelSize={7}
-          nodeVal={(node) =>
-            highlightedIds.has(String(node.id)) ? (node.val ?? 2) * 1.35 : node.val ?? 2
-          }
-          nodeColor={(node) =>
-            highlightedIds.has(String(node.id))
-              ? COLORS.gold
-              : String(node.id) === hovered?.id
-                ? COLORS.lavender
-                : activeTheme?.node ?? COLORS.muted
-          }
-          // Permanent label under album/figure/concept nodes only — the
-          // orientation layers. Songs and keywords stay hover-only tooltips;
-          // labeling all ~3,600 keywords made the view unreadable.
-          nodeThreeObjectExtend={true}
+          nodeVal={(node) => node.val ?? 2}
           nodeThreeObject={makeNodeThreeObject}
-          nodeLabel={(node) =>
-            `${node.label}\n${GROUP_LABEL[node.group as Group] ?? node.group}` +
-            (node.song ? `\n— ${node.song}` : "")
-          }
+          nodeLabel={() => ""}
           linkColor={(link) =>
             highlightedIds.has(endpointId(link.source)) ||
             highlightedIds.has(endpointId(link.target))
-              ? COLORS.line
-              : activeTheme?.line ?? "rgba(168, 139, 208, 0.09)"
+              ? theme.lineHi
+              : theme.line
           }
           linkWidth={(link) =>
             highlightedIds.has(endpointId(link.source)) ||
             highlightedIds.has(endpointId(link.target))
               ? 0.8
-              : 0.2
+              : 0.25
           }
-          linkOpacity={0.8}
+          linkOpacity={0.9}
           onNodeClick={(node) => focusNode(node as GraphNode)}
           onNodeHover={(node) => setHovered(node as GraphNode | null)}
         />
 
-        <div className="absolute left-7 top-7 z-10 flex gap-3">
-          <button
+        {/* top-left controls */}
+        <div className="absolute left-6 top-6 z-10 flex gap-2.5">
+          <DrawablyButton
             onClick={() => {
               setControlsOpen(true);
               window.setTimeout(() => searchRef.current?.focus(), 0);
             }}
             aria-label="Cerca nel catalogo"
-            className="grid h-14 w-14 place-items-center rounded-full border border-[#ffdc91]/35 text-2xl text-[#ffdc91] transition hover:border-[#ffdc91] hover:bg-[#ffdc91]/10"
+            width={1.6}
+            className="h-12 w-12 p-0 font-mono text-lg"
           >
             ⌕
-          </button>
-          <button
+          </DrawablyButton>
+          <DrawablyButton
             onClick={() => setControlsOpen((open) => !open)}
             aria-label="Apri filtri"
             aria-expanded={controlsOpen}
-            className="grid h-14 w-14 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-xs uppercase tracking-widest text-[#ffdc91] transition hover:border-[#ffdc91] hover:bg-[#ffdc91]/10"
+            variant={controlsOpen ? "solid" : "outline"}
+            width={1.6}
+            className="h-12 w-12 p-0 font-mono text-[10px] uppercase tracking-[0.12em]"
           >
             index
-          </button>
+          </DrawablyButton>
         </div>
 
         {(controlsOpen || searchFocused) && (
-          <section className="absolute left-7 top-24 z-20 w-80 border border-[#ffdc91]/25 bg-[#240083]/90 p-5 font-mono text-xs text-[#ffdc91] shadow-[0_16px_50px_rgba(12,0,58,0.35)] backdrop-blur">
+          <DrawablyCard
+            paper={theme.bg}
+            className="atlas-reveal atlas-controls absolute left-6 top-20 z-20 w-80 p-5 font-mono text-xs"
+            style={{
+              "--i": 0,
+              boxShadow: "0 16px 50px -20px rgba(0, 0, 0, 0.35)",
+              animationDelay: "0ms",
+            } as React.CSSProperties}
+          >
             <div className="relative">
-              <input
+              <DrawablyInput
                 ref={searchRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -405,71 +509,95 @@ export default function GraphView({ data }: { data: GraphData }) {
                 onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
                 placeholder="cerca nell'atlante  /"
                 aria-label="Cerca nel catalogo"
-                className="w-full border-b border-[#ffdc91]/45 bg-transparent px-0 py-3 text-[#ffdc91] outline-none placeholder:text-[#ffdc91]/40 focus:border-[#ffdc91]"
+                width={1.6}
+                className="block w-full"
               />
               {searchFocused && matches.length > 0 && (
-                <ul className="absolute left-0 right-0 top-full z-30 max-h-64 overflow-y-auto border border-[#ffdc91]/25 bg-[#240083]">
-                  {matches.map((node) => (
-                    <li key={node.id}>
-                      <button
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => focusNode(node)}
-                        className="w-full border-b border-[#ffdc91]/10 px-3 py-3 text-left text-[#ffdc91] transition hover:bg-[#ffdc91] hover:text-[#2e00aa]"
-                      >
-                        {node.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <DrawablyCard
+                  paper={theme.bg}
+                  width={1.6}
+                  className="absolute left-0 right-0 top-full z-30 max-h-64 overflow-y-auto p-0"
+                >
+                  <ul>
+                    {matches.map((node) => (
+                      <li key={node.id}>
+                        <button
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => focusNode(node)}
+                          className="w-full border-b px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-[color-mix(in_oklch,var(--atlas-ink)_8%,transparent)]"
+                          style={{ borderColor: "var(--atlas-hair)", color: theme.ink }}
+                        >
+                          {node.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </DrawablyCard>
               )}
             </div>
 
-            <div className="mt-5 border-t border-[#ffdc91]/20 pt-4">
-              <p className="mb-3 uppercase tracking-[0.18em] text-[#ffdc91]/55">Mostra</p>
+            <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
+              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-55">
+                Mostra
+              </p>
               <div className="flex flex-wrap gap-2">
                 {ALL_GROUPS.map((group) => {
                   const enabled = visibleGroups.has(group);
                   return (
-                    <button
+                    <DrawablyButton
                       key={group}
                       onClick={() => toggleGroup(group)}
-                      className={`rounded-full border px-3 py-1.5 transition ${
-                        enabled
-                          ? "border-[#ffdc91]/70 bg-[#ffdc91]/10 text-[#ffdc91]"
-                          : "border-[#ffdc91]/20 text-[#ffdc91]/40"
-                      }`}
+                      variant={enabled ? "solid" : "outline"}
+                      width={1.4}
+                      className="px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                     >
                       {GROUP_LABEL[group]} · {stats[group] ?? 0}
-                    </button>
+                    </DrawablyButton>
                   );
                 })}
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between border-t border-[#ffdc91]/20 pt-4 text-[#ffdc91]/55">
-              <span>{visibleData.nodes.length} / {data.nodes.length} nodi</span>
-              <button onClick={fit} className="text-[#ffdc91] hover:underline">
+            <div
+              className="mt-5 flex items-center justify-between border-t pt-4 opacity-55"
+              style={{ borderColor: "var(--atlas-hair)" }}
+            >
+              <span>
+                {visibleData.nodes.length} / {data.nodes.length} nodi
+              </span>
+              <button onClick={fit} className="underline underline-offset-2 hover:opacity-70">
                 inquadra tutto
               </button>
             </div>
-          </section>
+          </DrawablyCard>
         )}
 
+        {/* hover pill */}
         {hovered && !selected && (
-          <div className="pointer-events-none absolute left-1/2 top-8 z-10 -translate-x-1/2 border border-[#ffdc91]/25 bg-[#240083]/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.16em] text-[#ffdc91]">
+          <DrawablyBadge
+            className="atlas-reveal atlas-hover-pill pointer-events-none absolute left-1/2 top-6 z-10 -translate-x-1/2 px-4 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.16em]"
+            style={{
+              "--i": 0,
+              background: theme.bg,
+              animationDelay: "0ms",
+            } as React.CSSProperties}
+          >
             {hovered.label}
-          </div>
+            {hovered.song ? ` — ${hovered.song}` : ""}
+          </DrawablyBadge>
         )}
 
-        <div className="pointer-events-none absolute bottom-8 left-8 z-10 font-mono">
-          <p className="text-lg font-semibold tracking-[-0.06em] text-[#ffdc91]">THE CAPA ATLAS</p>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[#ffdc91]/55">
+        {/* brand block */}
+        <div className="pointer-events-none absolute bottom-7 left-7 z-10">
+          <p className="atlas-pen text-2xl tracking-[-0.02em]">THE CAPA ATLAS</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] opacity-55">
             Trascina per ruotare · scorri per zoomare
           </p>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 gap-3">
-          <button
+        {/* bottom-center controls */}
+        <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-2.5">
+          <DrawablyButton
             onClick={() => {
               setColorMode((mode) => {
                 const next = mode === "mono" ? "group" : "mono";
@@ -481,118 +609,43 @@ export default function GraphView({ data }: { data: GraphData }) {
               colorMode === "group" ? "Passa a colore uniforme" : "Colora per categoria"
             }
             aria-pressed={colorMode === "group"}
-            className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-[10px] uppercase text-[#ffdc91] transition hover:border-[#ffdc91]"
+            variant={colorMode === "group" ? "solid" : "outline"}
+            width={1.4}
+            className="h-10 p-0 font-mono text-[10px] uppercase tracking-[0.1em]"
           >
             {colorMode === "group" ? "rgb" : "gry"}
-          </button>
-          <button
+          </DrawablyButton>
+          <DrawablyButton
             onClick={() => setMuted((value) => !value)}
             aria-label={muted ? "Attiva audio" : "Disattiva audio"}
-            className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 font-mono text-[10px] uppercase text-[#ffdc91] transition hover:border-[#ffdc91]"
+            variant={muted ? "outline" : "solid"}
+            width={1.4}
+            className="h-10 p-0 font-mono text-[10px] uppercase tracking-[0.1em]"
           >
             {muted ? "off" : "on"}
-          </button>
-          <button
+          </DrawablyButton>
+          <DrawablyButton
             onClick={fit}
             aria-label="Inquadra tutto il grafo"
-            className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 text-lg text-[#ffdc91] transition hover:border-[#ffdc91]"
+            width={1.6}
+            className="h-10 p-0 text-lg"
           >
             ⟲
-          </button>
+          </DrawablyButton>
         </div>
       </div>
 
-      <aside
-        style={{
-          backgroundColor: activeTheme
-            ? hexToRgba(activeTheme.bg, 0.88)
-            : hexToRgba(COLORS.backgroundDeep, 0.88),
-        }}
-        className={`absolute right-0 top-0 z-20 h-full w-[34%] min-w-[25rem] max-w-[42rem] border-l border-[#ffdc91]/20 p-9 text-[#ffdc91] shadow-[-18px_0_45px_rgba(12,0,58,0.2)] backdrop-blur-md transition-[transform,background-color] duration-500 ${
-          selected ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {selected && (
-          <div className="flex h-full flex-col overflow-y-auto pr-1">
-            <div className="flex items-center justify-between border-b border-[#ffdc91]/20 pb-6 font-mono text-xs uppercase tracking-[0.2em] text-[#ffdc91]/60">
-              <span>{GROUP_LABEL[selected.group] ?? selected.group}</span>
-              <button
-                onClick={() => {
-                  play(sound.close);
-                  setSelected(null);
-                }}
-                className="grid h-12 w-12 place-items-center rounded-full border border-[#ffdc91]/35 text-xl text-[#ffdc91] transition hover:border-[#ffdc91]"
-                aria-label="Chiudi pannello"
-              >
-                ×
-              </button>
-            </div>
+      {panelNode && (
+        <NodeDetail
+          node={panelNode}
+          neighbors={panelNodeNeighbors}
+          open={selected !== null}
+          onClose={closeDetail}
+          onNavigate={handleNavigate}
+        />
+      )}
 
-            <h2 className="mt-10 text-5xl font-semibold leading-[0.95] tracking-[-0.07em] text-[#ffdc91]">
-              {title}
-            </h2>
-
-            {selected.group === "song" && (
-              <dl className="mt-8 border-y border-[#ffdc91]/20 py-6 text-lg leading-relaxed text-[#ffdc91]/80">
-                {selected.album && <div>Album · {selected.album}</div>}
-                {selected.release && <div>Uscita · {selected.release}</div>}
-                {selected.url && (
-                  <a
-                    href={selected.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-block font-mono text-xs uppercase tracking-wider text-[#ffdc91] underline underline-offset-4 hover:no-underline"
-                  >
-                    Apri su Genius ↗
-                  </a>
-                )}
-              </dl>
-            )}
-
-            {selected.group === "keyword" && (
-              <>
-                <p className="mt-8 border-l-2 border-[#ffdc91] bg-[#ffdc91]/10 p-5 text-lg italic leading-relaxed text-[#ffdc91]">
-                  {selected.fragment}
-                </p>
-                {selected.annotation && (
-                  <p className="mt-6 text-lg leading-relaxed text-[#ffdc91]/85">
-                    {selected.annotation}
-                  </p>
-                )}
-                {selected.url && (
-                  <a
-                    href={selected.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-6 inline-block font-mono text-xs uppercase tracking-wider text-[#ffdc91] underline underline-offset-4 hover:no-underline"
-                  >
-                    Vedi annotazione su Genius ↗
-                  </a>
-                )}
-              </>
-            )}
-
-            <div className="mt-10 border-t border-[#ffdc91]/20 pt-7">
-              <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-[#ffdc91]/55">
-                Collegato a · {selectedNeighbors.length}
-              </p>
-              <ul className="flex flex-wrap gap-2">
-                {selectedNeighbors.slice(0, 40).map((node) => (
-                  <li key={node.id}>
-                    <button
-                      onClick={() => focusNode(node)}
-                      title={node.label}
-                      className="max-w-[16rem] truncate whitespace-nowrap rounded-full border border-[#ffdc91]/30 px-3 py-2 text-sm text-[#ffdc91] transition hover:bg-[#ffdc91] hover:text-[#2e00aa]"
-                    >
-                      {node.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      </aside>
+      <IntroOverlay />
     </div>
   );
 }
