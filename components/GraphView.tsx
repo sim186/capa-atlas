@@ -125,6 +125,19 @@ function prefersReducedMotion() {
 /** Camera flight duration, collapsed to an instant cut for reduced motion. */
 const flightMs = (ms: number) => (prefersReducedMotion() ? 0 : ms);
 
+function hash01(str: string) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 10000) / 10000;
+}
+
+function linkKey(link: { source?: unknown; target?: unknown }) {
+  return endpointId(link.source) + ">" + endpointId(link.target);
+}
+
 function endpointId(endpoint: unknown) {
   if (typeof endpoint === "object" && endpoint !== null && "id" in endpoint) {
     return String(endpoint.id);
@@ -300,6 +313,71 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
 
   const fit = useCallback(() => {
     fgRef.current?.zoomToFit(flightMs(650), 110);
+  }, []);
+
+  // Hair layout: `val` (degree-derived, 2–9) decides how far a node sits
+  // from the centre — hubs at the crown, minor nodes out on the rim. The
+  // target radius is lobed (curl-sized bumps) and squashed on y, so the cloud
+  // reads as a head of curls rather than a sphere. Custom force because
+  // 3d-force-graph's built-in radial force is per-node-static.
+  useEffect(() => {
+    const RADIUS_CORE = 30;
+    const RADIUS_RIM = 420;
+    const STRENGTH = 0.12;
+    const VAL_MIN = 2;
+    const VAL_MAX = 9;
+    const LOBE = 0.22; // curl bump amplitude, fraction of radius
+    const FLAT = 0.75; // y squash
+    const UNFURL_MS = 2600;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const fg = fgRef.current;
+      if (!fg && ++tries < 50) return;
+      window.clearInterval(timer);
+      if (!fg) return;
+      let nodes: GraphNode[] = [];
+      const t0 = performance.now();
+      const radial = (alpha: number) => {
+        // one-off entrance: curls start tight and spring open
+        const u = reduceMotionRef.current
+          ? 1
+          : Math.min(1, (performance.now() - t0) / UNFURL_MS);
+        const unfurl = 0.15 + 0.85 * (1 - (1 - u) ** 3);
+        for (const n of nodes) {
+          const t = Math.min(
+            1,
+            Math.max(0, ((n.val ?? VAL_MIN) - VAL_MIN) / (VAL_MAX - VAL_MIN))
+          );
+          const x = n.x ?? 0;
+          const y = n.y ?? 0;
+          const z = n.z ?? 0;
+          const r = Math.hypot(x, y / FLAT, z) || 1;
+          const lump =
+            1 +
+            (LOBE / 3) *
+              (Math.sin(5.3 * (x / r) + 0.7) +
+                Math.sin(4.7 * (y / FLAT / r) + 1.9) +
+                Math.sin(5.9 * (z / r) + 3.1));
+          // ease so only the top few land in the very centre
+          const target =
+            (RADIUS_CORE + (RADIUS_RIM - RADIUS_CORE) * (1 - t) ** 1.5) *
+            lump *
+            unfurl;
+          const k = ((target - r) / r) * STRENGTH * alpha;
+          const node = n as GraphNode & { vx?: number; vy?: number; vz?: number };
+          node.vx = (node.vx ?? 0) + x * k;
+          node.vy = (node.vy ?? 0) + y * k;
+          node.vz = (node.vz ?? 0) + z * k;
+        }
+      };
+      radial.initialize = (ns: GraphNode[]) => {
+        nodes = ns;
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (fg as any).d3Force("importance", radial);
+      fg.d3ReheatSimulation();
+    }, 100);
+    return () => window.clearInterval(timer);
   }, []);
 
   // Planet gizmo click: swing the camera to a top-down plan view over
@@ -918,7 +996,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               ? inkAlpha(theme.ink, 0.6)
               : focus
                 ? inkAlpha(theme.ink, 0.04)
-                : theme.line
+                : inkAlpha(theme.ink, 0.2)
           }
           linkWidth={(link) =>
             focus &&
@@ -927,7 +1005,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               ? 0.9
               : focus
                 ? 0.1
-                : 0.15
+                : 0.3
           }
           // The "flux" from the dictionary graph: bright dots streaming
           // along the selected node's edges. Count 0 hides the particle
@@ -942,6 +1020,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               ? 4
               : 0
           }
+          // Curls: every link bows out with a stable per-link twist, so the
+          // edge mesh reads as tangled ringlets instead of straight wires.
+          linkCurvature={(link) => 0.45 + 0.5 * hash01(linkKey(link))}
+          linkCurveRotation={(link) => Math.PI * 2 * hash01(linkKey(link) + "r")}
           linkDirectionalParticleWidth={3}
           linkDirectionalParticleSpeed={0.004}
           linkDirectionalParticleColor={() => theme.ink}

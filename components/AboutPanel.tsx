@@ -186,6 +186,10 @@ export default function AboutPanel({
           )}
 
           <p className="mt-5 text-xs leading-snug opacity-65">
+            Progetto fan non ufficiale, non affiliato a Caparezza.
+          </p>
+
+          <p className="mt-2 text-xs leading-snug opacity-65">
             Le copertine degli album appartengono ai rispettivi titolari e sono
             mostrate a scopo illustrativo, caricate da Cover Art Archive e iTunes.
           </p>
