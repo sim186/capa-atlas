@@ -147,6 +147,28 @@ export default function AboutPanel({
               </a>{" "}
               di Vasco Asturiano
             </li>
+            <li>
+              Autore ·{" "}
+              <a
+                href="https://github.com/sim186"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:opacity-70"
+              >
+                sim186
+              </a>
+            </li>
+            <li>
+              Codice ·{" "}
+              <a
+                href="https://github.com/sim186/capa-atlas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:opacity-70"
+              >
+                capa-atlas
+              </a>
+            </li>
           </ul>
 
           {portraits.length > 0 && (
