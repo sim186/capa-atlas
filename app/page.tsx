@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import GraphView from "@/components/GraphView";
-import type { GraphData } from "@/lib/graph";
+import type { GraphData, Portrait } from "@/lib/graph";
 
 export const dynamic = "force-static";
 
@@ -15,6 +15,15 @@ export default function Home() {
     data = JSON.parse(raw) as GraphData;
   } catch {
     // no data yet
+  }
+
+  let portraits: Portrait[] = [];
+  try {
+    portraits = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "data", "portraits.json"), "utf-8")
+    ) as Portrait[];
+  } catch {
+    // no portraits fetched: the atlas just renders without a backdrop
   }
 
   if (!data || data.nodes.length === 0) {
@@ -37,7 +46,7 @@ export default function Home() {
 
   return (
     <main className="h-full">
-      <GraphView data={data} />
+      <GraphView data={data} portraits={portraits} />
     </main>
   );
 }

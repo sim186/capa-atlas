@@ -37,13 +37,6 @@ export const CATEGORY_THEMES: Record<Group, AtlasTheme> = {
     line: "rgba(168, 139, 208, 0.16)",
     lineHi: "rgba(168, 139, 208, 0.55)",
   },
-  keyword: {
-    bg: "#5c1338",
-    ink: "#ffe9f2",
-    node: "#e58fb5",
-    line: "rgba(229, 143, 181, 0.16)",
-    lineHi: "rgba(229, 143, 181, 0.55)",
-  },
   figure: {
     bg: "#0f4a30",
     ink: "#e9f7ee",

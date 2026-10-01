@@ -5,6 +5,7 @@ import type { GraphNode } from "@/lib/graph";
 import { GROUP_LABEL, type Group } from "@/lib/graph";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
+import { useIsDesktop } from "@/lib/useIsDesktop";
 
 interface NodeDetailProps {
   node: GraphNode;
@@ -14,20 +15,6 @@ interface NodeDetailProps {
   onClose: () => void;
   /** Walk to a connected node. dir: 1 = forward, -1 = back. */
   onNavigate: (node: GraphNode, dir: 1 | -1) => void;
-}
-
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window === "undefined" ? true : window.matchMedia("(min-width: 800px)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 800px)");
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return isDesktop;
 }
 
 /**
@@ -43,9 +30,6 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
   // depend on them (e.g. disabling "back").
   const [history, setHistory] = useState<GraphNode[]>([]);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [dragging, setDragging] = useState(false);
-  const [dragY, setDragY] = useState(0);
-  const dragStartRef = useRef<number | null>(null);
   // Sketchy frame drawn around the desktop panel (the "notebook margin").
   const surfaceRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -90,25 +74,7 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [goNext, goPrev]);
 
-  // --- bottom-sheet drag-to-dismiss (mobile only) ---
-  const onGripPointerDown = (event: React.PointerEvent) => {
-    dragStartRef.current = event.clientY;
-    setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const onGripPointerMove = (event: React.PointerEvent) => {
-    if (dragStartRef.current === null) return;
-    setDragY(Math.max(0, event.clientY - dragStartRef.current));
-  };
-  const onGripPointerUp = () => {
-    if (dragStartRef.current === null) return;
-    dragStartRef.current = null;
-    setDragging(false);
-    setDragY(0);
-    if (dragY > 90) onClose();
-  };
-
-  const title = node.fragment && node.group === "keyword" ? node.fragment : node.label;
+  const title = node.label;
   const groupLabel = GROUP_LABEL[node.group as Group] ?? node.group;
 
   const body = (
@@ -118,7 +84,7 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
       style={{ "--dir": direction } as React.CSSProperties}
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="flex flex-1 flex-col px-7 pb-6 pt-6 sm:px-10 sm:pt-8">
+        <div className="flex flex-1 flex-col px-7 pb-6 pt-2 sm:px-10 sm:pt-8">
           <div
             className="atlas-reveal flex items-baseline justify-between gap-4 pr-12"
             style={{ "--i": 0 } as React.CSSProperties}
@@ -131,14 +97,46 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
             </span>
           </div>
 
-          <span className="atlas-rule mt-5" style={{ "--i": 1 } as React.CSSProperties} />
+          <span className="atlas-rule mt-3 sm:mt-5" style={{ "--i": 1 } as React.CSSProperties} />
 
           <h2
-            className="atlas-title-reveal mt-7 font-sans text-4xl font-bold leading-[0.95] tracking-[-0.035em] text-balance sm:text-5xl"
+            className="atlas-title-reveal mt-5 font-sans sm:mt-7 text-3xl font-bold leading-[0.98] tracking-[-0.035em] text-balance sm:text-5xl"
             style={{ color: "var(--atlas-ink)" }}
           >
             {title}
           </h2>
+
+
+          {node.cover && (
+            <figure className="atlas-reveal mt-6 flex items-end gap-3" style={{ "--i": 1.5 } as React.CSSProperties}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- third-party artwork, loaded from its source, never proxied or stored */}
+              <img
+                src={node.cover}
+                alt={`Copertina di ${node.group === "album" ? node.label : node.album}`}
+                width={112}
+                height={112}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                className="h-28 w-28 flex-none rounded-sm object-cover"
+                style={{ boxShadow: "0 10px 30px -14px rgba(0, 0, 0, 0.55)" }}
+                onError={(event) => (event.currentTarget.parentElement!.hidden = true)}
+              />
+              <figcaption className="text-[0.7rem] leading-snug text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+                {node.coverSourceUrl ? (
+                  <a
+                    href={node.coverSourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline decoration-1 underline-offset-4"
+                  >
+                    {node.coverSource}
+                  </a>
+                ) : (
+                  node.coverSource
+                )}
+              </figcaption>
+            </figure>
+          )}
 
           {node.group === "song" && (
             <div className="atlas-reveal mt-5" style={{ "--i": 2 } as React.CSSProperties}>
@@ -150,57 +148,89 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
                 )}
                 {node.release && <span className="block">Uscita · {node.release}</span>}
               </p>
-              {node.url && (
+              {node.description && (
+                <p className="mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                  {node.description}
+                </p>
+              )}
+              <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                {node.url && (
+                  <a
+                    href={node.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
+                  >
+                    Apri su Genius ↗
+                  </a>
+                )}
+                {node.descriptionUrl && (
+                  <a
+                    href={node.descriptionUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
+                  >
+                    Wikipedia ↗
+                  </a>
+                )}
+              </p>
+            </div>
+          )}
+
+          {node.group === "song" && node.quotes && node.quotes.length > 0 && (
+            <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
+              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+                Citazioni annotate · {node.quotes.length}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {node.quotes.map((quote, index) => (
+                  <li key={index}>
+                    <details className="group rounded-md border" style={{ borderColor: "var(--atlas-hair)" }}>
+                      <summary className="cursor-pointer list-none px-3 py-2.5 text-[0.86rem] font-medium leading-snug marker:content-none">
+                        {quote.fragment}
+                      </summary>
+                      <div className="border-t px-3 py-3" style={{ borderColor: "var(--atlas-hair)" }}>
+                        <p className="text-[0.85rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                          {quote.annotation}
+                        </p>
+                        {quote.url && (
+                          <a
+                            href={quote.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex font-mono text-[0.68rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
+                          >
+                            Vedi su Genius ↗
+                          </a>
+                        )}
+                      </div>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {node.group !== "song" && (
+            <div className="atlas-reveal mt-5" style={{ "--i": 2 } as React.CSSProperties}>
+              <p className="text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]">
+                {node.description ??
+                  `Un elemento dell'atlante Caparezza, collegato a ${neighbors.length} ${
+                    neighbors.length === 1 ? "nodo" : "nodi"
+                  }.`}
+              </p>
+              {node.descriptionUrl && (
                 <a
-                  href={node.url}
+                  href={node.descriptionUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-3 inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
                 >
-                  Apri su Genius ↗
+                  Wikipedia ↗
                 </a>
               )}
             </div>
-          )}
-
-          {node.group === "keyword" && (
-            <div
-              className="atlas-reveal mt-6 flex flex-col items-start gap-4"
-              style={{ "--i": 2 } as React.CSSProperties}
-            >
-              {node.annotation && (
-                <p className="text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
-                  {node.annotation}
-                </p>
-              )}
-              {node.song && (
-                <p className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[color-mix(in_oklch,var(--atlas-ink)_50%,transparent)]">
-                  — {node.song}
-                </p>
-              )}
-              {node.url && (
-                <a
-                  href={node.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
-                >
-                  Vedi annotazione su Genius ↗
-                </a>
-              )}
-            </div>
- )}
-
-          {node.group !== "song" && node.group !== "keyword" && (
-            <p
-              className="atlas-reveal mt-5 text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]"
-              style={{ "--i": 2 } as React.CSSProperties}
-            >
-              {node.fragment ??
-                `Un elemento dell'atlante Caparezza, collegato a ${neighbors.length} ${
-                  neighbors.length === 1 ? "nodo" : "nodi"
-                }.`}
-            </p>
           )}
 
           <span className="atlas-rule mt-8" style={{ "--i": 3 } as React.CSSProperties} />
@@ -215,7 +245,7 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
                   <DrawablyButton
                     onClick={() => openNeighbor(neighbor)}
                     width={1.4}
-                    className="atlas-pen max-w-[16rem] truncate px-3 py-1.5 text-[0.82rem]"
+                    className="atlas-pen atlas-pill max-w-[16rem] truncate text-[0.82rem]"
                     title={neighbor.label}
                   >
                     <span className="atlas-roll">
@@ -232,14 +262,14 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
 
       {/* pager */}
       <div
-        className="relative z-10 flex flex-none border-t"
+        className="atlas-pager relative z-10 flex flex-none border-t"
         style={{ borderColor: "var(--atlas-hair)", background: "var(--atlas-bg)" }}
       >
         <button
           onClick={goPrev}
           disabled={history.length === 0}
           data-dir="prev"
-          className="flex flex-1 items-center gap-3 px-7 py-4 text-left disabled:opacity-35 sm:px-10"
+          className="flex min-w-0 flex-1 items-center gap-3 px-5 py-4 text-left disabled:opacity-35 sm:px-10"
           style={{ color: "var(--atlas-ink)" }}
         >
           <DrawablyBadge
@@ -250,7 +280,7 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
             ←
           </DrawablyBadge>
           <span className="min-w-0 flex-1">
-            <span className="block text-[0.56rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_42%,transparent)]">
+            <span className="block text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_70%,transparent)]">
               Indietro
             </span>
           </span>
@@ -259,11 +289,11 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
           onClick={goNext}
           disabled={neighbors.length === 0}
           data-dir="next"
-          className="flex flex-1 items-center justify-end gap-3 border-l px-7 py-4 text-right disabled:opacity-35 sm:px-10"
+          className="flex min-w-0 flex-1 items-center justify-end gap-3 border-l px-5 py-4 text-right disabled:opacity-35 sm:px-10"
           style={{ borderColor: "var(--atlas-hair)", color: "var(--atlas-ink)" }}
         >
           <span className="min-w-0 flex-1">
-            <span className="block text-[0.56rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_42%,transparent)]">
+            <span className="block text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_70%,transparent)]">
               {neighbors.length > 0 ? groupLabel : "—"}
             </span>
             <span className="atlas-roll max-w-full truncate text-[0.82rem] font-medium">
@@ -294,7 +324,7 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
         <DrawablyButton
           onClick={onClose}
           width={1.4}
-          className="absolute right-6 top-6 z-10 h-10 w-10 p-0"
+          className="atlas-panel-close h-10 w-10 p-0"
           aria-label="Chiudi pannello"
         >
           <span className="atlas-close-mark" />
@@ -304,23 +334,19 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
     );
   }
 
+  // Phones get a full page, not a drawer over the 3D view: the map behind
+  // made the text hard to read and the whole thing confusing.
   return (
     <div
       className="atlas-sheet"
       data-open={open}
-      data-swiping={dragging}
-      style={dragY ? { transform: `translateY(${dragY}px)` } : undefined}
       role="dialog"
       aria-label="Dettaglio nodo"
     >
-      <div
-        className="atlas-grip"
-        onPointerDown={onGripPointerDown}
-        onPointerMove={onGripPointerMove}
-        onPointerUp={onGripPointerUp}
-        onPointerCancel={onGripPointerUp}
-      >
-        <span className="atlas-grip-bar" />
+      <div className="atlas-sheet-bar">
+        <button onClick={onClose} className="atlas-back">
+          <span aria-hidden>←</span> Mappa
+        </button>
       </div>
       {body}
     </div>

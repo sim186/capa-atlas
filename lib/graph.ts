@@ -1,4 +1,10 @@
-export type Group = "album" | "song" | "keyword" | "figure" | "concept";
+export type Group = "album" | "song" | "figure" | "concept";
+
+export interface Quote {
+  fragment: string;
+  annotation: string;
+  url?: string;
+}
 
 export interface GraphNode {
   id: string;
@@ -14,17 +20,39 @@ export interface GraphNode {
   release?: string;
   url?: string;
   art?: string;
-  // keyword
-  fragment?: string;
-  annotation?: string;
-  song?: string;
-  tools?: Record<string, unknown>;
+  // album + song: short synopsis pulled from Wikipedia (data/wikipedia.json)
+  description?: string;
+  descriptionUrl?: string;
+  // album + songs on it: cover art URL (never stored locally, loaded from the
+  // source) and where it came from, from data/covers.json
+  cover?: string;
+  coverSource?: string;
+  coverSourceUrl?: string;
+  // annotated citations from the song, shown in the sidebar rather than as
+  // their own graph nodes (there were 3600+ of them — mostly noise at the
+  // graph level, but still worth surfacing once you're reading a song).
+  quotes?: Quote[];
+}
+
+/** A freely licensed photo of Caparezza from Wikimedia Commons (data/portraits.json). */
+export interface Portrait {
+  file: string;
+  title: string;
+  page: string;
+  author: string;
+  license: string;
+  licenseUrl?: string | null;
+  width: number;
+  height: number;
 }
 
 export interface GraphLink {
   source: string;
   target: string;
-  kind: "on" | "contains" | "refers";
+  kind: "on" | "refers" | "co_occurs";
+  // how many quotes support this link (refers) or how many songs a
+  // concept/figure pair share (co_occurs). Absent for "on".
+  weight?: number;
 }
 
 export interface GraphData {
@@ -35,7 +63,6 @@ export interface GraphData {
 export const GROUP_LABEL: Record<Group, string> = {
   album: "Album",
   song: "Canzone",
-  keyword: "Keyword (citazione annotata)",
   figure: "Figura / alter-ego",
   concept: "Tema",
 };
@@ -45,13 +72,22 @@ export const GROUP_LABEL: Record<Group, string> = {
 export const GROUP_COLOR: Record<Group, string> = {
   album: "#6b3fd1",
   song: "#005dcc",
-  keyword: "#e02776",
   figure: "#cf302d",
   concept: "#168b57",
 };
 
 export const LINK_COLOR: Record<GraphLink["kind"], string> = {
   on: "rgba(107,63,209,0.24)",
-  contains: "rgba(224,39,118,0.18)",
   refers: "rgba(22,139,87,0.25)",
+  co_occurs: "rgba(207,48,45,0.2)",
+};
+
+// One silhouette per category (100×100 viewBox), shared by the WebGL sprites,
+// the legend and the result list, so colour is never the only cue: album =
+// diamond, song = disc, figure = triangle, concept = square.
+export const GROUP_SHAPE: Record<Group, string> = {
+  album: "M50 6L94 50L50 94L6 50Z",
+  song: "M50 14A36 36 0 1 1 49.99 14Z",
+  figure: "M50 10L93 86H7Z",
+  concept: "M17 17H83V83H17Z",
 };

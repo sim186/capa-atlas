@@ -4,16 +4,28 @@ Capa Atlas — Phase 2: build public/graphData.json from data/raw/referents.json
 
 Node types:
   album    (group: album)    one per album
-  song     (group: song)     one per song
-  keyword  (group: keyword)  one per unique fragment (the Genius highlight)
+  song     (group: song)     one per song, carries its quotes inline (not
+                              rendered as graph nodes — see `quotes` on the
+                              song node, shown in the sidebar instead)
   figure / concept           from data/concepts.json classification
 
 Links:
-  song → album     (kind: on)
-  song → keyword   (kind: contains)
-  keyword → figure/concept  (kind: refers)   [first-match classification]
+  song → album              (kind: on)
+  song → figure/concept     (kind: refers)   [collapsed from per-quote
+                             classification: one edge per song per concept,
+                             weighted by how many quotes support it]
+  figure/concept → figure/concept  (kind: co_occurs)  [two concepts/figures
+                             that surface in the same song — densifies the
+                             thematic layer now that quotes aren't nodes]
 
 Also writes data/keywords.csv for spreadsheet-friendly browsing.
+
+Album/song nodes additionally carry a `description`/`descriptionUrl` when
+data/wikipedia.json (built by scripts/fetch_wikipedia.py) has an entry for
+that node id — most tracks won't, only singles/albums with their own page.
+Album nodes (and the songs on them) also carry `cover`/`coverSource`/
+`coverSourceUrl` from data/covers.json (scripts/fetch_images.py) — URLs only,
+the artwork itself is never stored in the repo.
 """
 
 import csv
@@ -26,6 +38,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw", "referents.jsonl")
 CONCEPTS = os.path.join(ROOT, "data", "concepts.json")
 REFERENT_OVERRIDES_PATH = os.path.join(ROOT, "data", "referent_overrides.json")
+WIKIPEDIA_PATH = os.path.join(ROOT, "data", "wikipedia.json")
+COVERS_PATH = os.path.join(ROOT, "data", "covers.json")
 OUT = os.path.join(ROOT, "public", "graphData.json")
 CSV_OUT = os.path.join(ROOT, "data", "keywords.csv")
 
@@ -36,6 +50,24 @@ def load_referents():
         sys.exit(1)
     with open(RAW, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
+
+
+def load_wikipedia() -> dict[str, dict]:
+    """node id -> {title, extract, url, lang}, built by fetch_wikipedia.py.
+    Missing entries (and entries fetch_wikipedia.py couldn't confirm) are {}."""
+    if not os.path.exists(WIKIPEDIA_PATH):
+        return {}
+    with open(WIKIPEDIA_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_covers() -> dict[str, dict]:
+    """album node id -> {url, source, sourceUrl}, built by fetch_images.py.
+    Albums without a known cover are {}."""
+    if not os.path.exists(COVERS_PATH):
+        return {}
+    with open(COVERS_PATH, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def load_referent_overrides() -> dict[int, list[str]]:
@@ -86,13 +118,16 @@ def main() -> int:
     concepts = json.load(open(CONCEPTS, encoding="utf-8"))["concepts"]
     concept_by_id = {c["id"]: c for c in concepts}
     referent_overrides = load_referent_overrides()
+    wikipedia = load_wikipedia()
+    covers = load_covers()
 
     albums: dict[str, dict] = {}
     songs: dict[str, dict] = {}
-    keywords: dict[str, dict] = {}
     concepts_final: dict[str, dict] = {}
     links: list[dict] = []
     seen_kw: set[tuple[str, str]] = set()  # (songId, fragment) de-dup
+    # song_id -> concept_node_id -> quote count (for weighting + co-occurrence)
+    song_concepts: dict[str, dict[str, int]] = {}
 
     for r in refs:
         song_id, fragment = f"song:{r['songId']}", r["fragment"]
@@ -106,7 +141,7 @@ def main() -> int:
             song = {
                 "id": song_id, "label": r["songTitle"], "group": "song", "val": 1,
                 "album": album_name, "release": r.get("songRelease"),
-                "url": r.get("songUrl"), "art": r.get("songArt"),
+                "url": r.get("songUrl"), "art": r.get("songArt"), "quotes": [],
             }
             songs[song_id] = song
             links.append({"source": song["id"], "target": album["id"], "kind": "on"})
@@ -115,28 +150,67 @@ def main() -> int:
         if key in seen_kw:
             continue
         seen_kw.add(key)
-        kw_id = f"kw:{r['referentId']}"
-        keyword = keywords.setdefault(kw_id, {
-            "id": kw_id, "label": clean(fragment), "group": "keyword", "val": 1,
-            "fragment": fragment, "annotation": r["annotation"],
-            "url": r.get("referentUrl"), "song": r["songTitle"],
+        song["quotes"].append({
+            "fragment": clean(fragment, 200),
+            "annotation": r["annotation"],
+            "url": r.get("referentUrl"),
         })
-        links.append({"source": song["id"], "target": keyword["id"], "kind": "contains"})
 
         cids = classify(fragment, r["annotation"], r["songTitle"], concepts)
         for cid in referent_overrides.get(r["referentId"], []):
             if cid not in cids:
                 cids.append(cid)
+        song_cids = song_concepts.setdefault(song_id, {})
         for cid in cids:
             c = concept_by_id[cid]
             node_id = f"concept:{cid}"
             concepts_final.setdefault(node_id, {
                 "id": node_id, "label": c["label"], "group": c["group"], "val": 1,
             })
-            links.append({"source": keyword["id"], "target": node_id, "kind": "refers"})
+            song_cids[node_id] = song_cids.get(node_id, 0) + 1
 
-    nodes = (list(albums.values()) + list(songs.values())
-             + list(keywords.values()) + list(concepts_final.values()))
+    # Collapse per-quote classification into one song → concept/figure edge
+    # per pair, weighted by how many quotes in that song support it, plus a
+    # co-occurrence edge between every pair of concepts/figures sharing a
+    # song — this is the density the graph loses now that quotes aren't
+    # individual nodes threading songs to themes.
+    # Pairs that co-occur in fewer than CO_OCCURS_MIN songs are pruned:
+    # single-song pairs are mostly noise, and popular themes otherwise form
+    # near-cliques that turn the thematic layer into an unreadable hairball.
+    co_occurs_min = int(os.environ.get("CO_OCCURS_MIN", "3"))
+    co_occurs: dict[tuple[str, str], int] = {}
+    for song_id, cids in song_concepts.items():
+        for node_id, weight in cids.items():
+            links.append({
+                "source": song_id, "target": node_id, "kind": "refers", "weight": weight,
+            })
+        ordered = sorted(cids)
+        for i, a in enumerate(ordered):
+            for b in ordered[i + 1:]:
+                pair = (a, b)
+                co_occurs[pair] = co_occurs.get(pair, 0) + 1
+    for (a, b), weight in co_occurs.items():
+        if weight < co_occurs_min:
+            continue
+        links.append({"source": a, "target": b, "kind": "co_occurs", "weight": weight})
+
+    for node in list(albums.values()) + list(songs.values()):
+        entry = wikipedia.get(node["id"])
+        if entry:
+            node["description"] = entry["extract"]
+            if entry.get("url"):
+                node["descriptionUrl"] = entry["url"]
+
+    for node in list(albums.values()) + list(songs.values()):
+        album_id = node["id"] if node["group"] == "album" else f"album:{node.get('album')}"
+        cover = covers.get(album_id)
+        if cover:
+            node["cover"] = cover["url"]
+            node["coverSource"] = cover["source"]
+            if cover.get("sourceUrl"):
+                node["coverSourceUrl"] = cover["sourceUrl"]
+
+    nodes = list(albums.values()) + list(songs.values()) + list(concepts_final.values())
 
     # degree-based sizing
     degree: dict[str, int] = {}
