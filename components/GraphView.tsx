@@ -145,6 +145,9 @@ function endpointId(endpoint: unknown) {
   return String(endpoint);
 }
 
+// Engine ticks the scene must draw before the intro curtain lifts.
+const WARM_TICKS = 40;
+
 // How long each portrait holds the map before the next fades in.
 const IDLE_PORTRAIT_MS = 9000;
 
@@ -206,6 +209,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // has lifted, gone at the first touch (or after a while if never touched).
   const [hintOn, setHintOn] = useState(false);
   const hintDoneRef = useRef(false);
+  // Real loading progress for the intro: the dynamic chunk mounted, then a few
+  // dozen engine ticks drawn (shaders compiled, textures uploaded, frames
+  // flowing). The unfurl entrance waits for the curtain, so it's actually seen.
+  const [sceneMounted, setSceneMounted] = useState(false);
+  const [warmTicks, setWarmTicks] = useState(0);
+  const tickCountRef = useRef(0);
+  const revealedRef = useRef(false);
+  const sceneReady = sceneMounted && warmTicks >= WARM_TICKS;
+  const introProgress = sceneMounted ? 0.4 + 0.6 * Math.min(1, warmTicks / WARM_TICKS) : 0.12;
   useEffect(() => {
     if (isDesktop) return;
     const show = window.setTimeout(() => {
@@ -394,12 +406,16 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       window.clearInterval(timer);
       if (!fg) return;
       let nodes: GraphNode[] = [];
-      const t0 = performance.now();
+      let t0 = 0;
       const radial = (alpha: number) => {
-        // one-off entrance: curls start tight and spring open
+        // one-off entrance: curls start tight and spring open. It holds
+        // tight until the intro curtain lifts, so the visitor sees it happen.
+        if (revealedRef.current && t0 === 0) t0 = performance.now();
         const u = reduceMotionRef.current
           ? 1
-          : Math.min(1, (performance.now() - t0) / UNFURL_MS);
+          : t0 === 0
+            ? 0
+            : Math.min(1, (performance.now() - t0) / UNFURL_MS);
         const unfurl = 0.15 + 0.85 * (1 - (1 - u) ** 3);
         for (const n of nodes) {
           const t = Math.min(
@@ -475,6 +491,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     const ready = window.setInterval(() => {
       if (!fgRef.current) return;
       window.clearInterval(ready);
+      setSceneMounted(true);
       fit();
       if (!phone) return;
       follow = window.setInterval(() => {
@@ -1135,6 +1152,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             };
             return !hidden(link.source) && !hidden(link.target);
           }}
+          onEngineTick={() => {
+            const n = ++tickCountRef.current;
+            if (n <= WARM_TICKS && n % 8 === 0) setWarmTicks(n);
+          }}
           onEngineStop={() => {
             layoutDoneRef.current = true;
           }}
@@ -1559,7 +1580,14 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         />
       )}
 
-      <IntroOverlay portrait={portraits[0]} />
+      <IntroOverlay
+        portrait={portraits[0]}
+        progress={introProgress}
+        ready={sceneReady}
+        onReveal={() => {
+          revealedRef.current = true;
+        }}
+      />
     </div>
   );
 }

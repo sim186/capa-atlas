@@ -438,7 +438,17 @@ button:hover .atlas-roll > span {
   justify-content: center;
   gap: 1.6rem;
   background: var(--atlas-bg);
-  animation: atlasIntroOut 0.55s ease 1.85s both;
+}
+
+/* the curtain lifts when the scene is ready (IntroOverlay), not on a timer */
+.atlas-intro[data-leaving="true"] {
+  animation: atlasIntroOut 0.55s ease both;
+  pointer-events: none;
+}
+
+.atlas-intro-bar {
+  transform-origin: left center;
+  transition: transform 0.5s var(--atlas-ease);
 }
 
 /* ------------------------------------------------------------------ */
