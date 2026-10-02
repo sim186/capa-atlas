@@ -148,6 +148,13 @@ function endpointId(endpoint: unknown) {
 // How long each portrait holds the map before the next fades in.
 const IDLE_PORTRAIT_MS = 9000;
 
+// How many of the selected node's edges get the bright, animated treatment.
+// Phone idle map: only the strongest theme-to-theme links (of 314).
+const PHONE_MIN_CO_WEIGHT = 6;
+
+const PRIMARY_LINKS_DESKTOP = 20;
+const PRIMARY_LINKS_PHONE = 10;
+
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
 
 export default function GraphView({ data, portraits }: { data: GraphData; portraits: Portrait[] }) {
@@ -276,7 +283,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           // Phone default hides the songs, which are the only hubs for `on` and
           // `refers`: without the theme-to-theme layer the map would have no edges.
           (visibleKinds.has(link.kind) ||
-            (ghostSongs && link.kind === "co_occurs")) &&
+            (ghostSongs && link.kind === "co_occurs" && (link.weight ?? 0) >= PHONE_MIN_CO_WEIGHT)) &&
           ids.has(String(link.source)) &&
           ids.has(String(link.target))
       )
@@ -320,6 +327,20 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     }
     return set;
   }, [selected, selectedNeighbors]);
+  // A hub like "Consumismo" has ~100 edges; lighting them all is a hairball
+  // (and ~400 flowing particles). Rank the selected node's edges by weight and
+  // let only the strongest few be "primary": bright, thick and animated. The
+  // rest of its edges stay as faint context, everything else is hidden.
+  const primaryLinks = useMemo(() => {
+    if (!selected) return null;
+    const touching = visibleData.links.filter(
+      (link) =>
+        endpointId(link.source) === selected.id || endpointId(link.target) === selected.id
+    );
+    touching.sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1));
+    return new Set(touching.slice(0, isDesktop ? PRIMARY_LINKS_DESKTOP : PRIMARY_LINKS_PHONE).map(linkKey));
+  }, [selected, visibleData.links, isDesktop]);
+
   useEffect(() => {
     songLabelsRef.current = isDesktop || highlightedIds.size <= PHONE_MAX_SONG_LABELS;
   }, [isDesktop, highlightedIds]);
@@ -1065,38 +1086,25 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           nodeVal={(node) => node.val ?? 2}
           nodeThreeObject={makeNodeThreeObject}
           nodeLabel={() => ""}
-          linkColor={(link) =>
-            focus &&
-            (endpointId(link.source) === focus.self ||
-              endpointId(link.target) === focus.self)
-              ? inkAlpha(theme.ink, 0.6)
-              : focus
-                ? inkAlpha(theme.ink, 0.04)
-                : inkAlpha(theme.ink, isDesktop ? 0.2 : 0.28)
-          }
-          linkWidth={(link) =>
-            focus &&
-            (endpointId(link.source) === focus.self ||
-              endpointId(link.target) === focus.self)
-              ? 0.9
-              : focus
-                ? 0.1
-                : isDesktop
-                  ? 0.3
-                  : 0.4
-          }
+          linkColor={(link) => {
+            if (!focus) return inkAlpha(theme.ink, isDesktop ? 0.2 : 0.22);
+            return primaryLinks?.has(linkKey(link))
+              ? inkAlpha(theme.ink, 0.7)
+              : inkAlpha(theme.ink, 0.12);
+          }}
+          linkWidth={(link) => {
+            if (!focus) return isDesktop ? 0.3 : 0.25;
+            // stronger links read thicker: weight 1 is a hairline, 6+ is bold
+            return primaryLinks?.has(linkKey(link))
+              ? 0.5 + 0.12 * Math.min(link.weight ?? 1, 6)
+              : 0.15;
+          }}
           // The "flux" from the dictionary graph: bright dots streaming
-          // along the selected node's edges. Count 0 hides the particle
-          // layer per link; the accessor re-runs on every render, which is
-          // what lets selection changes propagate.
+          // along the selected node's primary edges only. Count 0 hides the
+          // particle layer per link; the accessor re-runs on every render,
+          // which is what lets selection changes propagate.
           linkDirectionalParticles={(link) =>
-            !reduceMotion &&
-            isDesktop &&
-            focus &&
-            (endpointId(link.source) === focus.self ||
-              endpointId(link.target) === focus.self)
-              ? 4
-              : 0
+            !reduceMotion && isDesktop && focus && primaryLinks?.has(linkKey(link)) ? 3 : 0
           }
           // Curls: every link bows out with a stable per-link twist, so the
           // edge mesh reads as tangled ringlets instead of straight wires.
@@ -1111,6 +1119,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           linkDirectionalParticleColor={() => theme.ink}
           linkOpacity={0.9}
           linkVisibility={(link) => {
+            // Selected: only that node's own edges are drawn at all. Hidden
+            // links cost nothing, unlike merely transparent ones.
+            if (
+              focus &&
+              endpointId(link.source) !== focus.self &&
+              endpointId(link.target) !== focus.self
+            ) {
+              return false;
+            }
             if (!ghostSongs) return true;
             const hidden = (end: unknown) => {
               const id = endpointId(end);
