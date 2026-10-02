@@ -145,6 +145,9 @@ function endpointId(endpoint: unknown) {
   return String(endpoint);
 }
 
+// How long each portrait holds the map before the next fades in.
+const IDLE_PORTRAIT_MS = 9000;
+
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
 
 export default function GraphView({ data, portraits }: { data: GraphData; portraits: Portrait[] }) {
@@ -153,7 +156,19 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const [selected, setSelected] = useState<GraphNode | null>(null);
   // Each category retints the page; the portrait changes with it so the
   // backdrop shifts together with the colour instead of sitting apart.
-  const backdropIndex = selected ? GROUP_ORDER.indexOf(selected.group) + 1 : 0;
+  // Idle, the portraits take turns on the map so all of them get seen — on a
+  // phone the detail sheet hides the map, so selection alone never shows them.
+  const [idlePortrait, setIdlePortrait] = useState(0);
+  const backdropIndex = selected ? GROUP_ORDER.indexOf(selected.group) + 1 : idlePortrait;
+  const idleRotates = selected === null && portraits.length > 1;
+  useEffect(() => {
+    if (!idleRotates || prefersReducedMotion()) return;
+    const timer = window.setInterval(
+      () => setIdlePortrait((i) => (i + 1) % portraits.length),
+      IDLE_PORTRAIT_MS
+    );
+    return () => window.clearInterval(timer);
+  }, [idleRotates, portraits.length]);
   // The node rendered inside the detail panel. It survives slightly longer
   // than `selected` so the panel can play its slide-out transition before
   // unmounting.
@@ -1484,6 +1499,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           open={selected !== null}
           onClose={closeDetail}
           onNavigate={handleNavigate}
+          portraits={portraits}
+          portraitIndex={backdropIndex}
         />
       )}
 

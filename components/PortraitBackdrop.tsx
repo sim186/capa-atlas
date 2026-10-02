@@ -21,16 +21,19 @@ export default function PortraitBackdrop({
   portraits,
   index,
   strength = 1,
+  className = "",
 }: {
   portraits: Portrait[];
   index: number;
   /** Multiplier on the resting opacity (the intro turns it up). */
   strength?: number;
+  /** Extra class, e.g. `atlas-plate` to reuse the stack as a header band. */
+  className?: string;
 }) {
   if (portraits.length === 0) return null;
   const active = index % portraits.length;
   return (
-    <div className="atlas-backdrop" aria-hidden="true" style={{ "--strength": strength } as React.CSSProperties}>
+    <div className={`atlas-backdrop ${className}`.trim()} aria-hidden="true" style={{ "--strength": strength } as React.CSSProperties}>
       {portraits.map((portrait, i) => (
         // eslint-disable-next-line @next/next/no-img-element -- decorative, pre-sized static file
         <img

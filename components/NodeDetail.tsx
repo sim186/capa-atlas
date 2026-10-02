@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BASE_PATH } from "@/lib/basePath";
-import type { GraphNode, Quote } from "@/lib/graph";
+import PortraitBackdrop from "@/components/PortraitBackdrop";
+import type { GraphNode, Portrait, Quote } from "@/lib/graph";
 import { GROUP_LABEL, type Group } from "@/lib/graph";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
@@ -16,6 +17,9 @@ interface NodeDetailProps {
   onClose: () => void;
   /** Walk to a connected node. dir: 1 = forward, -1 = back. */
   onNavigate: (node: GraphNode, dir: 1 | -1) => void;
+  /** Phone sheet only: the portraits and which one this node's category wears. */
+  portraits?: Portrait[];
+  portraitIndex?: number;
 }
 
 const quoteCache = new Map<string, Quote[]>();
@@ -48,7 +52,7 @@ function useQuotes(node: GraphNode): Quote[] | null {
  * meta row, hairline rule, title, body blocks and pager each fade up at
  * ~52ms intervals with a soft overshoot ease.
  */
-export default function NodeDetail({ node, neighbors, open, onClose, onNavigate }: NodeDetailProps) {
+export default function NodeDetail({ node, neighbors, open, onClose, onNavigate, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
   const quotes = useQuotes(node);
   // Back-history for the pager and the direction of the last hop, used to
@@ -109,8 +113,14 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
       className="atlas-slide flex min-h-0 flex-1 flex-col"
       style={{ "--dir": direction } as React.CSSProperties}
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="flex flex-1 flex-col px-7 pb-6 pt-2 sm:px-10 sm:pt-8">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {/* The sheet covers the whole map on a phone, so the backdrop portraits
+            would never be seen there: bring this category's portrait into the
+            sheet as a masthead that fades into the page and scrolls away. */}
+        {!isDesktop && portraits.length > 0 && (
+          <PortraitBackdrop portraits={portraits} index={portraitIndex} className="atlas-plate" />
+        )}
+        <div className="relative flex flex-1 flex-col px-7 pb-6 pt-2 sm:px-10 sm:pt-8">
           <div
             className="atlas-reveal flex items-baseline justify-between gap-4 pr-12"
             style={{ "--i": 0 } as React.CSSProperties}

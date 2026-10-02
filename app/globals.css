@@ -519,7 +519,7 @@ button:hover .atlas-roll > span {
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--atlas-ink);
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 /* ------------------------------------------------------------------ */
@@ -637,6 +637,24 @@ a:focus-visible {
   .atlas-backdrop img[data-active="true"] {
     opacity: calc(0.42 * var(--strength));
   }
+}
+
+/* Masthead variant inside the phone detail sheet: the portrait runs the width
+   of the page behind the title and dissolves downward into the paper. */
+.atlas-backdrop.atlas-plate {
+  inset: 0 0 auto 0;
+  height: 18rem;
+}
+
+.atlas-plate img {
+  inset: 0;
+  width: 100%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 25%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 25%, transparent 100%);
+}
+
+.atlas-plate img[data-active="true"] {
+  opacity: 0.5;
 }
 
 @media (prefers-reduced-motion: reduce) {
