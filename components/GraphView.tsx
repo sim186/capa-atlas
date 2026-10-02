@@ -401,15 +401,45 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     );
   }, [play]);
 
+  // Initial framing. ForceGraph3D is a dynamic() import, so on a slow device
+  // (or a cold dev server) it mounts well after this effect: timers started
+  // here would find fgRef empty and the camera would stay at its default,
+  // far too close. Poll until the graph exists, then frame it.
+  //
+  // Phones don't open on the whole cloud: framing it means fitting the far
+  // rim nodes, so ~200 nodes end up as specks in 390px. Instead the camera
+  // follows the core (themes and figures) while the layout is still unfurling,
+  // until the visitor first touches the scene or the layout stops; they drag
+  // out to the rest themselves. (Double tap still frames everything.)
+  const userMovedRef = useRef(false);
+  const layoutDoneRef = useRef(false);
   useEffect(() => {
-    const frame = requestAnimationFrame(fit);
-    // On a phone the layout is still settling after the first frame, so the
-    // first fit lands off-center: frame it again once it has calmed down.
-    const settle =
-      window.innerWidth < 800 ? window.setTimeout(fit, 1800) : undefined;
+    const phone = window.innerWidth < 800;
+    let follow: number | undefined;
+    const startedAt = performance.now();
+    const ready = window.setInterval(() => {
+      if (!fgRef.current) return;
+      window.clearInterval(ready);
+      fit();
+      if (!phone) return;
+      follow = window.setInterval(() => {
+        if (
+          userMovedRef.current ||
+          layoutDoneRef.current ||
+          performance.now() - startedAt > 30000
+        ) {
+          window.clearInterval(follow);
+          return;
+        }
+        fgRef.current?.zoomToFit(flightMs(700), 150, (node) => {
+          const group = (node as GraphNode).group;
+          return group === "concept" || group === "figure";
+        });
+      }, 800);
+    }, 100);
     return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(settle);
+      window.clearInterval(ready);
+      window.clearInterval(follow);
     };
   }, [fit]);
 
@@ -953,6 +983,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         className="relative isolate flex-1"
         onPointerDown={(event) => {
           if ((event.target as HTMLElement).closest("nav, button, a, input")) return;
+          userMovedRef.current = true;
           dragStartRef.current = { x: event.clientX, y: event.clientY };
         }}
         onPointerMove={(event) => {
@@ -1050,6 +1081,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               return groupById.get(id) === "song" && !highlightedIds.has(id);
             };
             return !hidden(link.source) && !hidden(link.target);
+          }}
+          onEngineStop={() => {
+            layoutDoneRef.current = true;
           }}
           onNodeClick={(node) => focusNode(node as GraphNode)}
           // Clicking empty space is the gesture for "deselect" — the only
