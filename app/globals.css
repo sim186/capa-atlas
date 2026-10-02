@@ -639,6 +639,55 @@ a:focus-visible {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* First-run hint (phone)                                              */
+/* ------------------------------------------------------------------ */
+
+.atlas-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 8.25rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  text-align: center;
+  color: var(--atlas-ink);
+  /* paper-coloured halo so the words hold up over nodes, edges and the photo */
+  text-shadow: 0 0 0.7rem var(--atlas-bg), 0 0 0.25rem var(--atlas-bg);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0.5rem);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s var(--atlas-ease);
+}
+
+.atlas-hint[data-on="true"] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* the one moment of motion: the arrows sweep across twice, like a finger would */
+.atlas-hint[data-on="true"] .atlas-hint-arrows {
+  animation: atlasHintSweep 1.8s var(--atlas-ease) 0.6s 2;
+}
+
+@keyframes atlasHintSweep {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-14px); }
+  70% { transform: translateX(14px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-hint[data-on="true"] .atlas-hint-arrows {
+    animation: none;
+  }
+}
+
 /* Masthead variant inside the phone detail sheet: the portrait runs the width
    of the page behind the title and dissolves downward into the paper. */
 .atlas-backdrop.atlas-plate {

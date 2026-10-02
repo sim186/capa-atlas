@@ -195,6 +195,25 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const reduceMotionRef = useRef(reduceMotion);
   const viewOffsetRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const isDesktop = useIsDesktop();
+  // Phone-only first-run hint that the scene is draggable. Shown once the intro
+  // has lifted, gone at the first touch (or after a while if never touched).
+  const [hintOn, setHintOn] = useState(false);
+  const hintDoneRef = useRef(false);
+  useEffect(() => {
+    if (isDesktop) return;
+    const show = window.setTimeout(() => {
+      if (!hintDoneRef.current) setHintOn(true);
+    }, 2800);
+    const hide = window.setTimeout(() => {
+      hintDoneRef.current = true;
+      setHintOn(false);
+    }, 14000);
+    return () => {
+      window.clearTimeout(show);
+      window.clearTimeout(hide);
+    };
+  }, [isDesktop]);
+
   // Phones start with the sparse layers (albums, themes, figures). Songs stay
   // hidden — kept in the layout, so nothing shifts — until they belong to the
   // selected node's neighborhood, or the visitor turns them all on.
@@ -999,6 +1018,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         onPointerDown={(event) => {
           if ((event.target as HTMLElement).closest("nav, button, a, input")) return;
           userMovedRef.current = true;
+          hintDoneRef.current = true;
+          setHintOn(false);
           dragStartRef.current = { x: event.clientX, y: event.clientY };
         }}
         onPointerMove={(event) => {
@@ -1347,6 +1368,23 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             Esc per tornare.
           </p>
         </div>
+        )}
+
+        {/* phone: say the scene can be dragged, once, then get out of the way */}
+        {!isDesktop && (
+          <div className="atlas-hint" data-on={hintOn && !selected} aria-hidden="true">
+            <svg width="64" height="22" viewBox="0 0 64 22" fill="none" className="atlas-hint-arrows">
+              <path
+                d="M6 11C20 7 44 15 58 11M6 11l8-6M6 11l8 6M58 11l-8-6M58 11l-8 6"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <p className="atlas-pen text-xl leading-none">Trascina per esplorare</p>
+            <p className="text-xs opacity-65">pizzica per zoomare, tocca un nodo per aprirlo</p>
+          </div>
         )}
 
         {/* legend: always on, doubles as the quick category filter */}
