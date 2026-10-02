@@ -39,7 +39,7 @@ import {
 } from "drawably/react";
 import { CATEGORY_THEMES, MONO_THEME, type AtlasTheme } from "@/lib/theme";
 import { sound } from "@/lib/sound";
-import { useIsDesktop } from "@/lib/useIsDesktop";
+import { useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
 import NodeDetail from "@/components/NodeDetail";
 import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
@@ -209,6 +209,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const reduceMotionRef = useRef(reduceMotion);
   const viewOffsetRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const isDesktop = useIsDesktop();
+  // Layout (side panel vs sheet) follows the width; the rendering profile also
+  // follows the input. A tablet is wide enough for the desktop layout but is a
+  // touch device with a much weaker GPU, so it gets the lite profile too:
+  // songs hidden until focused, straight edges, no particles, no antialiasing.
+  const isTouch = useIsTouch();
+  const lite = !isDesktop || isTouch;
   // Phone-only first-run hint that the scene is draggable. Shown once the intro
   // has lifted, gone at the first touch (or after a while if never touched).
   const [hintOn, setHintOn] = useState(false);
@@ -223,7 +229,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const sceneReady = sceneMounted && warmTicks >= WARM_TICKS;
   const introProgress = sceneMounted ? 0.4 + 0.6 * Math.min(1, warmTicks / WARM_TICKS) : 0.12;
   useEffect(() => {
-    if (isDesktop) return;
+    if (!lite) return;
     const show = window.setTimeout(() => {
       if (!hintDoneRef.current) setHintOn(true);
     }, 2800);
@@ -235,18 +241,18 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       window.clearTimeout(show);
       window.clearTimeout(hide);
     };
-  }, [isDesktop]);
+  }, [lite]);
 
   // Phones start with the sparse layers (albums, themes, figures). Songs stay
   // hidden — kept in the layout, so nothing shifts — until they belong to the
   // selected node's neighborhood, or the visitor turns them all on.
   const [songMode, setSongMode] = useState<"focus" | "all">("focus");
-  const ghostSongs = !isDesktop && songMode === "focus";
+  const ghostSongs = lite && songMode === "focus";
   const ghostSongsRef = useRef(ghostSongs);
-  const isDesktopRef = useRef(isDesktop);
+  const liteRef = useRef(lite);
   useEffect(() => {
-    isDesktopRef.current = isDesktop;
-  }, [isDesktop]);
+    liteRef.current = lite;
+  }, [lite]);
   // A phone can't hold dozens of song names around one hub: past this many
   // lit nodes only the dots show, and the sheet lists them instead.
   const songLabelsRef = useRef(true);
@@ -354,12 +360,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         endpointId(link.source) === selected.id || endpointId(link.target) === selected.id
     );
     touching.sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1));
-    return new Set(touching.slice(0, isDesktop ? PRIMARY_LINKS_DESKTOP : PRIMARY_LINKS_PHONE).map(linkKey));
-  }, [selected, visibleData.links, isDesktop]);
+    return new Set(touching.slice(0, lite ? PRIMARY_LINKS_PHONE : PRIMARY_LINKS_DESKTOP).map(linkKey));
+  }, [selected, visibleData.links, lite]);
 
   useEffect(() => {
-    songLabelsRef.current = isDesktop || highlightedIds.size <= PHONE_MAX_SONG_LABELS;
-  }, [isDesktop, highlightedIds]);
+    songLabelsRef.current = !lite || highlightedIds.size <= PHONE_MAX_SONG_LABELS;
+  }, [lite, highlightedIds]);
   // The selection owns the focus context — and nothing else. Hovering is
   // deliberately inert (just the label pill + tick sound): highlighting,
   // dimming and the edge flux only ever follow the clicked node, so the
@@ -489,7 +495,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const userMovedRef = useRef(false);
   const layoutDoneRef = useRef(false);
   useEffect(() => {
-    const phone = window.innerWidth < 800;
+    const phone = liteRef.current;
     let follow: number | undefined;
     const startedAt = performance.now();
     const ready = window.setInterval(() => {
@@ -537,9 +543,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         return;
       }
       controls.minDistance = MIN_CAMERA_DISTANCE;
-      // Phones report a pixel ratio of 3; two is plenty for flat discs.
-      if (window.innerWidth < 800) {
-        fgRef.current?.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      // Phones report a pixel ratio of 3; two is plenty for flat discs. A
+      // tablet (pixel ratio 2, but a big screen) fills far more pixels per
+      // frame, so it gets 1.5.
+      if (liteRef.current) {
+        const cap = window.innerWidth < 800 ? 2 : 1.5;
+        fgRef.current?.renderer().setPixelRatio(Math.min(window.devicePixelRatio, cap));
       }
       controls.minPolarAngle = MIN_POLAR;
       controls.maxPolarAngle = MAX_POLAR;
@@ -718,7 +727,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       // Pass 2: however close the camera is, only the nearest few unlit
       // labels may show — dozens of names in one view are unreadable soup.
       candidates.sort((a, b) => a.distance - b.distance);
-      const budget = isDesktopRef.current ? MAX_AMBIENT_LABELS : PHONE_MAX_AMBIENT_LABELS;
+      const budget = liteRef.current ? PHONE_MAX_AMBIENT_LABELS : MAX_AMBIENT_LABELS;
       for (let i = 0; i < candidates.length && i < budget; i++) candidates[i].obj.visible = true;
       // Planet gizmo: the satellite sits on the orbit ring at the camera's
       // azimuth, and the mono readout shows the heading in degrees.
@@ -818,9 +827,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // On a phone the Canzone layer is "revealed on selection" vs "all", not a
   // hard filter; every other group is a plain show/hide.
   const layerOn = (group: Group) =>
-    group === "song" && !isDesktop ? songMode === "all" : visibleGroups.has(group);
+    group === "song" && lite ? songMode === "all" : visibleGroups.has(group);
   const toggleLayer = (group: Group) => {
-    if (group === "song" && !isDesktop) {
+    if (group === "song" && lite) {
       play(() => sound.toggle(songMode === "focus"));
       setSongMode((mode) => (mode === "focus" ? "all" : "focus"));
     } else {
@@ -995,7 +1004,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // every disc, pick the nearest visible node within a finger's reach.
   // Only a tap with nothing near it deselects (or, twice, re-frames all).
   const handleBackgroundClick = (event: MouseEvent) => {
-    if (!isDesktop) {
+    if (lite) {
       const fg = fgRef.current;
       const dom = fg?.renderer().domElement;
       if (fg && dom) {
@@ -1104,7 +1113,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           // Read once at creation. At a pixel ratio of 2 MSAA buys little and
           // costs a lot of fill-rate on phone GPUs.
           rendererConfig={{
-            antialias: typeof window === "undefined" || window.innerWidth >= 800,
+            antialias:
+              typeof window === "undefined" ||
+              (window.innerWidth >= 800 && !window.matchMedia("(pointer: coarse)").matches),
             powerPreference: "high-performance",
           }}
           // transparent clear colour: the stage div paints the theme colour and
@@ -1115,13 +1126,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           nodeThreeObject={makeNodeThreeObject}
           nodeLabel={() => ""}
           linkColor={(link) => {
-            if (!focus) return inkAlpha(theme.ink, isDesktop ? 0.2 : 0.22);
+            if (!focus) return inkAlpha(theme.ink, lite ? 0.22 : 0.2);
             return primaryLinks?.has(linkKey(link))
               ? inkAlpha(theme.ink, 0.7)
               : inkAlpha(theme.ink, 0.12);
           }}
           linkWidth={(link) => {
-            if (!focus) return isDesktop ? 0.3 : 0.25;
+            if (!focus) return lite ? 0.25 : 0.3;
             // stronger links read thicker: weight 1 is a hairline, 6+ is bold
             return primaryLinks?.has(linkKey(link))
               ? 0.5 + 0.12 * Math.min(link.weight ?? 1, 6)
@@ -1132,15 +1143,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           // particle layer per link; the accessor re-runs on every render,
           // which is what lets selection changes propagate.
           linkDirectionalParticles={(link) =>
-            !reduceMotion && isDesktop && focus && primaryLinks?.has(linkKey(link)) ? 3 : 0
+            !reduceMotion && !lite && focus && primaryLinks?.has(linkKey(link)) ? 3 : 0
           }
           // Curls: every link bows out with a stable per-link twist, so the
           // edge mesh reads as tangled ringlets instead of straight wires.
           // Phones skip the curls: each curved edge is its own tube mesh (30
           // segments), and with ~1200 edges that is the main GPU/CPU cost.
           // Straight edges with a coarse cross-section are far cheaper.
-          linkResolution={isDesktop ? 6 : 3}
-          linkCurvature={(link) => (isDesktop ? 0.45 + 0.5 * hash01(linkKey(link)) : 0)}
+          linkResolution={lite ? 3 : 6}
+          linkCurvature={(link) => (lite ? 0 : 0.45 + 0.5 * hash01(linkKey(link)))}
           linkCurveRotation={(link) => Math.PI * 2 * hash01(linkKey(link) + "r")}
           linkDirectionalParticleWidth={3}
           linkDirectionalParticleSpeed={0.004}
@@ -1333,7 +1344,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                   </div>
                 </div>
 
-                {!isDesktop && (
+                {lite && (
                   <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
                     <p className="mb-3 text-[0.7rem] font-bold opacity-70">Vista</p>
                     <div className="flex flex-wrap gap-2">
@@ -1420,7 +1431,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         )}
 
         {/* phone: say the scene can be dragged, once, then get out of the way */}
-        {!isDesktop && (
+        {lite && (
           <div className="atlas-hint" data-on={hintOn && !selected} aria-hidden="true">
             <svg width="64" height="22" viewBox="0 0 64 22" fill="none" className="atlas-hint-arrows">
               <path
