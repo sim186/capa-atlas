@@ -164,6 +164,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const searchRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<GraphNode | null>(null);
+  // Phones: the detail sheet covers the map, so it opens and closes on its own.
+  // Closing it keeps `selected`, so the highlighted neighbourhood stays on the
+  // map to be looked at; a tap on empty space (or the chip's ✕) clears it.
+  const [sheetOpen, setSheetOpen] = useState(false);
   // Each category retints the page; the portrait changes with it so the
   // backdrop shifts together with the colour instead of sitting apart.
   // Idle, the portraits take turns on the map so all of them get seen — on a
@@ -738,9 +742,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     return () => cancelAnimationFrame(raf);
   }, [materials]);
 
+  const closeSheet = useCallback(() => {
+    play(sound.close);
+    setSheetOpen(false);
+  }, [play]);
+
   const closeDetail = useCallback(() => {
     play(sound.close);
     setSelected(null);
+    setSheetOpen(false);
     // Keep the node mounted through the slide-out transition (~620ms).
     closeTimerRef.current = window.setTimeout(() => setPanelNode(null), 700);
   }, [play]);
@@ -843,6 +853,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const focusNode = useCallback(
     (node: GraphNode) => {
       setSelected(node);
+      setSheetOpen(true);
       if (closeTimerRef.current !== null) {
         window.clearTimeout(closeTimerRef.current);
         closeTimerRef.current = null;
@@ -1520,8 +1531,37 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         </div>
         )}
 
+        {/* phone: with the sheet closed the selection stays on the map. This
+            chip names it, reopens the sheet, or clears the selection. */}
+        {!isDesktop && selected && !sheetOpen && (
+          <div
+            className="absolute left-1/2 top-4 z-20 flex max-w-[calc(100%-6rem)] -translate-x-1/2 items-center gap-2"
+            style={{ background: "transparent" }}
+          >
+            <DrawablyButton
+              onClick={() => {
+                play(sound.select);
+                setSheetOpen(true);
+              }}
+              width={1.4}
+              className="atlas-ink-btn h-10 min-w-0 px-4 text-sm"
+              aria-label={`Apri il dettaglio di ${selected.label}`}
+            >
+              <span className="block max-w-[11rem] truncate">{selected.label}</span>
+            </DrawablyButton>
+            <DrawablyButton
+              onClick={closeDetail}
+              width={1.4}
+              className="atlas-ink-btn h-10 w-10 flex-none p-0"
+              aria-label="Deseleziona"
+            >
+              <span className="atlas-close-mark" />
+            </DrawablyButton>
+          </div>
+        )}
+
         {/* phone tab bar: map · list · search. The sheet has its own pager. */}
-        {!isDesktop && !selected && (
+        {!isDesktop && !sheetOpen && (
           <nav
             aria-label="Navigazione"
             className="absolute inset-x-0 bottom-0 z-10 flex border-t transition-transform duration-300"
@@ -1572,8 +1612,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         <NodeDetail
           node={panelNode}
           neighbors={panelNodeNeighbors}
-          open={selected !== null}
-          onClose={closeDetail}
+          open={isDesktop ? selected !== null : sheetOpen}
+          onClose={isDesktop ? closeDetail : closeSheet}
           onNavigate={handleNavigate}
           portraits={portraits}
           portraitIndex={backdropIndex}
