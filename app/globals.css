@@ -632,9 +632,11 @@ a:focus-visible {
 @media (max-width: 767px) {
   .atlas-backdrop img {
     width: 100%;
+    -webkit-mask-image: linear-gradient(to left, #000 35%, rgba(0, 0, 0, 0.25) 100%);
+    mask-image: linear-gradient(to left, #000 35%, rgba(0, 0, 0, 0.25) 100%);
   }
   .atlas-backdrop img[data-active="true"] {
-    opacity: calc(0.2 * var(--strength));
+    opacity: calc(0.42 * var(--strength));
   }
 }
 

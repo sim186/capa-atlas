@@ -239,7 +239,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     const links = data.links
       .filter(
         (link) =>
-          visibleKinds.has(link.kind) &&
+          // Phone default hides the songs, which are the only hubs for `on` and
+          // `refers`: without the theme-to-theme layer the map would have no edges.
+          (visibleKinds.has(link.kind) ||
+            (ghostSongs && link.kind === "co_occurs")) &&
           ids.has(String(link.source)) &&
           ids.has(String(link.target))
       )
@@ -247,7 +250,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       // must not mutate the source dataset or subsequent filtering loses links.
       .map((link) => ({ ...link }));
     return { nodes, links };
-  }, [data, forcedId, visibleGroups, visibleKinds]);
+  }, [data, forcedId, visibleGroups, visibleKinds, ghostSongs]);
 
   // Adjacency is computed from the *visible* links only, so hover/selection
   // never lights up a relationship the visitor can't actually see.
@@ -996,7 +999,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               ? inkAlpha(theme.ink, 0.6)
               : focus
                 ? inkAlpha(theme.ink, 0.04)
-                : inkAlpha(theme.ink, 0.2)
+                : inkAlpha(theme.ink, isDesktop ? 0.2 : 0.28)
           }
           linkWidth={(link) =>
             focus &&
@@ -1005,7 +1008,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               ? 0.9
               : focus
                 ? 0.1
-                : 0.3
+                : isDesktop
+                  ? 0.3
+                  : 0.4
           }
           // The "flux" from the dictionary graph: bright dots streaming
           // along the selected node's edges. Count 0 hides the particle

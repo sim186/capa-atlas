@@ -1,60 +1,135 @@
-# The Capa Atlas 🗺️
+<div align="center">
 
-Interactive knowledge graph of **Caparezza's** lyrics annotations (the "keywords"):
-every Genius highlight per song, its annotation, and the recurring themes/figures
-that connect songs and albums across his discography.
+<img src="public/og.jpg" alt="The Capa Atlas" width="720" />
 
-**Data source:** the public Genius web endpoints (no API token needed — verified
-working). Lyrics pages embed the referent ids; `genius.com/api/referents/{id}`
-returns the highlighted fragment + annotation.
+# The Capa Atlas
+
+**Il grafo 3D delle annotazioni di Caparezza.**
+Ogni keyword sottolineata su Genius è un rimando, una citazione, un personaggio:
+qui diventano una rete navigabile che attraversa tutti gli album.
+
+[**→ Apri l'atlas**](https://sim186.github.io/capa-atlas/)
+
+![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=fff)
+![Deploy](https://github.com/sim186/capa-atlas/actions/workflows/deploy.yml/badge.svg)
+
+</div>
+
+> Progetto fan **non ufficiale**, non affiliato a Caparezza.
+
+## Perché
+
+I testi di Caparezza funzionano come ipertesti. Vincent van Gogh risponde al
+consumismo, la rinascita torna di disco in disco, i personaggi si richiamano da
+un album all'altro. Leggere le note canzone per canzone nasconde la rete:
+l'atlas la mostra intera.
+
+L'idea nasce dall'[AI Coding Dictionary](https://aicodingdictionary.com) di
+[Matt Pocock](https://github.com/mattpocock/dictionary-of-ai-coding), un
+dizionario navigabile come grafo di concetti, spostato dalle parole dell'AI a
+quelle di un cantautore.
+
+## Cosa c'è dentro
+
+| | |
+|---|---|
+| **254** | canzoni |
+| **71** | album |
+| **28** | concetti (Consumismo e massificazione, Cattolicesimo, Rinascita…) |
+| **13** | figure (Vincent van Gogh, alter ego…) |
+| **1485** | collegamenti |
+
+### Nodi
+
+- `album`: copertina e descrizione da Wikipedia
+- `song`: le citazioni annotate stanno dentro il nodo e si leggono nel pannello laterale
+- `concept`: tema ricorrente, classificato dalle keyword
+- `figure`: persona o personaggio citato
+
+### Collegamenti
+
+- `on`: canzone → album
+- `refers`: canzone → concetto/figura (un arco per canzone, pesato sul numero di citazioni)
+- `co_occurs`: concetto/figura ↔ concetto/figura che compaiono nella stessa canzone
+
+Il layout raggruppa i nodi in cluster; sullo sfondo c'è un ritratto di Caparezza
+da Wikimedia Commons (crediti nel pannello *Info*).
 
 ## Quick start
 
 ```bash
 npm install
-npm run fetch      # harvest seed songs (5) → data/raw/referents.jsonl + public/graphData.json
 npm run dev        # http://localhost:3000
 ```
 
-Full crawl (all ~367 tracks on the artist page — a few minutes):
+`public/graphData.json` è già versionato: per sfogliare l'atlas non serve
+scaricare nulla. Nello sviluppo locale il token PostHog è obbligatorio, copia
+la variabile da un tuo progetto in `.env.local`:
 
 ```bash
-npm run fetch:all
+NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_...
 ```
 
-## Pipeline
+## Pipeline dati
 
-| Phase | Script | Output |
+Richiede Python 3, nessuna API key: usa gli endpoint web pubblici di Genius.
+
+```bash
+npm run fetch        # solo le canzoni seed → referents.jsonl + graphData.json
+npm run fetch:all    # intera discografia (qualche minuto, riprendibile)
+```
+
+| Fase | Script | Output |
 |---|---|---|
-| 1. Harvest | `scripts/fetch_capa.py` | `data/raw/referents.jsonl` (resumable) |
-| 2. Graph | `scripts/build_graph.py` | `public/graphData.json`, `data/keywords.csv` |
-| 3. Frontend | Next.js App Router + `react-force-graph-2d` | interactive force graph |
+| 1. Raccolta | `scripts/fetch_capa.py` | `data/raw/referents.jsonl` |
+| 2. Wikipedia | `scripts/fetch_wikipedia.py` | `data/wikipedia.json` |
+| 3. Immagini | `scripts/fetch_images.py` | `data/covers.json`, `data/portraits.json`, `public/portraits/` |
+| 4. Grafo | `scripts/build_graph.py` | `public/graphData.json`, `data/keywords.csv` |
 
-### Node types
+Come funziona la raccolta:
 
-`album` (gray) · `song` (blue) · `keyword` (amber — the highlighted fragment +
-annotation) · `figure` (red — Vincent van Gogh, alter-ego…) · `concept` (green —
-"Consumismo e massificazione", "Cattolicesimo", "Rinascita"…)
+1. `genius.com/api/artists/24580/songs?per_page=50&page=N` → elenco canzoni
+2. la pagina di ogni testo contiene `window.__PRELOADED_STATE__` → id dei referent e metadati
+3. `genius.com/api/referents/{id}?text_format=plain` → frammento evidenziato + annotazione
 
-### Links
+Pausa di 0,35 s tra le richieste, User-Agent da browser (Genius risponde 403 a
+quelli di default), ripresa tramite `data/raw/done_ids.json`.
 
-- `on` — song → album
-- `contains` — song → keyword
-- `refers` — keyword → figure/concept (regex classification, `data/concepts.json`)
+Le keyword si collegano a concetti e figure tramite regole in
+`data/concepts.json`; correzioni manuali in `data/referent_overrides.json`.
+Le copertine **non** sono scaricate né committate: si salva solo l'URL
+(Cover Art Archive / iTunes) e il browser le carica da lì.
 
-## How it works (data side)
+## Stack
 
-1. `genius.com/api/artists/24580/songs?per_page=50&page=N` → song list
-2. each song's lyrics page → `window.__PRELOADED_STATE__` → referent ids +
-   song/album metadata
-3. `genius.com/api/referents/{id}?text_format=plain` → `fragment` + annotation body
+- [Next.js](https://nextjs.org) (App Router, export statico) · React 19 · TypeScript · Tailwind 4
+- [react-force-graph-3d](https://github.com/vasturiano/react-force-graph) di Vasco Asturiano
+- [drawably](https://github.com/Axyl101/drawably) per l'interfaccia disegnata a mano
+- [PostHog](https://posthog.com) per analytics ed error tracking
 
-Polite 0.35s delay, browser User-Agent (Genius 403s on default UAs), resume via
-`data/raw/done_ids.json`.
+## Deploy
 
-## Next steps
+Ogni push su `main` esegue `.github/workflows/deploy.yml`: build statica con
+`GH_PAGES=true` (base path `/capa-atlas`) e pubblicazione su GitHub Pages.
 
-- [ ] full crawl + dedupe (features, live/remix versions appear on the artist page)
-- [ ] LLM-assisted keyword → concept classification (replace regex seeds in `data/concepts.json`)
-- [ ] album nodes → album cover art, year badges
-- [ ] swap `react-force-graph-2d` → `react-force-graph-3d` (same API, `ssr: false`)
+```bash
+GH_PAGES=true npm run build   # genera out/
+```
+
+## Roadmap
+
+- [ ] crawl completo con deduplica (feat, versioni live e remix compaiono nella pagina artista)
+- [ ] classificazione keyword → concetto assistita da LLM, al posto delle regole regex
+- [ ] badge anno sugli album
+
+## Crediti
+
+- Dati: annotazioni pubbliche di [Genius](https://genius.com/artists/Caparezza)
+- Foto di sfondo: Giuseppe Milo e paPisc, da Wikimedia Commons (CC BY / CC BY-SA, dettagli nell'app)
+- Copertine: Cover Art Archive / MusicBrainz
+- Autore: [sim186](https://github.com/sim186)
+
+I testi e le annotazioni appartengono ai rispettivi autori. Questo progetto non
+li ridistribuisce a scopo commerciale.
