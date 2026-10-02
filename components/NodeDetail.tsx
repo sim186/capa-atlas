@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { GraphNode } from "@/lib/graph";
+import { BASE_PATH } from "@/lib/basePath";
+import type { GraphNode, Quote } from "@/lib/graph";
 import { GROUP_LABEL, type Group } from "@/lib/graph";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
@@ -17,6 +18,30 @@ interface NodeDetailProps {
   onNavigate: (node: GraphNode, dir: 1 | -1) => void;
 }
 
+const quoteCache = new Map<string, Quote[]>();
+
+/** A song's annotated quotes, fetched on first open. null while loading. */
+function useQuotes(node: GraphNode): Quote[] | null {
+  const file = node.quotesFile;
+  const [loaded, setLoaded] = useState<{ file: string; quotes: Quote[] } | null>(null);
+  useEffect(() => {
+    if (!file || quoteCache.has(file)) return;
+    let cancelled = false;
+    fetch(`${BASE_PATH}/quotes/${file}`)
+      .then((res) => (res.ok ? (res.json() as Promise<Quote[]>) : []))
+      .catch(() => [] as Quote[])
+      .then((quotes) => {
+        quoteCache.set(file, quotes);
+        if (!cancelled) setLoaded({ file, quotes });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [file]);
+  if (file && quoteCache.has(file)) return quoteCache.get(file)!;
+  return loaded && loaded.file === file ? loaded.quotes : null;
+}
+
 /**
  * The node detail surface: a right-hand panel on desktop, a draggable
  * bottom sheet on mobile. Every open/re-nav replays the staggered reveal:
@@ -25,6 +50,7 @@ interface NodeDetailProps {
  */
 export default function NodeDetail({ node, neighbors, open, onClose, onNavigate }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
+  const quotes = useQuotes(node);
   // Back-history for the pager and the direction of the last hop, used to
   // slide content in from the correct side. Both are state so render can
   // depend on them (e.g. disabling "back").
@@ -178,13 +204,18 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate 
             </div>
           )}
 
-          {node.group === "song" && node.quotes && node.quotes.length > 0 && (
+          {node.group === "song" && node.quoteCount && (
             <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
               <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
-                Citazioni annotate · {node.quotes.length}
+                Citazioni annotate · {node.quoteCount}
               </p>
+              {quotes === null && (
+                <p className="font-mono text-[0.72rem] uppercase tracking-[0.14em] opacity-55">
+                  Carico…
+                </p>
+              )}
               <ul className="flex flex-col gap-2">
-                {node.quotes.map((quote, index) => (
+                {(quotes ?? []).map((quote, index) => (
                   <li key={index}>
                     <details className="group rounded-md border" style={{ borderColor: "var(--atlas-hair)" }}>
                       <summary className="cursor-pointer list-none px-3 py-2.5 text-[0.86rem] font-medium leading-snug marker:content-none">

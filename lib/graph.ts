@@ -31,7 +31,10 @@ export interface GraphNode {
   // annotated citations from the song, shown in the sidebar rather than as
   // their own graph nodes (there were 3600+ of them — mostly noise at the
   // graph level, but still worth surfacing once you're reading a song).
-  quotes?: Quote[];
+  // They are not in graphData.json (too heavy): `quotesFile` names the
+  // per-song file in public/quotes/ that the detail panel fetches on demand.
+  quoteCount?: number;
+  quotesFile?: string;
 }
 
 /** A freely licensed photo of Caparezza from Wikimedia Commons (data/portraits.json). */

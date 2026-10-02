@@ -20,7 +20,7 @@ Usage:
   python scripts/fetch_images.py --max 8         keep at most N portraits
 
 Reads:  data/raw/referents.jsonl (album names)
-Writes: data/portraits.json, public/portraits/*.jpg, data/covers.json
+Writes: data/portraits.json, public/portraits/*.jpg (greyscale, <=1400px), data/covers.json
 """
 
 import argparse
@@ -105,6 +105,23 @@ def burst_key(title: str) -> str:
     return t.strip().casefold()
 
 
+PORTRAIT_MAX_SIDE = 1400
+
+
+def optimize_portrait(path: str) -> tuple[int, int]:
+    """Shrink + bake to greyscale: the backdrop is shown in grey anyway, and a
+    smaller single-channel JPEG is far cheaper to download and decode on a
+    phone (the originals reach 1.5 MB). Idempotent. Returns (width, height)."""
+    from PIL import Image
+    with Image.open(path) as im:
+        if im.mode == "L" and max(im.size) <= PORTRAIT_MAX_SIDE:
+            return im.size
+        im = im.convert("L")
+        im.thumbnail((PORTRAIT_MAX_SIDE, PORTRAIT_MAX_SIDE), Image.LANCZOS)
+        im.save(path, "JPEG", quality=74, optimize=True, progressive=True)
+        return im.size
+
+
 def fetch_portraits(max_keep: int) -> None:
     params = {
         "action": "query",
@@ -170,14 +187,15 @@ def fetch_portraits(max_keep: int) -> None:
             with resp, open(path, "wb") as f:
                 f.write(resp.read())
             time.sleep(1)
+        width, height = optimize_portrait(path)
         out.append({
             "file": f"/portraits/{name}",
             "title": c["title"].removeprefix("File:"),
             "page": c["page"], "author": c["author"],
             "license": c["license"], "licenseUrl": c["licenseUrl"],
-            "width": c["width"], "height": c["height"],
+            "width": width, "height": height,
         })
-        print(f"[{i + 1}/{len(picked)}] {c['license']:<12} {c['width']}x{c['height']}  {name}")
+        print(f"[{i + 1}/{len(picked)}] {c['license']:<12} {width}x{height}  {name}")
 
     if not out:
         print("no portraits fetched (rate limited? retry in a minute) — keeping existing file", file=sys.stderr)

@@ -4,9 +4,9 @@ Capa Atlas — Phase 2: build public/graphData.json from data/raw/referents.json
 
 Node types:
   album    (group: album)    one per album
-  song     (group: song)     one per song, carries its quotes inline (not
-                              rendered as graph nodes — see `quotes` on the
-                              song node, shown in the sidebar instead)
+  song     (group: song)     one per song, carries `quoteCount` + `quotesFile`; the quotes
+                              themselves are in public/quotes/<n>.json and are
+                              shown in the sidebar, not as graph nodes
   figure / concept           from data/concepts.json classification
 
 Links:
@@ -41,6 +41,7 @@ REFERENT_OVERRIDES_PATH = os.path.join(ROOT, "data", "referent_overrides.json")
 WIKIPEDIA_PATH = os.path.join(ROOT, "data", "wikipedia.json")
 COVERS_PATH = os.path.join(ROOT, "data", "covers.json")
 OUT = os.path.join(ROOT, "public", "graphData.json")
+QUOTES_DIR = os.path.join(ROOT, "public", "quotes")
 CSV_OUT = os.path.join(ROOT, "data", "keywords.csv")
 
 
@@ -220,10 +221,27 @@ def main() -> int:
     for n in nodes:
         n["val"] = 1 + min(8, degree.get(n["id"], 0) ** 0.7)
 
+    # Quotes are ~90% of the payload and only matter once a song is open, so
+    # they live in one small file per song (public/quotes/<n>.json) that the
+    # detail panel fetches on demand. The graph keeps just the count + file.
+    if os.path.isdir(QUOTES_DIR):
+        for stale in os.listdir(QUOTES_DIR):
+            if stale.endswith(".json"):
+                os.remove(os.path.join(QUOTES_DIR, stale))
+    os.makedirs(QUOTES_DIR, exist_ok=True)
+    for i, song in enumerate(songs.values()):
+        quotes = song.pop("quotes")
+        if not quotes:
+            continue
+        song["quoteCount"] = len(quotes)
+        song["quotesFile"] = f"{i}.json"
+        with open(os.path.join(QUOTES_DIR, song["quotesFile"]), "w", encoding="utf-8") as f:
+            json.dump(quotes, f, ensure_ascii=False, separators=(",", ":"))
+
     graph = {"nodes": nodes, "links": links}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(graph, f, ensure_ascii=False, indent=1)
+        json.dump(graph, f, ensure_ascii=False, separators=(",", ":"))
 
     with open(CSV_OUT, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)

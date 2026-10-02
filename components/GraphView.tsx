@@ -985,6 +985,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           controlType="orbit"
           enableNodeDrag={false}
           extraRenderers={extraRenderers}
+          // Read once at creation. At a pixel ratio of 2 MSAA buys little and
+          // costs a lot of fill-rate on phone GPUs.
+          rendererConfig={{
+            antialias: typeof window === "undefined" || window.innerWidth >= 800,
+            powerPreference: "high-performance",
+          }}
           // transparent clear colour: the stage div paints the theme colour and
           // the portrait backdrop sits between it and the canvas
           backgroundColor="rgba(0,0,0,0)"
@@ -1027,7 +1033,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           }
           // Curls: every link bows out with a stable per-link twist, so the
           // edge mesh reads as tangled ringlets instead of straight wires.
-          linkCurvature={(link) => 0.45 + 0.5 * hash01(linkKey(link))}
+          // Phones skip the curls: each curved edge is its own tube mesh (30
+          // segments), and with ~1200 edges that is the main GPU/CPU cost.
+          // Straight edges with a coarse cross-section are far cheaper.
+          linkResolution={isDesktop ? 6 : 3}
+          linkCurvature={(link) => (isDesktop ? 0.45 + 0.5 * hash01(linkKey(link)) : 0)}
           linkCurveRotation={(link) => Math.PI * 2 * hash01(linkKey(link) + "r")}
           linkDirectionalParticleWidth={3}
           linkDirectionalParticleSpeed={0.004}

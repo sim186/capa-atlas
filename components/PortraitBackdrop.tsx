@@ -1,3 +1,4 @@
+import { BASE_PATH } from "@/lib/basePath";
 import type { Portrait } from "@/lib/graph";
 
 // Where the face sits in each frame, so the crop keeps it clear of the fade.
@@ -34,7 +35,7 @@ export default function PortraitBackdrop({
         // eslint-disable-next-line @next/next/no-img-element -- decorative, pre-sized static file
         <img
           key={portrait.file}
-          src={portrait.file}
+          src={BASE_PATH + portrait.file}
           alt=""
           width={portrait.width}
           height={portrait.height}
