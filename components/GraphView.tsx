@@ -5,11 +5,10 @@ import type { ForceGraphMethods } from "react-force-graph-3d";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ConfigOptions } from "3d-force-graph";
 import {
-  CanvasTexture,
+  DataTexture,
   Group as ThreeGroup,
   type Object3D,
   type PerspectiveCamera,
-  SRGBColorSpace,
   Sprite,
   SpriteMaterial,
   Vector3,
@@ -27,7 +26,6 @@ import {
   Group,
   GROUP_COLOR,
   GROUP_LABEL,
-  GROUP_SHAPE,
   Portrait,
 } from "@/lib/graph";
 import GroupGlyph from "@/components/GroupGlyph";
@@ -43,6 +41,7 @@ import { useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
 import NodeDetail from "@/components/NodeDetail";
 import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
+import { makeShapeTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
@@ -503,7 +502,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       window.clearInterval(ready);
       setSceneMounted(true);
       fit();
-      if (!phone) return;
+      // Both profiles keep following the layout while it unfurls: a one-off fit
+      // at mount measures a still-compact cloud and lands far too close.
       follow = window.setInterval(() => {
         if (
           userMovedRef.current ||
@@ -513,10 +513,14 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           window.clearInterval(follow);
           return;
         }
-        fgRef.current?.zoomToFit(flightMs(700), 150, (node) => {
-          const group = (node as GraphNode).group;
-          return group === "concept" || group === "figure";
-        });
+        if (phone) {
+          fgRef.current?.zoomToFit(flightMs(700), 150, (node) => {
+            const group = (node as GraphNode).group;
+            return group === "concept" || group === "figure";
+          });
+        } else {
+          fgRef.current?.zoomToFit(flightMs(700), 110);
+        }
       }, 800);
     }, 100);
     return () => {
@@ -562,29 +566,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // material, so a texture is never rebuilt on theme change.
   const shapeTextures = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const size = 128;
-    const out = {} as Record<Group, CanvasTexture>;
-    for (const group of ALL_GROUPS) {
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
-      const path = new Path2D(GROUP_SHAPE[group]);
-      ctx.scale(size / 100, size / 100);
-      ctx.fillStyle = "#ffffff";
-      ctx.fill(path);
-      // Outer ring: a lighter pass of the same silhouette, slightly larger.
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.lineWidth = 2.4;
-      ctx.translate(50, 50);
-      ctx.scale(1.12, 1.12);
-      ctx.translate(-50, -50);
-      ctx.stroke(path);
-      const texture = new CanvasTexture(canvas);
-      texture.colorSpace = SRGBColorSpace;
-      out[group] = texture;
-    }
+    const out = {} as Record<Group, DataTexture>;
+    for (const group of ALL_GROUPS) out[group] = makeShapeTexture(group);
     return out;
   }, []);
 
@@ -985,6 +968,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       div.className = "atlas-label";
       div.textContent = n.label;
       const obj = new CSS2DObject(div);
+      // Hidden until the tick loop has decided: if it never runs, no labels is
+      // a better failure than all of them at once.
+      obj.visible = false;
       const base = 9 + Math.cbrt(n.val ?? 2) * 5;
       obj.position.set(0, -(base / 2 + 5), 0);
       group.add(obj);
@@ -1637,6 +1623,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         ready={sceneReady}
         onReveal={() => {
           revealedRef.current = true;
+          // The simulation cooled while the curtain was up, and the unfurl is a
+          // force that only acts on a running one: wake it so the entrance plays
+          // now, and let the camera follow it again.
+          layoutDoneRef.current = false;
+          fgRef.current?.d3ReheatSimulation();
         }}
       />
     </div>
