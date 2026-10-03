@@ -1006,6 +1006,154 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     [play]
   );
 
+  // Keyboard navigation on the map. Arrows hop to the nearest node in that
+  // direction on screen, Enter opens it, +/- zoom, Esc lets go. Ignored while
+  // typing or while a button/link has focus, so Tab and the panels keep working.
+  useEffect(() => {
+    const project = new Vector3();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const active = document.activeElement;
+      if (active && active !== document.body && !(active as HTMLElement).dataset.atlasStage) return;
+      const fg = fgRef.current;
+      const camera = fg?.camera() as PerspectiveCamera | undefined;
+      const controls = controlsRef.current;
+      if (!fg || !camera || !controls) return;
+
+      const zoom = (factor: number) => {
+        userMovedRef.current = true;
+        const target = controls.target;
+        const dx = camera.position.x - target.x;
+        const dy = camera.position.y - target.y;
+        const dz = camera.position.z - target.z;
+        const distance = Math.hypot(dx, dy, dz);
+        const next = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, distance * factor));
+        const k = next / distance;
+        fg.cameraPosition(
+          { x: target.x + dx * k, y: target.y + dy * k, z: target.z + dz * k },
+          { x: target.x, y: target.y, z: target.z },
+          flightMs(260)
+        );
+      };
+
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        zoom(KEY_ZOOM_STEP);
+        return;
+      }
+      if (event.key === "-" || event.key === "_") {
+        event.preventDefault();
+        zoom(1 / KEY_ZOOM_STEP);
+        return;
+      }
+      if (event.key === "Escape") {
+        kbdIdRef.current = null;
+        setKbdNode(null);
+        return;
+      }
+
+      const byId = new Map(visibleData.nodes.map((node) => [String(node.id), node]));
+      const current = kbdIdRef.current ? byId.get(kbdIdRef.current) : undefined;
+      if (event.key === "Enter" || event.key === " ") {
+        if (!current) return;
+        event.preventDefault();
+        focusNode(current);
+        return;
+      }
+      const dir: Record<string, [number, number]> = {
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1],
+      };
+      const u = dir[event.key];
+      if (!u) return;
+      event.preventDefault();
+
+      const dom = fg.renderer().domElement;
+      const toScreen = (node: GraphNode) => {
+        project.set(node.x ?? 0, node.y ?? 0, node.z ?? 0).project(camera);
+        return {
+          x: ((project.x + 1) / 2) * dom.clientWidth,
+          y: ((1 - project.y) / 2) * dom.clientHeight,
+          behind: project.z > 1,
+        };
+      };
+      const named = (node: GraphNode) =>
+        node.x !== undefined &&
+        !(
+          node.group === "song" &&
+          ghostSongs &&
+          !highlightedIds.has(node.id)
+        );
+      const pool = visibleData.nodes.filter(named);
+
+      let next: GraphNode | undefined;
+      if (!current) {
+        // first press: the node nearest the middle of the view
+        let best = Infinity;
+        const cx = dom.clientWidth / 2;
+        const cy = dom.clientHeight / 2;
+        for (const node of pool) {
+          const p = toScreen(node);
+          if (p.behind) continue;
+          const d = Math.hypot(p.x - cx, p.y - cy);
+          if (d < best) {
+            best = d;
+            next = node;
+          }
+        }
+      } else {
+        const origin = toScreen(current);
+        let best = Infinity;
+        for (const node of pool) {
+          if (node.id === current.id) continue;
+          const p = toScreen(node);
+          if (p.behind) continue;
+          const dx = p.x - origin.x;
+          const dy = p.y - origin.y;
+          const along = dx * u[0] + dy * u[1];
+          const across = Math.abs(dx * u[1] - dy * u[0]);
+          // inside a ~60° cone, penalising sideways drift
+          if (along <= 1 || across > along * 1.7) continue;
+          const score = along + across * 2;
+          if (score < best) {
+            best = score;
+            next = node;
+          }
+        }
+      }
+      if (!next) return;
+
+      kbdIdRef.current = next.id;
+      setKbdNode(next);
+      play(sound.hover);
+
+      // Keep the cursor in view: pan only when it nears the frame edge.
+      const p = toScreen(next);
+      const margin = 0.18;
+      const inside =
+        p.x > dom.clientWidth * margin &&
+        p.x < dom.clientWidth * (1 - margin) &&
+        p.y > dom.clientHeight * margin &&
+        p.y < dom.clientHeight * (1 - margin);
+      if (!inside) {
+        const t = controls.target;
+        fg.cameraPosition(
+          {
+            x: (next.x ?? 0) + camera.position.x - t.x,
+            y: (next.y ?? 0) + camera.position.y - t.y,
+            z: (next.z ?? 0) + camera.position.z - t.z,
+          },
+          { x: next.x ?? 0, y: next.y ?? 0, z: next.z ?? 0 },
+          flightMs(380)
+        );
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [visibleData.nodes, ghostSongs, highlightedIds, focusNode, play]);
+
   useEffect(() => {
     const id = hovered?.id ?? null;
     if (id && id !== prevHoveredId.current) play(sound.hover);
@@ -1154,6 +1302,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         // thousands. Without its own stacking context the whole label layer
         // paints over the detail panel / sheet (z-30), as text on top of text.
         className="relative isolate flex-1"
+        // Wheel / trackpad zoom is no pointerdown: without this the start-up
+        // camera follow kept re-fitting and snapped the visitor back out.
+        onWheel={() => {
+          userMovedRef.current = true;
+        }}
         onPointerDown={(event) => {
           if ((event.target as HTMLElement).closest("nav, button, a, input")) return;
           userMovedRef.current = true;
@@ -1497,6 +1650,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           </div>
         )}
 
+        <p className="sr-only" aria-live="polite">
+          {kbdNode
+            ? `${kbdNode.label}, ${GROUP_LABEL[kbdNode.group]}. Invio per aprire.`
+            : ""}
+        </p>
+
         {/* hover pill */}
         {hovered && !selected && (
           <div className="pointer-events-none absolute left-1/2 top-6 z-10 -translate-x-1/2">
@@ -1521,7 +1680,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           <p className="atlas-pen text-2xl tracking-[-0.02em]">THE CAPA ATLAS</p>
           <p className="mt-1 max-w-[17rem] text-xs leading-snug opacity-70">
             Trascina per ruotare, scorri per zoomare. Clicca un nodo per aprirlo,
-            Esc per tornare.
+            Esc per tornare. Da tastiera: frecce per spostarti, +/− per lo zoom,
+            Invio per aprire.
           </p>
         </div>
         )}
