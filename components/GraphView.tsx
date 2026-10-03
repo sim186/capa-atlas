@@ -72,13 +72,14 @@ function inkAlpha(hex: string, alpha: number) {
 }
 const DEFAULT_VISIBLE: Group[] = ["album", "song", "figure", "concept"];
 // Labels are layered by camera distance so the overview isn't a wall of
-// text: the sparse orientation layers (themes, figures) read from afar,
-// albums once you approach a cluster. Songs number in the hundreds, so they
-// are only named while they belong to the selected neighborhood.
+// text: albums (the discs) are the only names in the overview, themes and
+// figures (the alter egos) only surface once you approach their cluster.
+// Songs number in the hundreds, so they are only named while they belong to
+// the selected neighborhood.
 const LABEL_MAX_DISTANCE: Record<Group, number> = {
-  concept: 700,
-  figure: 1400,
-  album: 520,
+  concept: 520,
+  figure: 520,
+  album: Infinity,
   song: 520,
 };
 // Below this camera distance a disc fills the screen; keep the visitor out.
