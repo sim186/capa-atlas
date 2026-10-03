@@ -54,10 +54,11 @@ const ALL_GROUPS: Group[] = ["album", "song", "figure", "concept"];
 // themes sharing a song gets an edge) and is the main readability killer,
 // so it ships toggled off; the build script also prunes weak pairs.
 type LinkKind = GraphLink["kind"];
-const ALL_KINDS: LinkKind[] = ["on", "refers", "co_occurs"];
+const ALL_KINDS: LinkKind[] = ["on", "refers", "album_refers", "co_occurs"];
 const KIND_LABEL: Record<LinkKind, string> = {
   on: "album",
   refers: "citazioni",
+  album_refers: "album ↔ temi",
   co_occurs: "tematiche",
 };
 const DEFAULT_KINDS: LinkKind[] = ["on", "refers"];
@@ -74,14 +75,18 @@ const DEFAULT_VISIBLE: Group[] = ["album", "song", "figure", "concept"];
 // Labels are layered by camera distance so the overview isn't a wall of
 // text: albums (the discs) are the only names in the overview, themes and
 // figures (the alter egos) only surface once you approach their cluster.
-// Songs number in the hundreds, so they are only named while they belong to
-// the selected neighborhood.
+// Songs number in the hundreds, so they only surface when the camera is
+// really close (or when they belong to the selected neighborhood), and only
+// the nearest few on screen ever get a name.
 const LABEL_MAX_DISTANCE: Record<Group, number> = {
   concept: 520,
   figure: 520,
   album: Infinity,
-  song: 520,
+  song: 330,
 };
+// Keyboard navigation: pan step, zoom factor and the camera distance band.
+const KEY_ZOOM_STEP = 0.78;
+const MAX_CAMERA_DISTANCE = 1800;
 // Below this camera distance a disc fills the screen; keep the visitor out.
 const MIN_CAMERA_DISTANCE = 150;
 
@@ -329,9 +334,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       .filter(
         (link) =>
           // Phone default hides the songs, which are the only hubs for `on` and
-          // `refers`: without the theme-to-theme layer the map would have no edges.
+          // `refers`: album-to-theme and theme-to-theme edges keep the map connected.
           (visibleKinds.has(link.kind) ||
-            (ghostSongs && link.kind === "co_occurs" && (link.weight ?? 0) >= PHONE_MIN_CO_WEIGHT)) &&
+            (ghostSongs &&
+              (link.kind === "album_refers" ||
+                (link.kind === "co_occurs" && (link.weight ?? 0) >= PHONE_MIN_CO_WEIGHT)))) &&
           ids.has(String(link.source)) &&
           ids.has(String(link.target))
       )
@@ -341,31 +348,53 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     return { nodes, links };
   }, [data, forcedId, visibleGroups, visibleKinds, ghostSongs]);
 
-  // Adjacency is computed from the *visible* links only, so hover/selection
-  // never lights up a relationship the visitor can't actually see.
-  const neighbors = useMemo(() => {
-    const byId = new Map(data.nodes.map((node) => [node.id, node]));
-    const map = new Map<string, GraphNode[]>();
-    for (const link of visibleData.links) {
-      const source = byId.get(String(link.source));
-      const target = byId.get(String(link.target));
-      if (!source || !target || source.id === target.id) continue;
-      map.set(source.id, [...(map.get(source.id) ?? []), target]);
-      map.set(target.id, [...(map.get(target.id) ?? []), source]);
-    }
-    for (const nodes of map.values()) {
-      nodes.sort((a, b) => (b.val ?? 1) - (a.val ?? 1));
-    }
-    return map;
-  }, [data.nodes, visibleData.links]);
+  // Adjacency for the map (highlighting, flux) is computed from the *visible*
+  // links only, so selection never lights up a relationship the visitor can't
+  // actually see. The detail drawer is a list, not a drawing: it uses every
+  // link, so hiding a group or a link kind doesn't empty its "Collegato a".
+  const buildNeighbors = useCallback(
+    (links: readonly { source: unknown; target: unknown }[]) => {
+      const byId = new Map(data.nodes.map((node) => [node.id, node]));
+      const map = new Map<string, Map<string, GraphNode>>();
+      const add = (from: GraphNode, to: GraphNode) => {
+        let bucket = map.get(from.id);
+        if (!bucket) map.set(from.id, (bucket = new Map()));
+        bucket.set(to.id, to);
+      };
+      for (const link of links) {
+        const source = byId.get(endpointId(link.source));
+        const target = byId.get(endpointId(link.target));
+        if (!source || !target || source.id === target.id) continue;
+        add(source, target);
+        add(target, source);
+      }
+      const sorted = new Map<string, GraphNode[]>();
+      for (const [id, bucket] of map) {
+        sorted.set(
+          id,
+          [...bucket.values()].sort((a, b) => (b.val ?? 1) - (a.val ?? 1))
+        );
+      }
+      return sorted;
+    },
+    [data.nodes]
+  );
+  const neighbors = useMemo(
+    () => buildNeighbors(visibleData.links),
+    [buildNeighbors, visibleData.links]
+  );
+  const allNeighbors = useMemo(
+    () => buildNeighbors(data.links),
+    [buildNeighbors, data.links]
+  );
 
   const selectedNeighbors = useMemo(
     () => (selected ? neighbors.get(selected.id) ?? [] : []),
     [neighbors, selected]
   );
   const panelNodeNeighbors = useMemo(
-    () => (panelNode ? neighbors.get(panelNode.id) ?? [] : []),
-    [neighbors, panelNode]
+    () => (panelNode ? allNeighbors.get(panelNode.id) ?? [] : []),
+    [allNeighbors, panelNode]
   );
   const highlightedIds = useMemo(() => {
     const set = new Set<string>();
@@ -414,6 +443,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     minPolarAngle: number;
     maxPolarAngle: number;
   } | null>(null);
+  // Keyboard cursor: the node the arrow keys are currently "on". The tick loop
+  // names and enlarges it; the state copy feeds the screen-reader announcement.
+  const kbdIdRef = useRef<string | null>(null);
+  const [kbdNode, setKbdNode] = useState<GraphNode | null>(null);
   const gizmoDotRef = useRef<HTMLDivElement | null>(null);
   const gizmoHeadingRef = useRef<HTMLSpanElement | null>(null);
 
@@ -671,6 +704,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   useEffect(() => {
     let raf = 0;
     const tmp = new Vector3();
+    const ndc = new Vector3();
     const tick = () => {
       raf = requestAnimationFrame(tick);
       const camera = fgRef.current?.camera();
@@ -715,7 +749,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         const material = mats[state][group];
         if (sprite.material !== material) sprite.material = material;
         const factor =
-          state === "hover" ? 1.35 : state === "hi" ? 1.25 : state === "dim" ? 0.85 : 1;
+          state === "hover" || id === kbdIdRef.current
+            ? 1.35
+            : state === "hi"
+              ? 1.25
+              : state === "dim"
+                ? 0.85
+                : 1;
         if (sprite.scale.x !== base * factor) {
           sprite.scale.set(base * factor, base * factor, 1);
         }
@@ -735,19 +775,29 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           continue;
         }
         obj.getWorldPosition(tmp);
-        const lit = focus !== null && (id === focus.self || focus.ids.has(id));
+        const cursor = id === kbdIdRef.current;
+        const lit = cursor || (focus !== null && (id === focus.self || focus.ids.has(id)));
         // CSS2DRenderer re-derives element.style.display from object.visible
         // every frame (it only skips fully-hidden branches) — toggling the
         // DOM style directly gets clobbered on the next render pass.
-        // Songs are named only inside the selected neighborhood.
-        if (group === "song") {
-          obj.visible = lit && songLabelsRef.current;
+        // Songs are named inside the selected neighborhood, or when the camera
+        // is close enough to read them; never while ghosted on a phone.
+        if (cursor) {
+          obj.visible = true;
+        } else if (group === "song" && lit) {
+          obj.visible = songLabelsRef.current;
         } else if (lit) {
           obj.visible = true;
         } else {
           const distance = camera.position.distanceTo(tmp);
           obj.visible = false;
-          if (distance < LABEL_MAX_DISTANCE[group]) candidates.push({ obj, distance });
+          const ghostSong = group === "song" && ghostSongsRef.current;
+          // labels of nodes outside the frame would only eat the budget
+          ndc.copy(tmp).project(camera);
+          const onScreen = Math.abs(ndc.x) < 1.05 && Math.abs(ndc.y) < 1.05 && ndc.z < 1;
+          if (!ghostSong && onScreen && distance < LABEL_MAX_DISTANCE[group]) {
+            candidates.push({ obj, distance });
+          }
         }
         div.style.color = lit ? "var(--atlas-label-hi)" : "var(--atlas-label)";
         div.style.opacity = focus && !lit ? "0.12" : "1";
@@ -815,7 +865,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   }, [data]);
 
   const kindStats = useMemo(() => {
-    const counts: Record<LinkKind, number> = { on: 0, refers: 0, co_occurs: 0 };
+    const counts: Record<LinkKind, number> = { on: 0, refers: 0, album_refers: 0, co_occurs: 0 };
     for (const link of data.links) counts[link.kind] += 1;
     return counts;
   }, [data]);
@@ -1670,6 +1720,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         <NodeDetail
           node={panelNode}
           neighbors={panelNodeNeighbors}
+          hiddenGroups={ALL_GROUPS.filter((group) => !visibleGroups.has(group))}
           open={isDesktop ? selected !== null : sheetOpen}
           onClose={isDesktop ? closeDetail : closeSheet}
           onNavigate={handleNavigate}

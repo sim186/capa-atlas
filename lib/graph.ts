@@ -52,7 +52,7 @@ export interface Portrait {
 export interface GraphLink {
   source: string;
   target: string;
-  kind: "on" | "refers" | "co_occurs";
+  kind: "on" | "refers" | "co_occurs" | "album_refers";
   // how many quotes support this link (refers) or how many songs a
   // concept/figure pair share (co_occurs). Absent for "on".
   weight?: number;
@@ -83,6 +83,7 @@ export const LINK_COLOR: Record<GraphLink["kind"], string> = {
   on: "rgba(107,63,209,0.24)",
   refers: "rgba(22,139,87,0.25)",
   co_occurs: "rgba(207,48,45,0.2)",
+  album_refers: "rgba(107,63,209,0.2)",
 };
 
 // By default every node is a disc and colour carries the category (legend,

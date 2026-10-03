@@ -17,6 +17,9 @@ Links:
   figure/concept → figure/concept  (kind: co_occurs)  [two concepts/figures
                              that surface in the same song — densifies the
                              thematic layer now that quotes aren't nodes]
+  album → figure/concept    (kind: album_refers)  [how many songs of the album
+                             cite it; lets the overview connect albums to
+                             themes with the songs hidden]
 
 Also writes data/keywords.csv for spreadsheet-friendly browsing.
 
@@ -194,6 +197,22 @@ def main() -> int:
         if weight < co_occurs_min:
             continue
         links.append({"source": a, "target": b, "kind": "co_occurs", "weight": weight})
+
+    # Album → concept/figure: number of the album's songs that cite it. Pairs
+    # backed by a single song are pruned, same reasoning as co_occurs.
+    album_refers_min = int(os.environ.get("ALBUM_REFERS_MIN", "2"))
+    album_refers: dict[tuple[str, str], int] = {}
+    for song_id, cids in song_concepts.items():
+        album_id = f"album:{songs[song_id]['album']}"
+        for node_id in cids:
+            pair = (album_id, node_id)
+            album_refers[pair] = album_refers.get(pair, 0) + 1
+    for (album_id, node_id), weight in album_refers.items():
+        if weight < album_refers_min:
+            continue
+        links.append({
+            "source": album_id, "target": node_id, "kind": "album_refers", "weight": weight,
+        })
 
     for node in list(albums.values()) + list(songs.values()):
         entry = wikipedia.get(node["id"])

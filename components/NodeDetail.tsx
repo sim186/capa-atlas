@@ -12,6 +12,8 @@ import { useIsDesktop } from "@/lib/useIsDesktop";
 interface NodeDetailProps {
   node: GraphNode;
   neighbors: GraphNode[];
+  /** Groups currently switched off on the map: their neighbours are listed dimmed. */
+  hiddenGroups?: GraphNode["group"][];
   /** Drives the slide-in/out transition; parent controls unmount. */
   open: boolean;
   onClose: () => void;
@@ -52,7 +54,7 @@ function useQuotes(node: GraphNode): Quote[] | null {
  * meta row, hairline rule, title, body blocks and pager each fade up at
  * ~52ms intervals with a soft overshoot ease.
  */
-export default function NodeDetail({ node, neighbors, open, onClose, onNavigate, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
+export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, onClose, onNavigate, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
   const quotes = useQuotes(node);
   // Back-history for the pager and the direction of the last hop, used to
@@ -282,12 +284,19 @@ export default function NodeDetail({ node, neighbors, open, onClose, onNavigate,
             </p>
             <ul className="flex flex-wrap gap-2">
               {neighbors.slice(0, 40).map((neighbor) => (
-                <li key={neighbor.id}>
+                <li
+                  key={neighbor.id}
+                  className={hiddenGroups.includes(neighbor.group) ? "opacity-55" : undefined}
+                >
                   <DrawablyButton
                     onClick={() => openNeighbor(neighbor)}
                     width={1.4}
                     className="atlas-pen atlas-pill max-w-[16rem] truncate text-[0.82rem]"
-                    title={neighbor.label}
+                    title={
+                      hiddenGroups.includes(neighbor.group)
+                        ? `${neighbor.label} (nascosto sulla mappa)`
+                        : neighbor.label
+                    }
                   >
                     <span className="atlas-roll">
                       <span>{neighbor.label}</span>
