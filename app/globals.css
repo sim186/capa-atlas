@@ -70,7 +70,15 @@ body {
 }
 
 .atlas-controls .drawably-inputbox input {
-  padding: 0.75rem 0;
+  padding: 0.75rem 0.9rem;
+  min-width: 0;
+}
+
+/* iOS zooms into inputs under 16px, which pushes the text out of view. */
+@media (pointer: coarse) {
+  .atlas-controls .drawably-inputbox input {
+    font-size: 16px;
+  }
 }
 
 /* Pager arrows are badges, not buttons (they sit inside real buttons). */
