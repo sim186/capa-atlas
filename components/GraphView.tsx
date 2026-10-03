@@ -41,7 +41,7 @@ import { useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
 import NodeDetail from "@/components/NodeDetail";
 import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
-import { makeDiscTexture } from "@/lib/shapeTextures";
+import { makeDiscTexture, makeShapeTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
@@ -144,6 +144,8 @@ function endpointId(endpoint: unknown) {
   return String(endpoint);
 }
 
+const SHAPES_KEY = "atlas-distinct-shapes";
+
 // Engine ticks the scene must draw before the intro curtain lifts.
 const WARM_TICKS = 40;
 
@@ -196,6 +198,30 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // rgb is the default: notes carry their category color from the first
   // frame, no selection required.
   const [colorMode, setColorMode] = useState<ColorMode>("group");
+  // Accessibility: distinct node silhouettes, so colour isn't the only cue.
+  // Remembered across visits.
+  const [distinctShapes, setDistinctShapes] = useState(false);
+  useEffect(() => {
+    // read after mount (not in the initial state) so server and client markup match
+    const timer = window.setTimeout(() => {
+      try {
+        if (localStorage.getItem(SHAPES_KEY) === "1") setDistinctShapes(true);
+      } catch {
+        // storage blocked: the option just doesn't persist
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const toggleShapes = () => {
+    setDistinctShapes((value) => {
+      try {
+        localStorage.setItem(SHAPES_KEY, value ? "0" : "1");
+      } catch {
+        // see above
+      }
+      return !value;
+    });
+  };
   const [visibleKinds, setVisibleKinds] = useState<Set<LinkKind>>(
     () => new Set(DEFAULT_KINDS)
   );
@@ -562,15 +588,20 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   }, []);
 
   // ---- shared flat-shape textures + state materials -------------------
-  // One white disc texture; colour comes from the
-  // material, so a texture is never rebuilt on theme change.
+  // White textures; colour comes from the material, so a texture is never
+  // rebuilt on theme change. `disc` is the default (colour tells categories
+  // apart), `distinct` the accessibility silhouettes; the materials swap
+  // between them in place (see the effect below).
   const shapeTextures = useMemo(() => {
     if (typeof window === "undefined") return null;
-    // one disc shared by every category: colour, not shape, tells them apart
     const disc = makeDiscTexture();
-    const out = {} as Record<Group, DataTexture>;
-    for (const group of ALL_GROUPS) out[group] = disc;
-    return out;
+    const discs = {} as Record<Group, DataTexture>;
+    const distinct = {} as Record<Group, DataTexture>;
+    for (const group of ALL_GROUPS) {
+      discs[group] = disc;
+      distinct[group] = group === "song" ? disc : makeShapeTexture(group);
+    }
+    return { discs, distinct };
   }, []);
 
   const materials = useMemo(() => {
@@ -579,7 +610,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       const byGroup = {} as Record<Group, SpriteMaterial>;
       for (const group of ALL_GROUPS) {
         byGroup[group] = new SpriteMaterial({
-          map: shapeTextures[group],
+          map: shapeTextures.discs[group],
           transparent: true,
           opacity,
           depthWrite: false,
@@ -599,6 +630,17 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       dim: make(0.09),
     };
   }, [shapeTextures]);
+
+  useEffect(() => {
+    if (!materials || !shapeTextures) return;
+    const set = distinctShapes ? shapeTextures.distinct : shapeTextures.discs;
+    for (const state of [materials.idle, materials.hover, materials.hi, materials.dim]) {
+      for (const group of ALL_GROUPS) {
+        state[group].map = set[group];
+        state[group].needsUpdate = true;
+      }
+    }
+  }, [materials, shapeTextures, distinctShapes]);
 
   // Colorize mode retints the whole scene (bg + idle nodes + idle links) to
   // the selected node's category. Nothing selected falls back to mono.
@@ -1264,7 +1306,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                             isDesktop ? "py-2" : "min-h-11 py-2.5 text-[0.82rem]"
                           }`}
                         >
-                          <GroupGlyph group={node.group} />
+                          <GroupGlyph group={node.group} distinct={distinctShapes} />
                           <span className="min-w-0 flex-1 truncate">{node.label}</span>
                           {node.group === "song" && node.album && (
                             <span className="max-w-[40%] shrink-0 truncate opacity-50">
@@ -1361,6 +1403,21 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 )}
               </>
             )}
+
+            <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
+              <p className="mb-3 text-[0.7rem] font-bold opacity-70">Accessibilità</p>
+              <DrawablyButton
+                key={`shapes-${distinctShapes}`}
+                onClick={toggleShapes}
+                aria-pressed={distinctShapes}
+                variant={distinctShapes ? "solid" : "outline"}
+                width={1.4}
+                className="atlas-ink-btn px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
+                title="Un simbolo diverso per ogni categoria: rombo, cerchio, triangolo, quadrato"
+              >
+                {distinctShapes ? "forme diverse: on" : "forme diverse: off"}
+              </DrawablyButton>
+            </div>
 
             <div
               className="mt-5 flex items-center justify-between gap-3 border-t pt-4"
@@ -1460,6 +1517,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 >
                   <GroupGlyph
                     group={group}
+                    distinct={distinctShapes}
                     size={12}
                     color={colorMode === "group" && !selected ? GROUP_COLOR[group] : theme.node}
                   />

@@ -1,14 +1,17 @@
-import { GROUP_COLOR, GROUP_SHAPE, type Group } from "@/lib/graph";
+import { GROUP_COLOR, GROUP_SHAPE, GROUP_SHAPE_DISTINCT, type Group } from "@/lib/graph";
 
 /** Tiny category marker: same silhouette and colour as the node on canvas. */
 export default function GroupGlyph({
   group,
   size = 14,
   color,
+  distinct = false,
 }: {
   group: Group;
   size?: number;
   color?: string;
+  /** Use the distinct silhouettes (accessibility option) instead of discs. */
+  distinct?: boolean;
 }) {
   return (
     <svg
@@ -18,7 +21,7 @@ export default function GroupGlyph({
       aria-hidden
       className="shrink-0"
     >
-      <path d={GROUP_SHAPE[group]} fill={color ?? GROUP_COLOR[group]} />
+      <path d={(distinct ? GROUP_SHAPE_DISTINCT : GROUP_SHAPE)[group]} fill={color ?? GROUP_COLOR[group]} />
     </svg>
   );
 }
