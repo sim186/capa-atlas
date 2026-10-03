@@ -85,12 +85,13 @@ export const LINK_COLOR: Record<GraphLink["kind"], string> = {
   co_occurs: "rgba(207,48,45,0.2)",
 };
 
-// One silhouette per category (100×100 viewBox), shared by the WebGL sprites,
-// the legend and the result list, so colour is never the only cue: album =
-// diamond, song = disc, figure = triangle, concept = square.
+// Every node is a disc; colour carries the category (legend, search results
+// and the page theme all use the same four colours). Kept as a per-group map
+// so a silhouette could differ again without touching the consumers.
+const DISC = "M50 14A36 36 0 1 1 49.99 14Z";
 export const GROUP_SHAPE: Record<Group, string> = {
-  album: "M50 6L94 50L50 94L6 50Z",
-  song: "M50 14A36 36 0 1 1 49.99 14Z",
-  figure: "M50 10L93 86H7Z",
-  concept: "M17 17H83V83H17Z",
+  album: DISC,
+  song: DISC,
+  figure: DISC,
+  concept: DISC,
 };

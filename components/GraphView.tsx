@@ -41,7 +41,7 @@ import { useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
 import NodeDetail from "@/components/NodeDetail";
 import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
-import { makeShapeTexture } from "@/lib/shapeTextures";
+import { makeDiscTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
@@ -562,12 +562,14 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   }, []);
 
   // ---- shared flat-shape textures + state materials -------------------
-  // One white texture per category silhouette; colour comes from the
+  // One white disc texture; colour comes from the
   // material, so a texture is never rebuilt on theme change.
   const shapeTextures = useMemo(() => {
     if (typeof window === "undefined") return null;
+    // one disc shared by every category: colour, not shape, tells them apart
+    const disc = makeDiscTexture();
     const out = {} as Record<Group, DataTexture>;
-    for (const group of ALL_GROUPS) out[group] = makeShapeTexture(group);
+    for (const group of ALL_GROUPS) out[group] = disc;
     return out;
   }, []);
 

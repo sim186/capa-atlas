@@ -22,34 +22,36 @@ export const MONO_THEME: AtlasTheme = {
   lineHi: "rgba(23, 23, 23, 0.42)",
 };
 
+// Each theme is the colour the node already wears on the map (GROUP_COLOR in
+// lib/graph.ts): pick a violet disc and the whole page goes violet, not blue.
 export const CATEGORY_THEMES: Record<Group, AtlasTheme> = {
   album: {
-    bg: "#0b3d67",
-    ink: "#eaf3fb",
-    node: "#7fb8ea",
-    line: "rgba(127, 184, 234, 0.16)",
-    lineHi: "rgba(127, 184, 234, 0.55)",
-  },
-  song: {
     bg: "#2e00aa",
     ink: "#ece8ff",
     node: "#a88bd0",
     line: "rgba(168, 139, 208, 0.16)",
     lineHi: "rgba(168, 139, 208, 0.55)",
   },
+  song: {
+    bg: "#0b3d67",
+    ink: "#eaf3fb",
+    node: "#7fb8ea",
+    line: "rgba(127, 184, 234, 0.16)",
+    lineHi: "rgba(127, 184, 234, 0.55)",
+  },
   figure: {
+    bg: "#6b1414",
+    ink: "#fdeceb",
+    node: "#f19a97",
+    line: "rgba(241, 154, 151, 0.16)",
+    lineHi: "rgba(241, 154, 151, 0.55)",
+  },
+  concept: {
     bg: "#0f4a30",
     ink: "#e9f7ee",
     node: "#8fd6ab",
     line: "rgba(143, 214, 171, 0.16)",
     lineHi: "rgba(143, 214, 171, 0.55)",
-  },
-  concept: {
-    bg: "#5c3208",
-    ink: "#fff3e2",
-    node: "#f0b273",
-    line: "rgba(240, 178, 115, 0.16)",
-    lineHi: "rgba(240, 178, 115, 0.55)",
   },
 };
 
