@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import GraphView from "@/components/GraphView";
 import type { GraphData, Portrait } from "@/lib/graph";
+import { SITE_DESCRIPTION } from "@/lib/site";
 
 export const dynamic = "force-static";
 
@@ -44,8 +45,32 @@ export default function Home() {
     );
   }
 
+  const albums = data.nodes.filter((n) => n.group === "album");
+  const songs = data.nodes.filter((n) => n.group === "song");
+
   return (
     <main className="h-full">
+      {/* Crawler / screen-reader view of what the canvas draws. */}
+      <div className="sr-only">
+        <h1>The Capa Atlas</h1>
+        <p>{SITE_DESCRIPTION}</p>
+        <h2>Album</h2>
+        <ul>
+          {albums.map((a) => (
+            <li key={a.id}>
+              {a.label}
+              {a.description ? ` — ${a.description}` : ""}
+              <ul>
+                {songs
+                  .filter((s) => s.album === a.label)
+                  .map((s) => (
+                    <li key={s.id}>{s.label}</li>
+                  ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
       <GraphView data={data} portraits={portraits} />
     </main>
   );

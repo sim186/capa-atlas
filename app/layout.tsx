@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "drawably/style.css";
 import "drawably/font.css";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +15,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://sim186.github.io/capa-atlas";
-const TITLE = "The Capa Atlas";
-const DESCRIPTION =
-  "Grafo delle annotazioni e dei riferimenti di Caparezza su Genius. Progetto non ufficiale.";
+const TITLE = SITE_TITLE;
+const DESCRIPTION = SITE_DESCRIPTION;
 const OG_IMAGE = {
   url: `${SITE_URL}/og.jpg`,
   width: 1200,
@@ -25,8 +24,25 @@ const OG_IMAGE = {
   alt: "The Capa Atlas — il grafo delle annotazioni di Caparezza",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ececec",
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: TITLE,
+  url: `${SITE_URL}/`,
+  description: DESCRIPTION,
+  inLanguage: "it",
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(`${SITE_URL}/`),
   title: TITLE,
+  keywords: ["Caparezza", "Genius", "annotazioni", "grafo", "testi", "atlante"],
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/` },
   openGraph: {
@@ -54,6 +70,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex h-full flex-col">
         {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        />
       </body>
     </html>
   );
