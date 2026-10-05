@@ -34,6 +34,7 @@ import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import { makeDiscTexture, makeShapeTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
+import { atlasLayout, CORE_EXTENT, LAYOUT_EXTENT } from "@/lib/atlasLayout";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
@@ -222,6 +223,20 @@ function pinAt(node: GraphNode, at: Vec3) {
   node.z = node.fz = at.z;
 }
 
+/**
+ * Store a label's half width for the ambient collision check (see
+ * measuredHalfWidthOf in the render loop). Shown for one layout read,
+ * invisibly, since a hidden label has no width.
+ */
+function measureLabel(div: HTMLDivElement) {
+  const { display, visibility } = div.style;
+  div.style.visibility = "hidden";
+  div.style.display = "block";
+  if (div.offsetWidth) div.dataset.halfWidth = String(div.offsetWidth / 2);
+  div.style.display = display;
+  div.style.visibility = visibility;
+}
+
 /** Let go of every pin, so the layout can settle again. */
 function releasePins(nodes: readonly GraphNode[]) {
   for (const node of nodes) {
@@ -231,15 +246,16 @@ function releasePins(nodes: readonly GraphNode[]) {
   }
 }
 
-// Hair layout radii (see the "importance" force): hubs settle near
-// RADIUS_CORE, minor nodes out at RADIUS_RIM, with curl-sized bumps of LOBE
-// and the cloud squashed to FLAT on y. Start-up framing is computed from
-// these, so the camera never has to chase the layout while it unfurls.
-const RADIUS_CORE = 150;
-const RADIUS_RIM = 390;
-const LOBE = 0.22; // curl bump amplitude, fraction of radius
-const FLAT = 0.75; // y squash
 const CAMERA_FOV = 50; // three.js PerspectiveCamera default, used by 3d-force-graph
+
+// zoomToFit padding (px). Start-up framing, the settle fit and "inquadra" all
+// use it, so none of them jumps the others. None: the disc's diameter fits
+// the screen height, and the tilt foreshortens it to about 65%, which keeps
+// the near rim (magnified by perspective) clear of the toolbar as it orbits.
+const FIT_PADDING = 0;
+// Start-up camera tilt (polar angle, 0 = straight down): high enough to read
+// the career clock almost as a plan, low enough to keep the depth.
+const START_POLAR = Math.PI * 0.16;
 
 /**
  * The camera distance zoomToFit would pick for a cloud reaching `extent` from
@@ -652,20 +668,27 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const gizmoHeadingRef = useRef<HTMLSpanElement | null>(null);
 
   const fit = useCallback(() => {
-    fgRef.current?.zoomToFit(flightMs(650), 60);
+    fgRef.current?.zoomToFit(flightMs(650), liteRef.current ? 60 : FIT_PADDING);
   }, []);
 
-  // Hair layout: `val` (degree-derived, 2–9) decides how far a node sits
-  // from the centre — hubs at the crown, minor nodes out on the rim. The
-  // target radius is lobed (curl-sized bumps) and squashed on y, so the cloud
-  // reads as a head of curls rather than a sphere. Custom force because
-  // 3d-force-graph's built-in radial force is per-node-static.
+  // Atlas layout (lib/atlasLayout.ts): every node has a fixed home on the
+  // career clock (albums by year, themes and figures near the albums that
+  // cite them). The force below springs each node to its home. Link and
+  // charge forces are off: a studio album has dozens of links, and even a
+  // faint pull per link added up to dragging it halfway into the centre.
+  // So is centring: the clock's centre of mass isn't its centre (the gap at
+  // the bottom), and forceCenter slid the whole disc off its targets.
+  const layoutTargets = useMemo(() => atlasLayout(data), [data]);
+  const layoutTargetsRef = useRef(layoutTargets);
   useEffect(() => {
-    // A larger core keeps high-degree themes readable instead of stacking
-    // every important label on the same few pixels in the middle.
-    const STRENGTH = 0.12;
-    const VAL_MIN = 2;
-    const VAL_MAX = 9;
+    layoutTargetsRef.current = layoutTargets;
+  }, [layoutTargets]);
+  useEffect(() => {
+    // Each tick closes this share of the gap to home. The velocity is set,
+    // not accumulated, so nodes glide in without overshooting: an
+    // accumulated spring was still swinging when the engine cooled, and
+    // froze the layout off its targets.
+    const RATE = 0.12;
     const UNFURL_MS = 2600;
     let tries = 0;
     const timer = window.setInterval(() => {
@@ -675,8 +698,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       if (!fg) return;
       let nodes: GraphNode[] = [];
       let t0 = 0;
-      const radial = (alpha: number) => {
-        // one-off entrance: curls start tight and spring open. It holds
+      const home = () => {
+        // one-off entrance: the disc starts tight and springs open. It holds
         // tight until the intro curtain lifts, so the visitor sees it happen.
         if (revealedRef.current && t0 === 0) t0 = performance.now();
         const u = reduceMotionRef.current
@@ -685,38 +708,25 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             ? 0
             : Math.min(1, (performance.now() - t0) / UNFURL_MS);
         const unfurl = 0.15 + 0.85 * (1 - (1 - u) ** 3);
+        const targets = layoutTargetsRef.current;
         for (const n of nodes) {
-          const t = Math.min(
-            1,
-            Math.max(0, ((n.val ?? VAL_MIN) - VAL_MIN) / (VAL_MAX - VAL_MIN))
-          );
-          const x = n.x ?? 0;
-          const y = n.y ?? 0;
-          const z = n.z ?? 0;
-          const r = Math.hypot(x, y / FLAT, z) || 1;
-          const lump =
-            1 +
-            (LOBE / 3) *
-              (Math.sin(5.3 * (x / r) + 0.7) +
-                Math.sin(4.7 * (y / FLAT / r) + 1.9) +
-                Math.sin(5.9 * (z / r) + 3.1));
-          // ease so only the top few land in the very centre
-          const target =
-            (RADIUS_CORE + (RADIUS_RIM - RADIUS_CORE) * (1 - t) ** 1.5) *
-            lump *
-            unfurl;
-          const k = ((target - r) / r) * STRENGTH * alpha;
+          const target = targets.get(n.id);
+          if (!target) continue;
           const node = n as GraphNode & { vx?: number; vy?: number; vz?: number };
-          node.vx = (node.vx ?? 0) + x * k;
-          node.vy = (node.vy ?? 0) + y * k;
-          node.vz = (node.vz ?? 0) + z * k;
+          node.vx = (target.x * unfurl - (n.x ?? 0)) * RATE;
+          node.vy = (target.y * unfurl - (n.y ?? 0)) * RATE;
+          node.vz = (target.z * unfurl - (n.z ?? 0)) * RATE;
         }
       };
-      radial.initialize = (ns: GraphNode[]) => {
+      home.initialize = (ns: GraphNode[]) => {
         nodes = ns;
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (fg as any).d3Force("importance", radial);
+      const forces = fg as any;
+      forces.d3Force("importance", home);
+      forces.d3Force("link")?.strength(0);
+      forces.d3Force("charge")?.strength(0);
+      forces.d3Force("center", null);
       fg.d3ReheatSimulation();
     }, 100);
     return () => window.clearInterval(timer);
@@ -766,10 +776,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       window.clearInterval(ready);
       setSceneMounted(true);
       const dom = fg.renderer().domElement;
-      // the outermost curls: layout radius plus a full lobe
-      const extent = (phone ? RADIUS_CORE : RADIUS_RIM) * (1 + LOBE);
-      const distance = fitDistance(extent, phone ? 90 : 60, dom.clientWidth, dom.clientHeight);
-      fg.cameraPosition({ x: 0, y: 0, z: distance }, { x: 0, y: 0, z: 0 }, 0);
+      // the outermost layout ring (the core rings on a phone)
+      const extent = phone ? CORE_EXTENT : LAYOUT_EXTENT;
+      const padding = phone ? 90 : FIT_PADDING;
+      const distance = fitDistance(extent, padding, dom.clientWidth, dom.clientHeight);
+      fg.cameraPosition(
+        { x: 0, y: distance * Math.cos(START_POLAR), z: distance * Math.sin(START_POLAR) },
+        { x: 0, y: 0, z: 0 },
+        0
+      );
     }, 100);
     return () => window.clearInterval(ready);
   }, []);
@@ -1144,6 +1159,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         );
       const halfWidthOf = (div: HTMLDivElement) =>
         Math.min(110, Math.max(18, (div.textContent?.length ?? 0) * 3.2));
+      // Ambient labels collide on their real width (measureLabel): the
+      // estimate above runs short for long theme names, which then
+      // overlapped their neighbours once the overview was close enough to
+      // name them.
+      const measuredHalfWidthOf = (div: HTMLDivElement) =>
+        Number(div.dataset.halfWidth) || halfWidthOf(div);
       const tip = hoverTipRef.current;
       let tipShown = false;
       // Pointer picking, in screen space: the node nearest the cursor within
@@ -1194,6 +1215,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         const baseOpacity = Number(div.dataset.baseOpacity ?? "0.5");
         const entrance = entranceFor(id);
         const halfWidth = halfWidthOf(div);
+        const ambientHalfWidth = measuredHalfWidthOf(div);
         const lit = cursor || self || inLens;
         div.style.color = lit ? "var(--atlas-label-hi)" : "var(--atlas-label)";
         div.style.opacity = String((lit ? 1 : baseOpacity) * entrance);
@@ -1245,7 +1267,16 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
 
         const ghostSong = group === "song" && ghostSongsRef.current;
         if (!ghostSong && distance < LABEL_MAX_DISTANCE[group]) {
-          candidates.push({ div, distance, screenX, screenY, halfWidth, rank: 0, node, boxY: screenY - 14 });
+          candidates.push({
+            div,
+            distance,
+            screenX,
+            screenY,
+            halfWidth: ambientHalfWidth,
+            rank: 0,
+            node,
+            boxY: screenY - 14,
+          });
         }
       }
       if (tip) tip.style.opacity = tipShown ? "1" : "0";
@@ -1796,6 +1827,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         `${(9 + importance * 3.5).toFixed(1)}px`
       );
       labelLayerRef.current?.appendChild(div);
+      measureLabel(div);
       labelDivsRef.current.set(String(n.id), { div, group: n.group, node: n });
 
       return group;
@@ -1810,6 +1842,17 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     },
     []
   );
+  // Labels made before the web font arrived were measured in the fallback.
+  useEffect(() => {
+    let live = true;
+    document.fonts?.ready.then(() => {
+      if (!live) return;
+      for (const label of labelDivsRef.current.values()) measureLabel(label.div);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const groupById = useMemo(
     () => new Map(data.nodes.map((node) => [node.id, node.group])),
@@ -2047,7 +2090,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                   return group === "concept" || group === "figure";
                 });
               } else {
-                fgRef.current?.zoomToFit(flightMs(1400), 60);
+                fgRef.current?.zoomToFit(flightMs(1400), FIT_PADDING);
               }
             }
           }}
