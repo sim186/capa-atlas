@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/og.jpg" alt="Atlas — L'universo di Caparezza" width="720" />
+<img src="public/og.jpg" alt="The Capa Atlas — L'universo di Caparezza" width="720" />
 
 # The Capa Atlas
 

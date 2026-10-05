@@ -21,7 +21,7 @@ const OG_IMAGE = {
   url: `${SITE_URL}/og.jpg`,
   width: 1200,
   height: 630,
-  alt: "Atlas — L'universo di Caparezza: persone, eventi e idee che tornano di album in album",
+  alt: `${SITE_TITLE}: persone, eventi e idee che tornano di album in album`,
 };
 
 export const viewport: Viewport = {
