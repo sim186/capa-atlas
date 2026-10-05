@@ -21,7 +21,7 @@ const OG_IMAGE = {
   url: `${SITE_URL}/og.jpg`,
   width: 1200,
   height: 630,
-  alt: "The Capa Atlas — il grafo delle annotazioni di Caparezza",
+  alt: "Atlas — L'universo di Caparezza: persone, eventi e idee che tornano di album in album",
 };
 
 export const viewport: Viewport = {
@@ -42,7 +42,7 @@ const JSON_LD = {
 export const metadata: Metadata = {
   metadataBase: new URL(`${SITE_URL}/`),
   title: TITLE,
-  keywords: ["Caparezza", "Genius", "annotazioni", "grafo", "testi", "atlante"],
+  keywords: ["Caparezza", "Atlas", "universo", "testi", "riferimenti", "citazioni", "atlante", "Genius"],
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/` },
   openGraph: {

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import GraphView from "@/components/GraphView";
 import type { GraphData, Portrait } from "@/lib/graph";
-import { SITE_DESCRIPTION } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/lib/site";
 
 export const dynamic = "force-static";
 
@@ -32,7 +32,7 @@ export default function Home() {
       <main className="flex h-full items-center justify-center p-8 text-center">
         <div>
           <h1 className="mb-2 text-xl font-semibold tracking-[-0.03em] text-[var(--atlas-ink)]">
-            The Capa Atlas
+            {SITE_TITLE}
           </h1>
           <p className="font-mono text-[0.72rem] uppercase tracking-[0.16em] text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
             Nessun dato. Genera il grafo con:
@@ -52,7 +52,7 @@ export default function Home() {
     <main className="h-full">
       {/* Crawler / screen-reader view of what the canvas draws. */}
       <div className="sr-only">
-        <h1>The Capa Atlas</h1>
+        <h1>{SITE_TITLE}</h1>
         <p>{SITE_DESCRIPTION}</p>
         <h2>Album</h2>
         <ul>
