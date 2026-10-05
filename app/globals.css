@@ -481,6 +481,14 @@ button:hover .atlas-roll > span {
     0 0 6px var(--atlas-bg);
 }
 
+/* A name cut short to stay on screen (the render loop sets its max-width).
+   A little padding keeps accents and the halo inside the clip. */
+.atlas-label.is-trimmed {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-block: 2px;
+}
+
 /* Hover tooltip: the one thing hovering does besides enlarging the node.
    Positioned every frame by the render loop, above the node. */
 .atlas-tip {

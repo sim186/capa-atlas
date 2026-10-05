@@ -29,13 +29,13 @@ import {
 } from "drawably/react";
 import { CATEGORY_THEMES, MONO_THEME, type AtlasTheme } from "@/lib/theme";
 import { sound } from "@/lib/sound";
-import { useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
+import { DESKTOP_QUERY, TOUCH_QUERY, useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
 import NodeDetail from "@/components/NodeDetail";
 import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import { makeDiscTexture, makeShapeTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
-import { albumYears, atlasLayout, studioAlbumIds, CORE_EXTENT, LAYOUT_EXTENT } from "@/lib/atlasLayout";
+import { albumYears, atlasLayout, studioAlbumIds, LAYOUT_EXTENT, R_ALBUM } from "@/lib/atlasLayout";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
@@ -101,6 +101,14 @@ const LABEL_FADE_MS = 160;
 // a newcomer needs, so the orbit doesn't make names flicker.
 const LABEL_PAD = 10;
 const LABEL_PAD_KEEP = 3;
+// Ambient labels keep this far (px) inside the screen's sides.
+const LABEL_EDGE = 6;
+// The shortest a name is cut to (px) before it moves above its dot instead.
+const LABEL_MIN_TRIM = 72;
+// The staggered entrance: longest delay plus the grow time (see entranceFor).
+const ENTRANCE_MS = 1900;
+// Still frames before a phone stops drawing (see the render loop).
+const QUIET_FRAMES = 20;
 // Keyboard navigation: pan step, zoom factor and the camera distance band.
 const KEY_ZOOM_STEP = 0.78;
 const MAX_CAMERA_DISTANCE = 1800;
@@ -123,7 +131,10 @@ const FOCUS_MAX_DISTANCE = 430;
 // A finger is blunter than a pointer: a tap picks the nearest node within
 // this many screen px, since discs are only ~15px across in the overview.
 const TAP_RADIUS = 28;
-const PHONE_MAX_SONG_LABELS = 16;
+// A tap this close to a dot means the dot, whatever name lies under it; and
+// a name takes taps this far (px) around its box.
+const TAP_DOT_SURE = 4;
+const TAP_LABEL_SLOP = 8;
 // Cap on unlit labels on screen at once (themes, figures, albums).
 const MAX_AMBIENT_LABELS = 40;
 const PHONE_MAX_AMBIENT_LABELS = 14;
@@ -156,6 +167,9 @@ const LENS_HALF_HEIGHT = 100;
 const LENS_HALF_WIDTH = 72;
 const LENS_MAX_MEMBERS = LENS_SIDE_SLOTS * 2;
 const LENS_DOT = 11;
+// Phones: the lens's columns of dots stand this share of the screen's width
+// either side of its middle, leaving the rest for names.
+const PHONE_LENS_SHARE = 0.2;
 // Hover is a pointer, not a preview: no sound until the cursor rests a moment,
 // so sweeping across the cluster is silent. Idle orbit resumes a while after
 // the mouse leaves the map.
@@ -353,18 +367,54 @@ function pinAt(node: GraphNode, at: Vec3) {
   node.z = node.fz = at.z;
 }
 
-/**
- * Store a label's half width for the ambient collision check (see
- * measuredHalfWidthOf in the render loop). Shown for one layout read,
- * invisibly, since a hidden label has no width.
- */
-function measureLabel(div: HTMLDivElement) {
-  const { display, visibility } = div.style;
-  div.style.visibility = "hidden";
-  div.style.display = "block";
-  if (div.offsetWidth) div.dataset.halfWidth = String(div.offsetWidth / 2);
-  div.style.display = display;
-  div.style.visibility = visibility;
+// The label styles the render loop sets. It keeps the last value written
+// and only touches the DOM when one changes: writing every label's style
+// every frame (even unchanged) recalculated style for the whole layer, and
+// was most of a phone's frame.
+type LabelStyle = {
+  display: string;
+  transform: string;
+  opacity: string;
+  color: string;
+  zIndex: string;
+  maxWidth: string;
+};
+type LabelStyleKey = keyof LabelStyle;
+
+// One projected HTML label per node, with what the render loop reads about
+// it each frame (kept here rather than in data-* attributes, which are
+// slower to read).
+type LabelEntry = {
+  div: HTMLDivElement;
+  group: Group;
+  node: GraphNode;
+  tier: number;
+  maxDistance: number;
+  baseOpacity: number;
+  rank: number;
+  // half the rendered width, 0 until the render loop has measured it
+  measured: number;
+  pointedClass: boolean;
+  written: LabelStyle;
+  wanted: LabelStyle;
+};
+
+function setLabelStyle(entry: LabelEntry, key: LabelStyleKey, value: string) {
+  entry.wanted[key] = value;
+}
+
+/** Write what changed since the last frame; a hidden label keeps its place. */
+function commitLabelStyle(entry: LabelEntry) {
+  const { wanted, written, div } = entry;
+  const keys: LabelStyleKey[] =
+    wanted.display === "none" ? ["display"] : ["display", "transform", "opacity", "color", "zIndex", "maxWidth"];
+  for (const key of keys) {
+    if (written[key] === wanted[key]) continue;
+    written[key] = wanted[key];
+    div.style[key] = wanted[key];
+    // a cut-short name ends in an ellipsis
+    if (key === "maxWidth") div.classList.toggle("is-trimmed", wanted.maxWidth !== "");
+  }
 }
 
 /** Let go of every pin, so the layout can settle again. */
@@ -397,6 +447,35 @@ function fitDistance(extent: number, padding: number, width: number, height: num
   const paddedFov = (1 - (padding * 2) / height) * CAMERA_FOV;
   const fitHeight = (extent * 2) / Math.atan((paddedFov * Math.PI) / 180);
   return Math.max(fitHeight, fitHeight / (width / Math.max(1, height)));
+}
+
+// Phones frame the studio-album ring across the screen's width, its dots
+// this far (px) in from the sides; names with no room outside are cut
+// short (see placeRadial). Framing the theme rings instead (as
+// before) cut the clock off at both sides, and named none of it.
+const PHONE_FRAME_EXTENT = R_ALBUM + 12;
+const PHONE_FRAME_MARGIN = 48;
+
+/** Camera distance that puts the album ring across a phone's width. */
+function phoneFrameDistance(width: number, height: number) {
+  const tanHalfWidth = Math.tan((CAMERA_FOV * Math.PI) / 360) * (width / Math.max(1, height));
+  const half = width / 2;
+  return (PHONE_FRAME_EXTENT * half) / Math.max(1, half - PHONE_FRAME_MARGIN) / tanHalfWidth;
+}
+
+/** The phone overview: album ring across the screen, the clock upright. */
+function phoneFramePosition(width: number, height: number) {
+  const distance = phoneFrameDistance(width, height);
+  return { x: 0, y: distance * Math.cos(START_POLAR), z: distance * Math.sin(START_POLAR) };
+}
+
+/**
+ * The lite rendering profile (see `lite` in GraphView), read straight from
+ * the media queries: the hooks report the desktop profile until hydration
+ * is done, which is after the mount effects that frame the camera.
+ */
+function liteDevice() {
+  return !window.matchMedia(DESKTOP_QUERY).matches || window.matchMedia(TOUCH_QUERY).matches;
 }
 
 const SHAPES_KEY = "atlas-distinct-shapes";
@@ -544,13 +623,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const [songMode, setSongMode] = useState<"focus" | "all">("focus");
   const ghostSongs = lite && songMode === "focus";
   const ghostSongsRef = useRef(ghostSongs);
-  const liteRef = useRef(lite);
+  const liteRef = useRef(typeof window === "undefined" ? lite : liteDevice());
   useEffect(() => {
-    liteRef.current = lite;
+    // not `lite` itself: on the first commit it still holds the desktop
+    // profile the server rendered with
+    liteRef.current = liteDevice();
   }, [lite]);
-  // A phone can't hold dozens of song names around one hub: past this many
-  // lit nodes only the dots show, and the sheet lists them instead.
-  const songLabelsRef = useRef(true);
   useEffect(() => {
     ghostSongsRef.current = ghostSongs;
   }, [ghostSongs]);
@@ -567,9 +645,26 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const labelFadeRef = useRef(new Map<string, number>());
   const labelShownRef = useRef(new Set<string>());
   const labelFrameRef = useRef(0);
-  const labelDivsRef = useRef(
-    new Map<string, { div: HTMLDivElement; group: Group; node: GraphNode }>()
-  );
+  const labelDivsRef = useRef(new Map<string, LabelEntry>());
+  const unmeasuredRef = useRef(new Set<LabelEntry>());
+  // Whether an ambient name is still fading in or out (the render loop
+  // keeps drawing until it's done).
+  const labelsFadingRef = useRef(false);
+  // A phone's render loop pauses while the scene is still (see the tick).
+  // Anything about to move it wakes it first, for at least `ms`: a touch,
+  // a camera flight, a state change, the layout simulation.
+  const awakeUntilRef = useRef(0);
+  const renderPausedRef = useRef(false);
+  const wake = useCallback((ms = 600) => {
+    awakeUntilRef.current = Math.max(awakeUntilRef.current, performance.now() + ms);
+    if (renderPausedRef.current) {
+      renderPausedRef.current = false;
+      fgRef.current?.resumeAnimation();
+    }
+  }, []);
+  // The names on screen last frame and where (box centre, half width): a
+  // tap on a name opens its node (see pickAtTap).
+  const tapLabelsRef = useRef<{ node: GraphNode; x: number; y: number; halfWidth: number }[]>([]);
   // Live-updated flat discs. One shared canvas texture; three shared
   // materials (idle / hover / highlighted) swapped per node in the tick
   // loop, so no per-node materials or texture rebuilds.
@@ -762,9 +857,6 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     return new Set(touching.slice(0, lite ? PRIMARY_LINKS_PHONE : PRIMARY_LINKS_DESKTOP).map(linkKey));
   }, [anchor, visibleData.links, lite]);
 
-  useEffect(() => {
-    songLabelsRef.current = !lite || highlightedIds.size <= PHONE_MAX_SONG_LABELS;
-  }, [lite, highlightedIds]);
   const focus = useMemo(
     () => (anchor ? { self: anchor.id, ids: anchorIds } : null),
     [anchor, anchorIds]
@@ -804,8 +896,29 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const gizmoDotRef = useRef<HTMLDivElement | null>(null);
   const gizmoHeadingRef = useRef<HTMLSpanElement | null>(null);
 
+  // "Inquadra": the whole atlas back in view. A phone returns to its
+  // start-up frame (see phoneFramePosition), the clock upright again.
+  // Every render may have changed what the scene shows (a selection, a
+  // layer, the theme) or started a camera flight: draw again for a moment.
+  // So does a resize, which clears the canvas.
+  useEffect(() => {
+    wake();
+  });
+  useEffect(() => {
+    const onResize = () => wake();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [wake]);
+
   const fit = useCallback(() => {
-    fgRef.current?.zoomToFit(flightMs(650), liteRef.current ? 60 : FIT_PADDING);
+    const fg = fgRef.current;
+    if (!fg) return;
+    if (liteRef.current) {
+      const dom = fg.renderer().domElement;
+      fg.cameraPosition(phoneFramePosition(dom.clientWidth, dom.clientHeight), { x: 0, y: 0, z: 0 }, flightMs(650));
+      return;
+    }
+    fg.zoomToFit(flightMs(650), FIT_PADDING);
   }, []);
 
   // Atlas layout (lib/atlasLayout.ts): every node has a fixed home on the
@@ -937,8 +1050,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // difference (see onEngineStop), unless the visitor has taken over.
   //
   // Phones don't open on the whole cloud: framing it means fitting the far
-  // rim nodes, so ~200 nodes end up as specks in 390px. They frame the core
-  // (themes and figures) and the visitor drags out to the rest.
+  // rim nodes, so ~200 nodes end up as specks in 390px. They frame the
+  // studio-album ring (see phoneFramePosition) and leave out the halo of
+  // singles beyond it.
   const userMovedRef = useRef(false);
   const layoutDoneRef = useRef(false);
   const refitOnEngineStopRef = useRef(false);
@@ -951,10 +1065,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       window.clearInterval(ready);
       setSceneMounted(true);
       const dom = fg.renderer().domElement;
-      // the outermost layout ring (the core rings on a phone)
-      const extent = phone ? CORE_EXTENT : LAYOUT_EXTENT;
-      const padding = phone ? 90 : FIT_PADDING;
-      const distance = fitDistance(extent, padding, dom.clientWidth, dom.clientHeight);
+      if (phone) {
+        fg.cameraPosition(phoneFramePosition(dom.clientWidth, dom.clientHeight), { x: 0, y: 0, z: 0 }, 0);
+        return;
+      }
+      const distance = fitDistance(LAYOUT_EXTENT, FIT_PADDING, dom.clientWidth, dom.clientHeight);
       fg.cameraPosition(
         { x: 0, y: distance * Math.cos(START_POLAR), z: distance * Math.sin(START_POLAR) },
         { x: 0, y: 0, z: 0 },
@@ -1206,6 +1321,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     let raf = 0;
     const tmp = new Vector3();
     const ndc = new Vector3();
+    const entranceDelays = new Map<string, number>();
+    let lastPose: number[] = [];
+    let quietFrames = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
       const camera = fgRef.current?.camera();
@@ -1258,15 +1376,60 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           Math.abs(motion.velocity.z) < 0.01;
         if (returning && settled) lensMotionRef.current.delete(id);
       }
-      if (motionChanged) fgRef.current?.refresh();
+      // Moving lens members: a running simulation tick moves their objects to
+      // the new pins and redraws their links. (refresh() did that by
+      // rebuilding every node object and label, every frame.)
+      if (motionChanged) fgRef.current?.d3ReheatSimulation();
 
+      const entranceOver =
+        reduceMotionRef.current ||
+        (revealAtRef.current > 0 && now - revealAtRef.current > ENTRANCE_MS);
       const entranceFor = (id: string) => {
-        if (reduceMotionRef.current) return 1;
+        if (entranceOver) return 1;
         if (!revealAtRef.current) return 0.01;
-        const delay = hash01(`${id}:entrance`) * 700;
+        let delay = entranceDelays.get(id);
+        if (delay === undefined) entranceDelays.set(id, (delay = hash01(`${id}:entrance`) * 700));
         const progress = Math.min(1, Math.max(0.01, (now - revealAtRef.current - delay) / 1200));
         return 1 - (1 - progress) ** 3;
       };
+
+      // Phones stop drawing while nothing moves: no camera change, no lens
+      // spring, no label fading, nothing woken (a touch, a flight, a state
+      // change; see wake). The scene is a still picture then, and drawing it
+      // sixty times a second only spent the battery.
+      const fg = fgRef.current;
+      const pose = camera.position;
+      const turn = camera.quaternion;
+      const cameraMoved =
+        pose.x !== lastPose[0] ||
+        pose.y !== lastPose[1] ||
+        pose.z !== lastPose[2] ||
+        turn.x !== lastPose[3] ||
+        turn.y !== lastPose[4] ||
+        turn.z !== lastPose[5] ||
+        turn.w !== lastPose[6];
+      if (cameraMoved) lastPose = [pose.x, pose.y, pose.z, turn.x, turn.y, turn.z, turn.w];
+      const quiet =
+        liteRef.current &&
+        revealedRef.current &&
+        entranceOver &&
+        !cameraMoved &&
+        !motionChanged &&
+        !labelsFadingRef.current &&
+        now > awakeUntilRef.current;
+      if (quiet) {
+        if (++quietFrames === QUIET_FRAMES && fg) {
+          fg.pauseAnimation();
+          renderPausedRef.current = true;
+        }
+        if (quietFrames >= QUIET_FRAMES) return;
+      } else {
+        quietFrames = 0;
+        if (renderPausedRef.current && fg) {
+          renderPausedRef.current = false;
+          fg.resumeAnimation();
+        }
+      }
 
       // The desktop detail panel covers the right third of the screen. A
       // projection view-offset slides the whole scene left by half the panel
@@ -1329,18 +1492,21 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       }
       // Project labels into a stable HTML layer. This keeps text crisp and,
       // unlike CSS2D scene children, survives graph-data updates when the song
-      // layer or a relationship layer is toggled.
+      // layer or a relationship layer is toggled. Styles go through
+      // setLabelStyle and are written once, at the end, if they changed.
       type Candidate = {
-        div: HTMLDivElement;
+        entry: LabelEntry;
         distance: number;
         screenX: number;
         screenY: number;
         halfWidth: number;
         rank: number;
-        node: GraphNode;
         // vertical centre of the label box (labels sit above their dot,
         // lens labels beside it)
         boxY: number;
+        transform: string;
+        // a max-width that cuts the name short, or ""
+        maxWidth: string;
         // ambient only: the dot, the outward direction and the alignment
         radial?: { x: number; y: number; ux: number; uy: number; ax: number; ay: number };
       };
@@ -1349,6 +1515,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       // shows the names that fit and the rest appear under the cursor.
       const lensCandidates: Candidate[] = [];
       const placed: Candidate[] = [];
+      const width = dom?.clientWidth ?? 0;
+      const height = dom?.clientHeight ?? 0;
       const fits = (candidate: Candidate, pad = LABEL_PAD) =>
         !placed.some(
           (other) =>
@@ -1357,15 +1525,53 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               candidate.halfWidth + other.halfWidth + pad
         );
       // Put an ambient label `gap` px out from its dot (see the candidate
-      // below) and update its collision box to match.
+      // below) and update its collision box to match. A name that would run
+      // off the side of the screen is cut short (ending in an ellipsis), so
+      // it still points away from the disc; where even a short name has no
+      // room it sits above its dot instead, held inside the edge.
       const placeRadial = (candidate: Candidate, gap: number) => {
         const r = candidate.radial;
         if (!r) return;
-        const anchorX = r.x + r.ux * gap;
-        const anchorY = r.y + r.uy * gap;
-        candidate.div.style.transform = `translate3d(${anchorX}px, ${anchorY}px, 0) translate(${(r.ax - 1) * 50}%, ${(r.ay - 1) * 50}%)`;
-        candidate.screenX = anchorX + r.ax * candidate.halfWidth;
-        candidate.screenY = candidate.boxY = anchorY + r.ay * LABEL_HALF_HEIGHT;
+        const full = measuredHalfWidthOf(candidate.entry) * 2;
+        let ax = r.ax;
+        let ay = r.ay;
+        let anchorX = r.x + r.ux * gap;
+        let anchorY = r.y + r.uy * gap;
+        // the widest box that fits: it spans (ax - 1) / 2 to (ax + 1) / 2 of
+        // its width either side of the anchor
+        const room = (anchor: number, a: number) =>
+          Math.min(
+            a > -1 ? (width - LABEL_EDGE - anchor) / ((a + 1) / 2) : Infinity,
+            a < 1 ? (anchor - LABEL_EDGE) / ((1 - a) / 2) : Infinity
+          );
+        let shown = full;
+        candidate.maxWidth = "";
+        const fitsHere = room(anchorX, ax);
+        if (fitsHere < full) {
+          if (fitsHere >= LABEL_MIN_TRIM) {
+            // in steps, so an orbiting name doesn't relayout every frame
+            shown = Math.floor(fitsHere / 8) * 8;
+            candidate.maxWidth = `${shown}px`;
+          } else {
+            // no room beside the dot: the name sits above it instead
+            // (turned back across the dot it lay over the inner rings)
+            anchorX = r.x;
+            ax = 0;
+            ay = -1;
+            anchorY = r.y - gap;
+            // (and no wider than half the screen, so it doesn't lie
+            // across the disc)
+            shown = Math.min(full, width / 2);
+            if (shown < full) candidate.maxWidth = `${(shown = Math.floor(shown / 8) * 8)}px`;
+            const half = shown / 2;
+            const centre = Math.min(width - LABEL_EDGE - half, Math.max(LABEL_EDGE + half, anchorX + ax * half));
+            anchorX = centre - ax * half;
+          }
+        }
+        candidate.halfWidth = shown / 2;
+        candidate.transform = `translate3d(${anchorX}px, ${anchorY}px, 0) translate(${(ax - 1) * 50}%, ${(ay - 1) * 50}%)`;
+        candidate.screenX = anchorX + (ax * shown) / 2;
+        candidate.screenY = candidate.boxY = anchorY + ay * LABEL_HALF_HEIGHT;
       };
       // The disc's centre on screen: ambient labels point away from it, so
       // the album ring is named from outside and the inner rings stay clear.
@@ -1373,17 +1579,65 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       let centreY = 0;
       if (dom) {
         ndc.set(0, 0, 0).project(camera);
-        centreX = ((ndc.x + 1) / 2) * dom.clientWidth;
-        centreY = ((1 - ndc.y) / 2) * dom.clientHeight;
+        centreX = ((ndc.x + 1) / 2) * width;
+        centreY = ((1 - ndc.y) / 2) * height;
       }
-      const halfWidthOf = (div: HTMLDivElement) =>
-        Math.min(110, Math.max(18, (div.textContent?.length ?? 0) * 3.2));
-      // Ambient labels collide on their real width (measureLabel): the
-      // estimate above runs short for long theme names, which then
-      // overlapped their neighbours once the overview was close enough to
-      // name them.
-      const measuredHalfWidthOf = (div: HTMLDivElement) =>
-        Number(div.dataset.halfWidth) || halfWidthOf(div);
+      const halfWidthOf = (entry: LabelEntry) =>
+        Math.min(110, Math.max(18, (entry.div.textContent?.length ?? 0) * 3.2));
+      // Ambient labels collide on their real width: the estimate above runs
+      // short for long theme names, which then overlapped their neighbours
+      // once the overview was close enough to name them.
+      const measuredHalfWidthOf = (entry: LabelEntry) => entry.measured || halfWidthOf(entry);
+      // New labels (and all of them once the web font arrives) are measured
+      // together: one layout read for the lot, not one per label.
+      const unmeasured = unmeasuredRef.current;
+      if (unmeasured.size > 0) {
+        const batch = [...unmeasured].filter((entry) => entry.div.isConnected);
+        for (const entry of batch) {
+          entry.div.style.visibility = "hidden";
+          entry.div.style.display = "block";
+        }
+        for (const entry of batch) entry.measured = entry.div.offsetWidth / 2;
+        for (const entry of batch) {
+          entry.div.style.visibility = "";
+          entry.div.style.display = entry.written.display;
+          unmeasured.delete(entry);
+        }
+      }
+      // An unlit name: beside its dot, pointing away from the disc's centre.
+      // Null when the node goes unnamed at this distance.
+      const ambientCandidate = (
+        entry: LabelEntry,
+        distance: number,
+        screenX: number,
+        screenY: number
+      ): Candidate | null => {
+        const ghostSong = entry.group === "song" && ghostSongsRef.current;
+        if (ghostSong || distance >= entry.maxDistance) return null;
+        // Outward from the centre: a name on the right of the disc starts
+        // at its dot, one on the left ends there, one at the top or bottom
+        // sits above or below it. The alignment blends between these, so a
+        // label glides round its dot as the clock turns instead of jumping.
+        const dx = screenX - centreX;
+        const dy = screenY - centreY;
+        const len = Math.hypot(dx, dy) || 1;
+        const ax = Math.max(-1, Math.min(1, (dx / len) * 3));
+        const ay = Math.max(-1, Math.min(1, (dy / len) * 3));
+        const candidate: Candidate = {
+          entry,
+          distance,
+          screenX,
+          screenY,
+          halfWidth: measuredHalfWidthOf(entry),
+          rank: entry.tier,
+          boxY: screenY,
+          transform: "",
+          maxWidth: "",
+          radial: { x: screenX, y: screenY, ux: dx / len, uy: dy / len, ax, ay },
+        };
+        placeRadial(candidate, LABEL_GAP);
+        return candidate;
+      };
       const tip = hoverTipRef.current;
       let tipShown = false;
       // Pointer picking, in screen space: the node nearest the cursor within
@@ -1396,27 +1650,26 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       let pick: GraphNode | null = null;
       let pickDistance = PICK_RADIUS;
       const labelLayer = labelLayerRef.current;
-      for (const [id, { div, group, node }] of labelDivsRef.current.entries()) {
+      const labels = labelDivsRef.current;
+      for (const [id, entry] of labels) {
+        const { div, node } = entry;
         if (labelLayer && !div.isConnected) labelLayer.appendChild(div);
+        setLabelStyle(entry, "display", "none");
         if (
           !dom ||
           node.x === undefined ||
           node.y === undefined ||
           node.z === undefined
         ) {
-          div.style.display = "none";
           continue;
         }
         tmp.set(node.x, node.y, node.z);
         const distance = camera.position.distanceTo(tmp);
         ndc.copy(tmp).project(camera);
         const onScreen = Math.abs(ndc.x) < 1.05 && Math.abs(ndc.y) < 1.05 && ndc.z < 1;
-        if (!onScreen) {
-          div.style.display = "none";
-          continue;
-        }
-        const screenX = ((ndc.x + 1) / 2) * dom.clientWidth;
-        const screenY = ((1 - ndc.y) / 2) * dom.clientHeight;
+        if (!onScreen) continue;
+        const screenX = ((ndc.x + 1) / 2) * width;
+        const screenY = ((1 - ndc.y) / 2) * height;
         if (picking && spriteRefs.current.get(id)?.sprite.visible) {
           const away = Math.hypot(screenX - pointer.x, screenY - pointer.y);
           if (away < pickDistance) {
@@ -1424,91 +1677,81 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             pick = node;
           }
         }
-        div.style.transform = `translate3d(${screenX}px, ${screenY - 8}px, 0) translate(-50%, -100%)`;
-        div.style.zIndex = String(Math.max(0, Math.round(100000 - distance * 100)));
+        const above = () => `translate3d(${screenX}px, ${screenY - 8}px, 0) translate(-50%, -100%)`;
 
         const cursor = id === kbdIdRef.current;
         const self = focus !== null && id === focus.self;
         const inLens = focus !== null && !self && focus.ids.has(id);
-        const canShowLit = group !== "song" || songLabelsRef.current;
-        const baseOpacity = Number(div.dataset.baseOpacity ?? "0.5");
         const entrance = entranceFor(id);
-        const halfWidth = halfWidthOf(div);
-        const ambientHalfWidth = measuredHalfWidthOf(div);
+        const halfWidth = halfWidthOf(entry);
         const lit = cursor || self || inLens;
-        div.style.color = lit ? "var(--atlas-label-hi)" : "var(--atlas-label)";
-        div.style.opacity = String((lit ? 1 : baseOpacity) * entrance);
-        div.style.display = "none";
+        setLabelStyle(entry, "color", lit ? "var(--atlas-label-hi)" : "var(--atlas-label)");
+        setLabelStyle(entry, "opacity", String((lit ? 1 : entry.baseOpacity) * entrance));
+        setLabelStyle(entry, "zIndex", self || cursor ? "2" : "1");
+        setLabelStyle(entry, "maxWidth", "");
 
         // The node under the cursor is named by the tooltip, which also says
         // what kind of node it is; its own label steps aside (the tooltip
         // covers the same spot, so pointing at the name keeps the pick). A
         // lens member keeps its name in its column, underlined instead.
         const pointed = id === hoveredId;
-        div.classList.toggle("is-pointed", pointed && inLens);
+        if (entry.pointedClass !== (pointed && inLens)) {
+          entry.pointedClass = pointed && inLens;
+          div.classList.toggle("is-pointed", entry.pointedClass);
+        }
         if (pointed && !inLens) {
           if (tip) {
             tip.style.transform = `translate3d(${screenX}px, ${screenY - 12}px, 0) translate(-50%, -100%)`;
             tipShown = true;
           }
-          placed.push({ div, distance, screenX, screenY, halfWidth, rank: Infinity, node, boxY: screenY - 14 });
+          // Its name, hidden, keeps its box: the cursor resting on the name
+          // (which points away from the dot) still points at this node.
+          const named = !focus && ambientCandidate(entry, distance, screenX, screenY);
+          placed.push(
+            named
+              ? { ...named, rank: Infinity }
+              : { entry, distance, screenX, screenY, halfWidth, rank: Infinity, boxY: screenY - 14, transform: "", maxWidth: "" }
+          );
           continue;
         }
         if (self || cursor) {
-          div.style.display = "block";
-          placed.push({ div, distance, screenX, screenY, halfWidth, rank: Infinity, node, boxY: screenY - 14 });
+          setLabelStyle(entry, "display", "block");
+          setLabelStyle(entry, "transform", above());
+          placed.push({ entry, distance, screenX, screenY, halfWidth, rank: Infinity, boxY: screenY - 14, transform: "", maxWidth: "" });
           continue;
         }
         if (inLens) {
           // Lens names point away from the selection, beside their dot, so
-          // each arc reads as a list and no name sits on a spoke.
+          // each arc reads as a list and no name sits on a spoke. A name
+          // longer than the room left to the screen's edge is cut short.
           const side = lensSideRef.current.get(id) ?? 1;
-          div.style.transform =
-            side === 1
-              ? `translate3d(${screenX + 10}px, ${screenY}px, 0) translate(0, -50%)`
-              : `translate3d(${screenX - 10}px, ${screenY}px, 0) translate(-100%, -50%)`;
-          if (canShowLit) {
-            lensCandidates.push({
-              div,
-              distance,
-              screenX: screenX + side * (halfWidth + 10),
-              screenY,
-              halfWidth,
-              rank: pointed ? Infinity : Number(div.dataset.rank ?? "0"),
-              node,
-              boxY: screenY,
-            });
-          }
+          const room = side === 1 ? width - screenX - 10 - LABEL_EDGE : screenX - 10 - LABEL_EDGE;
+          const full = measuredHalfWidthOf(entry) * 2;
+          const trimmed = full > room;
+          const cut = Math.max(40, Math.floor(room / 8) * 8);
+          const shownHalf = trimmed ? cut / 2 : full / 2;
+          lensCandidates.push({
+            entry,
+            distance,
+            screenX: screenX + side * (shownHalf + 10),
+            screenY,
+            halfWidth: shownHalf,
+            rank: pointed ? Infinity : entry.rank,
+            boxY: screenY,
+            transform:
+              side === 1
+                ? `translate3d(${screenX + 10}px, ${screenY}px, 0) translate(0, -50%)`
+                : `translate3d(${screenX - 10}px, ${screenY}px, 0) translate(-100%, -50%)`,
+            // in steps, so a springing lens doesn't relayout every frame
+            maxWidth: trimmed ? `${cut}px` : "",
+          });
           continue;
         }
         // With a lens open the rest of the atlas is unnamed context.
         if (focus) continue;
 
-        const ghostSong = group === "song" && ghostSongsRef.current;
-        if (!ghostSong && distance < Number(div.dataset.maxDistance)) {
-          // Outward from the centre: a name on the right of the disc starts
-          // at its dot, one on the left ends there, one at the top or bottom
-          // sits above or below it. The alignment blends between these, so a
-          // label glides round its dot as the clock turns instead of jumping.
-          const dx = screenX - centreX;
-          const dy = screenY - centreY;
-          const len = Math.hypot(dx, dy) || 1;
-          const ax = Math.max(-1, Math.min(1, (dx / len) * 3));
-          const ay = Math.max(-1, Math.min(1, (dy / len) * 3));
-          const candidate: Candidate = {
-            div,
-            distance,
-            screenX,
-            screenY,
-            halfWidth: ambientHalfWidth,
-            rank: Number(div.dataset.tier),
-            node,
-            boxY: screenY,
-            radial: { x: screenX, y: screenY, ux: dx / len, uy: dy / len, ax, ay },
-          };
-          placeRadial(candidate, LABEL_GAP);
-          candidates.push(candidate);
-        }
+        const candidate = ambientCandidate(entry, distance, screenX, screenY);
+        if (candidate) candidates.push(candidate);
       }
       if (tip) tip.style.opacity = tipShown ? "1" : "0";
       // Lens captions sit over their block's column of dots and names.
@@ -1519,8 +1762,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           head.div.style.display = "none";
           continue;
         }
-        const x = ((ndc.x + 1) / 2) * dom.clientWidth;
-        const y = ((1 - ndc.y) / 2) * dom.clientHeight;
+        const x = ((ndc.x + 1) / 2) * width;
+        const y = ((1 - ndc.y) / 2) * height;
         head.div.style.transform =
           head.side === 1
             ? `translate3d(${x - 4}px, ${y}px, 0) translate(0, -50%)`
@@ -1531,7 +1774,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       for (const candidate of lensCandidates) {
         if (!fits(candidate)) continue;
         placed.push(candidate);
-        candidate.div.style.display = "block";
+        setLabelStyle(candidate.entry, "display", "block");
+        setLabelStyle(candidate.entry, "transform", candidate.transform);
+        setLabelStyle(candidate.entry, "maxWidth", candidate.maxWidth);
       }
       // However close the camera is, only the nearest non-overlapping ambient
       // labels show. The selection, its lens and the cursor bypass this budget.
@@ -1541,7 +1786,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       candidates.sort(
         (a, b) =>
           a.rank - b.rank ||
-          Number(wasShown.has(b.node.id)) - Number(wasShown.has(a.node.id)) ||
+          Number(wasShown.has(b.entry.node.id)) - Number(wasShown.has(a.entry.node.id)) ||
           a.distance - b.distance
       );
       const budget = liteRef.current ? PHONE_MAX_AMBIENT_LABELS : MAX_AMBIENT_LABELS;
@@ -1549,7 +1794,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       const ambientOpacity = new Map<string, number>();
       for (const candidate of candidates) {
         if (shown.size >= budget) break;
-        const pad = wasShown.has(candidate.node.id) ? LABEL_PAD_KEEP : LABEL_PAD;
+        const pad = wasShown.has(candidate.entry.node.id) ? LABEL_PAD_KEEP : LABEL_PAD;
         if (!fits(candidate, pad)) {
           placeRadial(candidate, LABEL_GAP + LABEL_STEP_OUT);
           if (!fits(candidate, pad)) {
@@ -1558,9 +1803,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           }
         }
         placed.push(candidate);
-        shown.add(candidate.node.id);
+        shown.add(candidate.entry.node.id);
         const depthOpacity = 1 - 0.45 * ((shown.size - 1) / budget);
-        ambientOpacity.set(candidate.node.id, depthOpacity);
+        ambientOpacity.set(candidate.entry.node.id, depthOpacity);
       }
       // Fade: a newly placed name eases in, a displaced one eases out where
       // it stood. Lit labels (selection, lens, cursor) never fade.
@@ -1568,33 +1813,50 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       labelFrameRef.current = now;
       const step = reduceMotionRef.current ? 1 : frameMs / LABEL_FADE_MS;
       const fades = new Map<string, number>();
+      let fading = false;
       for (const candidate of candidates) {
-        const id = candidate.node.id;
+        const id = candidate.entry.node.id;
         const target = shown.has(id) ? 1 : 0;
         const was = labelFadeRef.current.get(id) ?? 0;
-        const fade = target > was ? Math.min(1, was + step) : Math.max(0, was - step);
+        // (settles on its target: a name already at 1 used to step down
+        // and back up, flickering every other frame)
+        const fade = target > was ? Math.min(target, was + step) : Math.max(target, was - step);
+        if (fade !== target) fading = true;
         if (fade <= 0) continue;
         fades.set(id, fade);
-        const baseOpacity = Number(candidate.div.dataset.baseOpacity ?? "0.5");
-        candidate.div.style.display = "block";
-        candidate.div.style.opacity = String(
-          baseOpacity * (ambientOpacity.get(id) ?? 0.55) * fade * entranceFor(id)
+        setLabelStyle(candidate.entry, "display", "block");
+        setLabelStyle(candidate.entry, "transform", candidate.transform);
+        setLabelStyle(candidate.entry, "maxWidth", candidate.maxWidth);
+        setLabelStyle(
+          candidate.entry,
+          "opacity",
+          String(candidate.entry.baseOpacity * (ambientOpacity.get(id) ?? 0.55) * fade * entranceFor(id))
         );
       }
       labelFadeRef.current = fades;
       labelShownRef.current = shown;
+      labelsFadingRef.current = fading;
+      for (const entry of labels.values()) commitLabelStyle(entry);
+      // Names on screen, for a tap (see pickAtTap).
+      const tappable: { node: GraphNode; x: number; y: number; halfWidth: number }[] = [];
+      for (const label of placed) {
+        if (label.entry.wanted.display === "block") {
+          tappable.push({ node: label.entry.node, x: label.screenX, y: label.boxY, halfWidth: label.halfWidth });
+        }
+      }
+      tapLabelsRef.current = tappable;
       // A name on screen is as good as its dot: pointing at a visible label
       // picks its node.
       if (picking) {
         for (const label of placed) {
           const shown =
-            label.div.style.display === "block" || label.node.id === hoveredIdRef.current;
+            label.entry.wanted.display === "block" || label.entry.node.id === hoveredIdRef.current;
           if (!shown) continue;
           if (
             Math.abs(pointer.x - label.screenX) <= label.halfWidth + 4 &&
             Math.abs(pointer.y - label.boxY) <= 9
           ) {
-            pick = label.node;
+            pick = label.entry.node;
             break;
           }
         }
@@ -1627,19 +1889,94 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     return () => cancelAnimationFrame(raf);
   }, [materials]);
 
+  // Bring a selection's lens into view. Never a fit: the point of view
+  // belongs to the visitor, so the camera only re-centres on the node and
+  // keeps their zoom level, within a comfortable reading band.
+  const lensFramedRef = useRef(false);
+  const frameLens = useCallback(
+    (node: GraphNode) => {
+      let attempts = 0;
+      const moveToNode = () => {
+        // A search result may have been hidden until this selection. Wait for
+        // force-graph to assign it a position; focusing its default (0,0,0)
+        // would leave the visitor looking into empty space.
+        const target = homeOf(lensMotionRef.current, node);
+        if (!target && attempts++ < 5) {
+          window.setTimeout(moveToNode, 120);
+          return;
+        }
+        // Aim at the node's place in the layout: if it was sitting on the
+        // previous lens it is springing back there now.
+        const { x, y, z } = target ?? { x: 0, y: 0, z: 0 };
+
+        // Approach from wherever the camera already is, not from a vantage
+        // picked off the origin-to-node ray. (The lens faces that way too.)
+        const fg = fgRef.current;
+        const camera = fg?.camera();
+        const curPos = camera
+          ? { x: camera.position.x, y: camera.position.y, z: camera.position.z }
+          : { x: 0, y: 0, z: 400 };
+        const dx = curPos.x - x;
+        const dy = curPos.y - y;
+        const dz = curPos.z - z;
+        const distance = Math.max(Math.hypot(dx, dy, dz), 1);
+        // Selection settles at a comfortable reading distance: never inside
+        // the cluster (tunnel vision) and never all the way out at the
+        // overview zoom, where the focused neighborhood shrinks to dots. In
+        // between, the visitor's own zoom level is respected.
+        // A lens pushes the floor out so both arcs and their names fit.
+        const ringCount = lensMembersOf(node.id).length;
+        let standoff = Math.max(
+          Math.min(Math.max(distance, FOCUS_MIN_DISTANCE), FOCUS_MAX_DISTANCE),
+          lensExtent(ringCount) * 5.6
+        );
+        // On a phone the names need most of the width: the columns of dots
+        // stand PHONE_LENS_SHARE of it either side of the middle.
+        const dom = fg?.renderer().domElement;
+        if (dom && ringCount > 0 && window.innerWidth < 800) {
+          const tanHalf = Math.tan((CAMERA_FOV * Math.PI) / 360);
+          standoff =
+            (lensExtent(ringCount) * dom.clientHeight) /
+            (2 * tanHalf * PHONE_LENS_SHARE * dom.clientWidth);
+        }
+        const ratio = standoff / distance;
+
+        fg?.cameraPosition(
+          { x: x + dx * ratio, y: y + dy * ratio, z: z + dz * ratio },
+          { x, y, z },
+          flightMs(700)
+        );
+      };
+      moveToNode();
+    },
+    [lensMembersOf]
+  );
+
+  // Phones: the lens opened under the detail page. Closing the page shows
+  // it, framed; letting go of the selection afterwards returns to the
+  // overview the lens flight left.
   const closeSheet = useCallback(() => {
     play(sound.close);
     setSheetOpen(false);
-  }, [play]);
+    const node = selectedRef.current;
+    if (node && window.innerWidth < 800) {
+      lensFramedRef.current = true;
+      frameLens(node);
+    }
+  }, [frameLens, play]);
 
   const closeDetail = useCallback(() => {
     play(sound.close);
     setSelected(null);
     setTrail([]);
     setSheetOpen(false);
+    if (lensFramedRef.current) {
+      lensFramedRef.current = false;
+      fit();
+    }
     // Keep the node mounted through the slide-out transition (~620ms).
     closeTimerRef.current = window.setTimeout(() => setPanelNode(null), 700);
-  }, [play]);
+  }, [fit, play]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -1849,55 +2186,12 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       // Never fit after selecting. The point of view belongs to the visitor;
       // selection only re-centers the frame on the node at the zoom level
       // they already have — the rest of the atlas stays in view.
-      let attempts = 0;
-      const moveToNode = () => {
-        // A search result may have been hidden until this selection. Wait for
-        // force-graph to assign it a position; focusing its default (0,0,0)
-        // would leave the visitor looking into empty space.
-        const target = homeOf(lensMotionRef.current, node);
-        if (!target && attempts++ < 5) {
-          window.setTimeout(moveToNode, 120);
-          return;
-        }
-        // Aim at the node's place in the layout: if it was sitting on the
-        // previous lens it is springing back there now.
-        const { x, y, z } = target ?? { x: 0, y: 0, z: 0 };
-
-        // Approach from wherever the camera already is, not from a vantage
-        // picked off the origin-to-node ray.
-        const camera = fgRef.current?.camera();
-        const curPos = camera
-          ? { x: camera.position.x, y: camera.position.y, z: camera.position.z }
-          : { x: 0, y: 0, z: 400 };
-        const dx = curPos.x - x;
-        const dy = curPos.y - y;
-        const dz = curPos.z - z;
-        const distance = Math.max(Math.hypot(dx, dy, dz), 1);
-        // Selection settles at a comfortable reading distance: never inside
-        // the cluster (tunnel vision) and never all the way out at the
-        // overview zoom, where the focused neighborhood shrinks to dots. In
-        // between, the visitor's own zoom level is respected.
-        // A lens pushes the floor out so both arcs and their names fit.
-        const ringCount = lensMembersOf(node.id).length;
-        const standoff = Math.max(
-          Math.min(Math.max(distance, FOCUS_MIN_DISTANCE), FOCUS_MAX_DISTANCE),
-          lensExtent(ringCount) * 5.6
-        );
-        const ratio = standoff / distance;
-
-        fgRef.current?.cameraPosition(
-          { x: x + dx * ratio, y: y + dy * ratio, z: z + dz * ratio },
-          { x, y, z },
-          flightMs(700)
-        );
-      };
       // On a phone the detail is a full page that hides the map, so there is
-      // nothing to frame — and flying in would leave the visitor inside the
-      // cluster when they come back.
+      // nothing to frame yet: the lens is framed when the page closes.
       if (window.innerWidth < 800) return;
-      window.setTimeout(moveToNode, 100);
+      window.setTimeout(() => frameLens(node), 100);
     },
-    [allNeighbors, lensMembersOf, play, visibleData.nodes, visibleGroups]
+    [allNeighbors, frameLens, lensMembersOf, play, visibleData.nodes, visibleGroups]
   );
 
   // Keyboard navigation on the map. Arrows hop to the nearest node in that
@@ -2089,8 +2383,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       }
 
       // The same node can be rebuilt (a layer was toggled): replace its old
-      // label instead of leaving duplicate DOM nodes behind.
-      labelDivsRef.current.get(String(n.id))?.div.remove();
+      // label instead of leaving duplicate DOM nodes behind. If nothing about
+      // the node changed, the label already made for it is kept as it is.
+      const existing = labelDivsRef.current.get(String(n.id));
+      if (existing && existing.node === n) return group;
+      existing?.div.remove();
       const div = document.createElement("div");
       // the group class sets the case: songs read as titles, figures as names
       div.className = `atlas-label atlas-label--${n.group}`;
@@ -2112,17 +2409,35 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       // Albums are the clock's spine and carry the overview; themes and
       // figures are quieter inner rings, named once the camera comes close.
       const lead = studioAlbums.has(n.id);
-      div.dataset.tier = String(lead ? 0 : LABEL_TIER[n.group]);
-      div.dataset.maxDistance = String(lead ? Infinity : LABEL_MAX_DISTANCE[n.group]);
-      div.dataset.baseOpacity = String(lead ? 0.6 + importance * 0.35 : 0.5 + importance * 0.2);
-      div.dataset.rank = String(n.val ?? 2);
       div.style.setProperty(
         "--label-size",
         `${(lead ? 9 + importance * 3 : 9 + importance * 1).toFixed(1)}px`
       );
       labelLayerRef.current?.appendChild(div);
-      measureLabel(div);
-      labelDivsRef.current.set(String(n.id), { div, group: n.group, node: n });
+      const hidden = (): LabelStyle => ({
+        display: "none",
+        transform: "",
+        opacity: "",
+        color: "",
+        zIndex: "",
+        maxWidth: "",
+      });
+      const entry: LabelEntry = {
+        div,
+        group: n.group,
+        node: n,
+        tier: lead ? 0 : LABEL_TIER[n.group],
+        maxDistance: lead ? Infinity : LABEL_MAX_DISTANCE[n.group],
+        baseOpacity: lead ? 0.6 + importance * 0.35 : 0.5 + importance * 0.2,
+        rank: n.val ?? 2,
+        measured: 0,
+        pointedClass: false,
+        written: hidden(),
+        wanted: hidden(),
+      };
+      labelDivsRef.current.set(String(n.id), entry);
+      // measured by the render loop, all new labels in one layout read
+      unmeasuredRef.current.add(entry);
 
       return group;
     },
@@ -2141,12 +2456,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     let live = true;
     document.fonts?.ready.then(() => {
       if (!live) return;
-      for (const label of labelDivsRef.current.values()) measureLabel(label.div);
+      for (const label of labelDivsRef.current.values()) unmeasuredRef.current.add(label);
+      wake();
     });
     return () => {
       live = false;
     };
-  }, []);
+  }, [wake]);
 
   const groupById = useMemo(
     () => new Map(data.nodes.map((node) => [node.id, node.group])),
@@ -2156,6 +2472,38 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // On touch the sprite hit-test alone is too fiddly: when a tap misses
   // every disc, pick the nearest visible node within a finger's reach.
   // Only a tap with nothing near it deselects (or, twice, re-frames all).
+  // pickAtTap: what a finger meant. A tap squarely on a dot opens that dot;
+  // otherwise a tap on a name opens the name's node, even over some other
+  // dot (the singles' halo lies under the album names); otherwise the
+  // nearest dot within a finger's reach.
+  const pickAtTap = (event: MouseEvent) => {
+    const fg = fgRef.current;
+    const dom = fg?.renderer().domElement;
+    if (!fg || !dom) return null;
+    const rect = dom.getBoundingClientRect();
+    const px = event.clientX - rect.left;
+    const py = event.clientY - rect.top;
+    let best: GraphNode | null = null;
+    let bestDistance = TAP_RADIUS;
+    for (const node of visibleData.nodes) {
+      if (node.x === undefined || node.y === undefined || node.z === undefined) continue;
+      if (ghostSongs && node.group === "song" && !highlightedIds.has(node.id)) continue;
+      const screen = fg.graph2ScreenCoords(node.x, node.y, node.z);
+      const distance = Math.hypot(screen.x - px, screen.y - py);
+      if (distance < bestDistance) {
+        best = node;
+        bestDistance = distance;
+      }
+    }
+    if (bestDistance <= TAP_DOT_SURE) return best;
+    const named = tapLabelsRef.current.find(
+      (label) =>
+        Math.abs(px - label.x) <= label.halfWidth + TAP_LABEL_SLOP &&
+        Math.abs(py - label.y) <= LABEL_HALF_HEIGHT + TAP_LABEL_SLOP
+    );
+    return named?.node ?? best;
+  };
+
   const handleBackgroundClick = (event: MouseEvent) => {
     // A click near a node (or on its name) opens it: no pixel hunting.
     if (!lite && hoveredNodeRef.current) {
@@ -2163,28 +2511,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       return;
     }
     if (lite) {
-      const fg = fgRef.current;
-      const dom = fg?.renderer().domElement;
-      if (fg && dom) {
-        const rect = dom.getBoundingClientRect();
-        const px = event.clientX - rect.left;
-        const py = event.clientY - rect.top;
-        let best: GraphNode | null = null;
-        let bestDistance = TAP_RADIUS;
-        for (const node of visibleData.nodes) {
-          if (node.x === undefined || node.y === undefined || node.z === undefined) continue;
-          if (ghostSongs && node.group === "song" && !highlightedIds.has(node.id)) continue;
-          const screen = fg.graph2ScreenCoords(node.x, node.y, node.z);
-          const distance = Math.hypot(screen.x - px, screen.y - py);
-          if (distance < bestDistance) {
-            best = node;
-            bestDistance = distance;
-          }
-        }
-        if (best) {
-          focusNode(best);
-          return;
-        }
+      const best = pickAtTap(event);
+      if (best) {
+        focusNode(best);
+        return;
       }
       const now = Date.now();
       const last = lastTapRef.current;
@@ -2233,6 +2563,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         // Wheel / trackpad zoom is no pointerdown: without this the start-up
         // camera follow kept re-fitting and snapped the visitor back out.
         onWheel={() => {
+          wake();
           userMovedRef.current = true;
           refitOnEngineStopRef.current = false;
         }}
@@ -2252,6 +2583,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           }
         }}
         onPointerDown={(event) => {
+          wake();
           if ((event.target as HTMLElement).closest("nav, button, a, input")) return;
           userMovedRef.current = true;
           refitOnEngineStopRef.current = false;
@@ -2260,6 +2592,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           dragStartRef.current = { x: event.clientX, y: event.clientY };
         }}
         onPointerMove={(event) => {
+          wake();
           if (event.pointerType === "mouse") {
             // a mouse already inside at load never fires pointerenter
             if (!pointerBusy) pointerEnter();
@@ -2390,9 +2723,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             return !hidden(link.source) && !hidden(link.target);
           }}
           onEngineTick={() => {
+            wake(300);
             const n = ++tickCountRef.current;
             if (n <= WARM_TICKS && n % 8 === 0) setWarmTicks(n);
           }}
+          // Phones: the layout has settled long before d3's default 15s,
+          // and the render loop can't rest while the engine runs.
+          cooldownTime={lite ? 6000 : 15000}
           onEngineStop={() => {
             layoutDoneRef.current = true;
             if (refitOnEngineStopRef.current) {
@@ -2405,20 +2742,20 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             if (revealedRef.current && !settleFitDoneRef.current) {
               settleFitDoneRef.current = true;
               if (userMovedRef.current) return;
-              if (liteRef.current) {
-                fgRef.current?.zoomToFit(flightMs(1400), 90, (node) => {
-                  const group = (node as GraphNode).group;
-                  return group === "concept" || group === "figure";
-                });
-              } else {
-                fgRef.current?.zoomToFit(flightMs(1400), FIT_PADDING);
-              }
+              // a phone's frame comes from the layout's own geometry, so
+              // the settled layout is already in it
+              if (!liteRef.current) fgRef.current?.zoomToFit(flightMs(1400), FIT_PADDING);
             }
           }}
           // The click opens what the render loop picked (nearest to the
           // cursor, or a pointed name), which may differ from the disc a ray
           // hit first.
-          onNodeClick={(node) => focusNode(hoveredNodeRef.current ?? (node as GraphNode))}
+          // (On touch, the disc a tap's ray met may lie under someone's name.)
+          onNodeClick={(node, event) =>
+            focusNode(
+              (lite ? pickAtTap(event) : hoveredNodeRef.current) ?? (node as GraphNode)
+            )
+          }
           // Clicking empty space is the gesture for "deselect" — the only
           // two ways the current selection changes are a click on another
           // note and a click on empty canvas (hover never touches it).
