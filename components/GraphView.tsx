@@ -164,6 +164,17 @@ const HOVER_SOUND_DWELL_MS = 140;
 const PICK_RADIUS = 18;
 const IDLE_ORBIT_RESUME_MS = 4000;
 const LENS_GROUP_ORDER: Group[] = ["album", "figure", "concept", "song"];
+// Lens block captions (plural: they head a list).
+const LENS_GROUP_TITLE: Record<Group, string> = {
+  album: "Album",
+  figure: "Figure",
+  concept: "Temi",
+  song: "Canzoni",
+};
+// Splitting a category across the two arcs costs this many rows of
+// imbalance: a block stays whole unless keeping it so leaves one arc far
+// longer than the other.
+const LENS_SPLIT_COST = 4;
 
 /** Width of the desktop detail panel (mirrors .atlas-panel in globals.css). */
 function desktopPanelWidth() {
@@ -241,18 +252,81 @@ function lensOrder(nodes: readonly GraphNode[]) {
   );
 }
 
+type LensRow =
+  | { kind: "head"; group: Group; count: number; more: boolean }
+  | { kind: "node"; node: GraphNode }
+  | { kind: "gap" };
+type LensSlot = { x: number; y: number; side: number };
+
 /**
- * Slot of the index-th of `count` lens members, in lens axes (x right, y up).
- * The right arc fills top to bottom, then the left arc bottom to top, so the
- * category order runs clockwise. Arcs bulge outward at the middle.
+ * The lens as two columns, each read top to bottom like an index: one block
+ * per category (a caption, then its members, weightiest first), with an
+ * empty row between blocks. The right column takes the first blocks. The
+ * split falls between blocks where that keeps the columns about even;
+ * otherwise inside the block that straddles the middle, whose second part
+ * gets a "segue" caption.
  */
-function lensSlot(index: number, count: number) {
-  const right = Math.ceil(count / 2);
-  const side = index < right ? 1 : -1;
-  const k = side === 1 ? right : count - right;
-  const j = side === 1 ? index : count - 1 - index;
-  const halfHeight = Math.min(LENS_HALF_HEIGHT, ((k - 1) * LENS_ROW) / 2);
-  const u = k === 1 ? 0 : 1 - (2 * j) / (k - 1);
+function lensLayout(nodes: readonly GraphNode[]) {
+  const blocks = LENS_GROUP_ORDER.map((group) => lensOrder(nodes.filter((n) => n.group === group))).filter(
+    (block) => block.length > 0
+  );
+  const rows: LensRow[] = [];
+  // where each split may fall: the row index the left column starts from,
+  // and whether the cut is inside a block (needs a continuation caption)
+  const cuts: { at: number; inside: Group | null; count: number }[] = [];
+  blocks.forEach((block, b) => {
+    if (b > 0) {
+      cuts.push({ at: rows.length, inside: null, count: 0 });
+      rows.push({ kind: "gap" });
+    }
+    const group = block[0].group;
+    rows.push({ kind: "head", group, count: block.length, more: false });
+    block.forEach((node, i) => {
+      if (i >= 1) cuts.push({ at: rows.length, inside: group, count: block.length });
+      rows.push({ kind: "node", node });
+    });
+  });
+  let best: { at: number; inside: Group | null; count: number } | null = null;
+  let bestScore = Infinity;
+  for (const cut of cuts) {
+    const right = cut.at;
+    // a block boundary drops its gap row; a cut inside adds a caption
+    const left = cut.inside ? rows.length - cut.at + 1 : rows.length - cut.at - 1;
+    const score = Math.abs(right - left) + (cut.inside ? LENS_SPLIT_COST : 0);
+    if (score < bestScore) {
+      bestScore = score;
+      best = cut;
+    }
+  }
+  let columns: LensRow[][];
+  if (!best) columns = [rows, []];
+  else if (best.inside) {
+    columns = [
+      rows.slice(0, best.at),
+      [{ kind: "head", group: best.inside, count: best.count, more: true }, ...rows.slice(best.at)],
+    ];
+  } else columns = [rows.slice(0, best.at), rows.slice(best.at + 1)];
+
+  const members = new Map<string, LensSlot>();
+  const heads: { group: Group; count: number; more: boolean; slot: LensSlot }[] = [];
+  columns.forEach((column, c) => {
+    const side = c === 0 ? 1 : -1;
+    column.forEach((row, j) => {
+      const slot = lensSlot(j, column.length, side);
+      if (row.kind === "node") members.set(row.node.id, slot);
+      else if (row.kind === "head") heads.push({ group: row.group, count: row.count, more: row.more, slot });
+    });
+  });
+  return { members, heads };
+}
+
+/**
+ * Slot of the j-th of `rows` rows in one lens column, in lens axes (x right,
+ * y up), top to bottom. Columns bulge outward at the middle.
+ */
+function lensSlot(j: number, rows: number, side: number): LensSlot {
+  const halfHeight = Math.min(LENS_HALF_HEIGHT, ((rows - 1) * LENS_ROW) / 2);
+  const u = rows === 1 ? 0 : 1 - (2 * j) / (rows - 1);
   const y = u * halfHeight;
   const bow = Math.sqrt(Math.max(0, 1 - (y / LENS_HALF_HEIGHT) ** 2));
   const x = side * LENS_HALF_WIDTH * (0.45 + 0.55 * bow);
@@ -707,6 +781,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // Which arc each lens member sits on (1 right, -1 left): its label points
   // away from the selection, toward that side.
   const lensSideRef = useRef(new Map<string, number>());
+  // The open lens's block captions, and where each sits in the world.
+  const lensHeadsRef = useRef<{ div: HTMLDivElement; at: Vec3; side: number }[]>([]);
   useEffect(() => {
     focusRef.current = focus;
     selectedRef.current = selected;
@@ -905,12 +981,29 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     const anchorHome = homeOf(motions, selected);
     if (!anchorHome) return;
 
-    const ring = lensOrder(selectedNeighbors);
+    const layout = lensLayout(selectedNeighbors);
     const sides = lensSideRef.current;
     sides.clear();
-    ring.forEach((node, index) => {
+    const toWorld = (slot: LensSlot) => ({
+      x: anchorHome.x + basis.right.x * slot.x + basis.up.x * slot.y,
+      y: anchorHome.y + basis.right.y * slot.x + basis.up.y * slot.y,
+      z: anchorHome.z + basis.right.z * slot.x + basis.up.z * slot.y,
+    });
+    // Block captions: plain HTML labels pinned where a member would sit.
+    const layer = labelLayerRef.current;
+    const heads = layout.heads.map(({ group, count, more, slot }) => {
+      const div = document.createElement("div");
+      div.className = "atlas-lens-head";
+      div.textContent = more ? `${LENS_GROUP_TITLE[group]}, segue` : `${LENS_GROUP_TITLE[group]} · ${count}`;
+      div.style.display = "none";
+      layer?.appendChild(div);
+      return { div, at: toWorld(slot), side: slot.side };
+    });
+    lensHeadsRef.current = heads;
+    selectedNeighbors.forEach((node) => {
       const home = homeOf(motions, node);
-      if (!home) return;
+      const slot = layout.members.get(node.id);
+      if (!home || !slot) return;
       let motion = motions.get(node.id);
       if (!motion) {
         motion = {
@@ -923,14 +1016,14 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         motions.set(node.id, motion);
       }
       motion.node = node;
-      const slot = lensSlot(index, ring.length);
       sides.set(node.id, slot.side);
-      motion.target = {
-        x: anchorHome.x + basis.right.x * slot.x + basis.up.x * slot.y - home.x,
-        y: anchorHome.y + basis.right.y * slot.x + basis.up.y * slot.y - home.y,
-        z: anchorHome.z + basis.right.z * slot.x + basis.up.z * slot.y - home.z,
-      };
+      const at = toWorld(slot);
+      motion.target = { x: at.x - home.x, y: at.y - home.y, z: at.z - home.z };
     });
+    return () => {
+      for (const head of heads) head.div.remove();
+      lensHeadsRef.current = [];
+    };
   }, [selected, selectedNeighbors, visibleData.nodes]);
 
   // Clamp the orbit tilt as soon as the controls exist (they're created
@@ -1417,6 +1510,22 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         }
       }
       if (tip) tip.style.opacity = tipShown ? "1" : "0";
+      // Lens captions sit over their block's column of dots and names.
+      for (const head of lensHeadsRef.current) {
+        tmp.set(head.at.x, head.at.y, head.at.z);
+        ndc.copy(tmp).project(camera);
+        if (!dom || !focus || ndc.z >= 1) {
+          head.div.style.display = "none";
+          continue;
+        }
+        const x = ((ndc.x + 1) / 2) * dom.clientWidth;
+        const y = ((1 - ndc.y) / 2) * dom.clientHeight;
+        head.div.style.transform =
+          head.side === 1
+            ? `translate3d(${x - 4}px, ${y}px, 0) translate(0, -50%)`
+            : `translate3d(${x + 4}px, ${y}px, 0) translate(-100%, -50%)`;
+        head.div.style.display = "block";
+      }
       lensCandidates.sort((a, b) => b.rank - a.rank);
       for (const candidate of lensCandidates) {
         if (!fits(candidate)) continue;
@@ -1982,7 +2091,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       // label instead of leaving duplicate DOM nodes behind.
       labelDivsRef.current.get(String(n.id))?.div.remove();
       const div = document.createElement("div");
-      div.className = "atlas-label";
+      // the group class sets the case: songs read as titles, figures as names
+      div.className = `atlas-label atlas-label--${n.group}`;
       const year = n.group === "album" ? yearOfAlbum.get(n.id) : undefined;
       if (year !== undefined) {
         const tag = document.createElement("span");

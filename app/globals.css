@@ -782,6 +782,42 @@ a:focus-visible {
 }
 
 /* A lens member under the cursor: its name stays in the column, underlined. */
+/* Songs read as titles and figures as names, so a list mixing them with
+   themes (a lens) shows what each row is without relying on colour. */
+.atlas-label--song,
+.atlas-label--figure {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+.atlas-label--song::before {
+  content: "«";
+}
+.atlas-label--song::after {
+  content: "»";
+}
+
+/* Lens block caption ("Temi · 22"): over its column, quieter than names. */
+.atlas-lens-head {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--atlas-label-hi);
+  opacity: 0.72;
+  padding-bottom: 3px;
+  border-bottom: 1px solid color-mix(in oklch, var(--atlas-label-hi) 35%, transparent);
+  pointer-events: none;
+  text-shadow:
+    0 0 3px var(--atlas-bg),
+    0 0 6px var(--atlas-bg);
+}
+
 /* An album's year leads its name, lighter, so the ring reads as a timeline. */
 .atlas-label-year {
   opacity: 0.55;
