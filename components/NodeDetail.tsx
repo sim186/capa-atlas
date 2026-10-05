@@ -8,6 +8,7 @@ import { GROUP_LABEL, type Group } from "@/lib/graph";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
 import { useIsDesktop } from "@/lib/useIsDesktop";
+import { spotifySearchUrl } from "@/lib/spotify";
 
 interface NodeDetailProps {
   node: GraphNode;
@@ -46,6 +47,22 @@ function useQuotes(node: GraphNode): Quote[] | null {
   }, [file]);
   if (file && quoteCache.has(file)) return quoteCache.get(file)!;
   return loaded && loaded.file === file ? loaded.quotes : null;
+}
+
+function SpotifyLink({ href, className = "" }: { href: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)] ${className}`}
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#1DB954]" fill="currentColor">
+        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.59 14.44a.75.75 0 0 1-1.03.25c-2.82-1.72-6.37-2.11-10.56-1.15a.75.75 0 1 1-.3-1.47c4.58-.94 8.49-.49 11.64 1.43.35.21.46.68.25 1.03Zm1.37-3.04a.94.94 0 0 1-1.29.31c-3.23-1.98-8.15-2.55-11.97-1.39a.94.94 0 1 1-.55-1.8c4.36-1.32 9.8-.68 13.5 1.58.44.27.58.85.31 1.3Zm.12-3.16C14.2 7.9 7.1 7.67 3.98 8.62a1.13 1.13 0 1 1-.66-2.17c3.58-1.09 11.36-.87 15.67 1.69a1.13 1.13 0 0 1-.91 2.06Z" />
+      </svg>
+      Spotify ↗
+    </a>
+  );
 }
 
 /** Wikipedia sections on what the album/song is about (concept, meaning, tracks). */
@@ -135,6 +152,7 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
 
   const title = node.label;
   const groupLabel = GROUP_LABEL[node.group as Group] ?? node.group;
+  const spotifyUrl = spotifySearchUrl(node);
 
   const body = (
     <div
@@ -240,6 +258,7 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
                     Wikipedia ↗
                   </a>
                 )}
+                {spotifyUrl && <SpotifyLink href={spotifyUrl} />}
               </p>
             </div>
           )}
@@ -333,6 +352,7 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
                   Wikipedia ↗
                 </a>
               )}
+              {spotifyUrl && <SpotifyLink href={spotifyUrl} className="mt-3" />}
             </div>
           )}
 
