@@ -27,6 +27,13 @@ export interface GraphNode {
   // album + song: short synopsis pulled from Wikipedia (data/wikipedia.json)
   description?: string;
   descriptionUrl?: string;
+  // concept + figure: hand-written note (data/concepts.json `blurb`); figure:
+  // short Wikipedia bio. `description` is the computed usage line.
+  blurb?: string;
+  bio?: string;
+  bioUrl?: string;
+  // the substance of the Wikipedia page: sections on concept/meaning/tracks
+  about?: { heading: string; text: string }[];
   // album + songs on it: cover art URL (never stored locally, loaded from the
   // source) and where it came from, from data/covers.json
   cover?: string;

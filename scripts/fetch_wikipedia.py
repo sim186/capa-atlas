@@ -9,12 +9,19 @@ and only keep it if the summary text actually mentions "Caparezza" — most
 album tracks have no dedicated article, and without this check a common
 song title (e.g. a single word) would happily match an unrelated page.
 
+Figure nodes (Van Gogh, Dante...) get a short bio looked up by explicit title.
+
 Usage:
   python scripts/fetch_wikipedia.py            fetch missing entries only (resumable)
   python scripts/fetch_wikipedia.py --refetch  re-fetch everything, ignoring the cache
   python scripts/fetch_wikipedia.py --limit 20 stop after N new lookups (testing)
 
-Output: data/wikipedia.json — { "<node id>": {title, extract, url, lang} }
+Output: data/wikipedia.json — { "<node id>": {title, extract, url, lang, about} }
+  `extract` is the one-line lead ("X è un singolo ... pubblicato il ...");
+  `about` is the substance of the page — a list of {heading, text} for the
+  sections that say what the album/song is *about* (concept, meaning,
+  composition...), minus track lists, credits, charts and other boilerplate.
+  Entries cached before `about` existed are backfilled without re-searching.
 Reads: data/raw/referents.jsonl (for the album/song id → title list)
 """
 
@@ -138,13 +145,100 @@ def lookup(title: str, kind: str) -> dict | None:
         haystack = f"{extract}\n{description}".casefold()
         if "caparezza" not in haystack or not extract or wrong_kind(kind, extract):
             continue
+        page_title = summary.get("title", result_title)
         return {
-            "title": summary.get("title", result_title),
+            "title": page_title,
             "extract": extract,
             "url": summary.get("content_urls", {}).get("desktop", {}).get("page"),
             "lang": lang,
+            "about": fetch_about(lang, page_title),
         }
     return None
+
+
+# Sections that are lists/credits/reception rather than "what is this about".
+SKIP_SECTIONS = {
+    "tracce", "formazione", "classifiche", "classifica", "note", "bibliografia",
+    "altri progetti", "collegamenti esterni", "voci correlate", "video musicale",
+    "video", "promozione", "tour", "riconoscimenti", "certificazioni",
+    "successo commerciale", "date di pubblicazione", "crediti", "produzione",
+    "musicisti", "altre versioni", "cover", "versioni", "edizioni", "singoli",
+    "pubblicazione", "accoglienza", "critica", "ricezione", "vendite",
+    # English pages (fallback language)
+    "track listing", "personnel", "charts", "weekly charts", "year-end charts",
+    "certifications", "critical reception", "reception", "release", "promotion",
+    "music video", "notes", "references", "external links", "see also",
+    "credits", "release history", "accolades", "tour", "sales",
+}
+HEADING_RE = re.compile(r"^(={2,6})\s*(.*?)\s*\1\s*$")
+MAX_SECTION_CHARS = 1400
+
+
+def fetch_about(lang: str, title: str) -> list[dict]:
+    """Plain-text sections of the page worth showing as a description.
+    Level-3+ headings are folded into their parent so the panel stays flat."""
+    data = http_json(SEARCH_URL.format(lang=lang), {
+        "action": "query", "prop": "extracts", "explaintext": 1,
+        "exsectionformat": "wiki", "titles": title, "format": "json",
+        "redirects": 1,
+    })
+    time.sleep(REQUEST_DELAY)
+    pages = data.get("query", {}).get("pages", {})
+    text = next(iter(pages.values()), {}).get("extract", "") if pages else ""
+    sections: list[dict] = []
+    heading, buf, skip = None, [], True  # lead paragraph is already `extract`
+
+    def flush():
+        body = "\n".join(buf).strip()
+        if heading and not skip and body:
+            if len(body) > MAX_SECTION_CHARS:  # cut at a sentence boundary
+                cut = body.rfind(". ", 0, MAX_SECTION_CHARS)
+                body = body[: cut + 1] if cut > 400 else body[:MAX_SECTION_CHARS].rstrip() + "…"
+            sections.append({"heading": heading, "text": body})
+
+    for line in text.splitlines():
+        m = HEADING_RE.match(line)
+        if m and len(m.group(1)) == 2:
+            flush()
+            heading, buf = m.group(2), []
+            skip = heading.casefold() in SKIP_SECTIONS
+        elif m:
+            buf.append(m.group(2) + ".")  # sub-heading → inline lead-in
+        else:
+            buf.append(line)
+    flush()
+    return sections
+
+
+# The 13 `figure` nodes (data/concepts.json) are real people / characters,
+# not Caparezza releases, so the search + "mentions Caparezza" check doesn't
+# apply: look the page up directly by an explicit title. Stored under the
+# node id ("concept:<id>") as a short bio.
+FIGURE_TITLES = {
+    "van_gogh": "Vincent van Gogh", "dante": "Dante Alighieri", "gesu_cristo": "Gesù",
+    "beethoven": "Ludwig van Beethoven", "berlusconi": "Silvio Berlusconi",
+    "galileo": "Galileo Galilei", "eraclito": "Eraclito", "nietzsche": "Friedrich Nietzsche",
+    "freud": "Sigmund Freud", "darwin": "Charles Darwin", "lewis_carroll": "Lewis Carroll",
+    "ulisse": "Ulisse", "kubrick": "Stanley Kubrick",
+}
+MAX_BIO_CHARS = 420
+
+
+def lookup_figure(title: str) -> dict | None:
+    summary = fetch_summary("it", title)
+    time.sleep(REQUEST_DELAY)
+    extract = summary.get("extract", "")
+    if not extract or summary.get("type") == "disambiguation":
+        return None
+    if len(extract) > MAX_BIO_CHARS:  # keep whole sentences
+        cut = extract.rfind(". ", 0, MAX_BIO_CHARS)
+        extract = extract[: cut + 1] if cut > 120 else extract[:MAX_BIO_CHARS].rstrip() + "…"
+    return {
+        "title": summary.get("title", title),
+        "extract": extract,
+        "url": summary.get("content_urls", {}).get("desktop", {}).get("page"),
+        "lang": "it",
+    }
 
 
 def load_referents() -> list[dict]:
@@ -174,6 +268,24 @@ def main() -> int:
     if not args.refetch and os.path.exists(OUT):
         with open(OUT, encoding="utf-8") as f:
             cache = json.load(f)
+
+    # Backfill: entries fetched before `about` existed — page is already
+    # known to be right, so just pull its sections.
+    backfill = [k for k, v in cache.items() if v and "about" not in v]
+    for k in backfill:
+        v = cache[k]
+        v["about"] = fetch_about(v["lang"], v["title"])
+        print(f"  backfilled about: {k} ({len(v['about'])} sections)")
+    if backfill:
+        with open(OUT, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=1)
+
+    for cid, wiki_title in FIGURE_TITLES.items():
+        node_id = f"concept:{cid}"
+        if node_id in cache and not args.refetch:
+            continue
+        cache[node_id] = lookup_figure(wiki_title) or {}
+        print(f"  figure {'ok' if cache[node_id] else '—'}  {wiki_title}")
 
     todo = [(node_id, title, "album") for node_id, title in albums.items() if node_id not in cache]
     todo += [(node_id, title, "song") for node_id, title in songs.items() if node_id not in cache]

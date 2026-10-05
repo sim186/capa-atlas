@@ -117,6 +117,31 @@ def clean(label: str, maxlen: int = 46) -> str:
     return " ".join(label.split())[:maxlen]
 
 
+def usage_line(node: dict, songs_cited: list[tuple[dict, int]]) -> str:
+    """One factual sentence for a concept/figure node, derived from the graph:
+    how many songs touch it, on which albums, over which years, and the song
+    where it weighs most. `songs_cited` is [(song node, quote count)]."""
+    n = len(songs_cited)
+    verb = "Citato" if node["group"] == "figure" else "Ricorre"
+    parts = [f"{verb} in {n} {'canzone' if n == 1 else 'canzoni'}"]
+    per_album: dict[str, int] = {}
+    for song, _ in songs_cited:
+        if song["album"] != "Singoli / altro":
+            per_album[song["album"]] = per_album.get(song["album"], 0) + 1
+    # a single song on an album isn't a pattern — only name albums with 2+
+    top = [kv for kv in sorted(per_album.items(), key=lambda kv: (-kv[1], kv[0]))[:2] if kv[1] > 1]
+    if top:
+        parts[0] += ", soprattutto in " + " e ".join(f"{a} ({c})" for a, c in top)
+    years = sorted(int(m.group()) for song, _ in songs_cited
+                   if (m := re.search(r"\d{4}", song.get("release") or "")))
+    if years:
+        parts.append(f"Dal {years[0]}" + (f" al {years[-1]}" if years[-1] != years[0] else ""))
+    strongest = max(songs_cited, key=lambda sc: (sc[1], sc[0]["label"]))
+    if n > 1 and strongest[1] > 1:
+        parts.append(f"Presenza più forte: «{strongest[0]['label']}»")
+    return ". ".join(parts) + "."
+
+
 def main() -> int:
     refs = load_referents()
     concepts = json.load(open(CONCEPTS, encoding="utf-8"))["concepts"]
@@ -218,6 +243,8 @@ def main() -> int:
         entry = wikipedia.get(node["id"])
         if entry:
             node["description"] = entry["extract"]
+            if entry.get("about"):
+                node["about"] = entry["about"]
             if entry.get("url"):
                 node["descriptionUrl"] = entry["url"]
 
@@ -229,6 +256,24 @@ def main() -> int:
             node["coverSource"] = cover["source"]
             if cover.get("sourceUrl"):
                 node["coverSourceUrl"] = cover["sourceUrl"]
+
+    # concept/figure nodes: computed usage line, Wikipedia bio for figures,
+    # and the hand-written `blurb` from data/concepts.json when present.
+    cited_by: dict[str, list[tuple[dict, int]]] = {}
+    for song_id, cids in song_concepts.items():
+        for node_id, weight in cids.items():
+            cited_by.setdefault(node_id, []).append((songs[song_id], weight))
+    for node_id, node in concepts_final.items():
+        if node_id in cited_by:
+            node["description"] = usage_line(node, cited_by[node_id])
+        blurb = concept_by_id[node_id.split(":", 1)[1]].get("blurb")
+        if blurb:
+            node["blurb"] = blurb
+        bio = wikipedia.get(node_id)
+        if bio:
+            node["bio"] = bio["extract"]
+            if bio.get("url"):
+                node["bioUrl"] = bio["url"]
 
     nodes = list(albums.values()) + list(songs.values()) + list(concepts_final.values())
 

@@ -48,6 +48,33 @@ function useQuotes(node: GraphNode): Quote[] | null {
   return loaded && loaded.file === file ? loaded.quotes : null;
 }
 
+/** Wikipedia sections on what the album/song is about (concept, meaning, tracks). */
+function AboutSections({ about }: { about?: { heading: string; text: string }[] }) {
+  if (!about?.length) return null;
+  return (
+    <div className="mt-4 space-y-4">
+      {about.map((section) => (
+        <section key={section.heading}>
+          <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+            {section.heading}
+          </h3>
+          {section.text
+            .split("\n")
+            .filter(Boolean)
+            .map((para, i) => (
+              <p
+                key={i}
+                className="mt-2 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)] first:mt-0"
+              >
+                {para}
+              </p>
+            ))}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 /**
  * The node detail surface: a right-hand panel on desktop, a draggable
  * bottom sheet on mobile. Every open/re-nav replays the staggered reveal:
@@ -191,6 +218,7 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
                   {node.description}
                 </p>
               )}
+              <AboutSections about={node.about} />
               <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
                 {node.url && (
                   <a
@@ -257,12 +285,44 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
 
           {node.group !== "song" && (
             <div className="atlas-reveal mt-5" style={{ "--i": 2 } as React.CSSProperties}>
-              <p className="text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]">
+              {node.blurb && (
+                <p className="text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]">
+                  {node.blurb}
+                </p>
+              )}
+              <p
+                className={
+                  node.blurb
+                    ? "mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_62%,transparent)]"
+                    : "text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]"
+                }
+              >
                 {node.description ??
                   `Un elemento dell'atlante Caparezza, collegato a ${neighbors.length} ${
                     neighbors.length === 1 ? "nodo" : "nodi"
                   }.`}
               </p>
+              <AboutSections about={node.about} />
+              {node.bio && (
+                <div className="mt-5">
+                  <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+                    Chi è
+                  </h3>
+                  <p className="text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                    {node.bio}
+                  </p>
+                  {node.bioUrl && (
+                    <a
+                      href={node.bioUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
+                    >
+                      Wikipedia ↗
+                    </a>
+                  )}
+                </div>
+              )}
               {node.descriptionUrl && (
                 <a
                   href={node.descriptionUrl}
