@@ -1054,9 +1054,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       }
       controls.minPolarAngle = MIN_POLAR;
       controls.maxPolarAngle = MAX_POLAR;
-      // The wheel button turns the scene too (as in most 3D tools), instead
-      // of OrbitControls' default drag-to-zoom; the wheel itself still zooms.
-      controls.mouseButtons = { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN };
+      // Match PrusaSlicer's navigation: left drag orbits, while middle and
+      // right drag pan. OrbitControls swaps the action when Shift/Ctrl is
+      // held, and the wheel itself still zooms.
+      controls.mouseButtons = { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.PAN };
       controlsRef.current = controls;
     };
     apply();
@@ -2244,7 +2245,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           pointerLeave();
         }}
         onMouseDown={(event) => {
-          // a wheel press on the map turns it; don't let the browser start
+          // a wheel press on the map pans it; don't let the browser start
           // autoscroll (Windows, Linux) on top of that
           if (event.button === 1 && !(event.target as HTMLElement).closest("nav, button, a, input")) {
             event.preventDefault();
