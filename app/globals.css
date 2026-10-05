@@ -464,17 +464,68 @@ button:hover .atlas-roll > span {
 /* ------------------------------------------------------------------ */
 
 .atlas-label {
-  font-family: var(--font-geist-sans), "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  /* Set in capitals above the node, small and mono, like a specimen tag:
+     size follows node weight (--label-size, set per node), opacity follows
+     distance (set by the render loop). */
+  font-family: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--label-size, 10px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
   color: var(--atlas-label);
   /* a paper-coloured halo keeps text legible over lines and discs */
   text-shadow:
     0 0 3px var(--atlas-bg),
-    0 0 3px var(--atlas-bg),
     0 0 6px var(--atlas-bg);
+}
+
+/* Hover tooltip: the one thing hovering does besides enlarging the node.
+   Positioned every frame by the render loop, above the node. */
+.atlas-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 8px 4px;
+  border: 1px solid color-mix(in oklch, var(--atlas-ink) 22%, transparent);
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: opacity 0.12s ease;
+  font-family: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--atlas-ink);
+}
+.atlas-tip-name {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.atlas-tip-kind {
+  font-size: 9.5px;
+  opacity: 0.6;
+}
+
+/* Breadcrumb of the walk through the selection lens. */
+.atlas-trail-step {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklch, var(--atlas-ink) 35%, transparent);
+}
+.atlas-trail-step:hover:not(:disabled) {
+  text-decoration-color: currentColor;
+}
+.atlas-trail-step:disabled {
+  text-decoration: none;
+  font-weight: 600;
+  cursor: default;
 }
 
 /* Planet gizmo (bottom-right): a flat disc on a hairline orbit ring. The
@@ -728,4 +779,10 @@ a:focus-visible {
   .atlas-backdrop img {
     transition: none;
   }
+}
+
+/* A lens member under the cursor: its name stays in the column, underlined. */
+.atlas-label.is-pointed {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

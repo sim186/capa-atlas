@@ -15,6 +15,10 @@ export interface GraphNode {
   x?: number;
   y?: number;
   z?: number;
+  // pinned position (d3-force): set while a selection lens is open
+  fx?: number;
+  fy?: number;
+  fz?: number;
   // song
   album?: string;
   release?: string;
