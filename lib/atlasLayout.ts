@@ -97,6 +97,46 @@ function spreadOnCircle(wanted: Map<string, number>, gap: number) {
 }
 
 /** Where each node of the atlas settles. Nodes without a target are left to the simulation. */
+function songsByAlbumOf(data: GraphData) {
+  const byId = new Map(data.nodes.map((node) => [node.id, node]));
+  const songsByAlbum = new Map<string, GraphNode[]>();
+  for (const link of data.links) {
+    if (link.kind !== "on") continue;
+    const song = byId.get(String(link.source));
+    const album = String(link.target);
+    if (!song || !byId.has(album)) continue;
+    let songs = songsByAlbum.get(album);
+    if (!songs) songsByAlbum.set(album, (songs = []));
+    songs.push(song);
+  }
+  return songsByAlbum;
+}
+
+/** Each album's year: the earliest release year among its songs. */
+export function albumYears(
+  data: GraphData,
+  songsByAlbum = songsByAlbumOf(data)
+): Map<string, number> {
+  const years = new Map<string, number>();
+  for (const album of data.nodes) {
+    if (album.group !== "album") continue;
+    const found = (songsByAlbum.get(album.id) ?? [])
+      .map((song) => yearOf(song.release))
+      .filter((year): year is number => year !== null);
+    if (found.length) years.set(album.id, Math.min(...found));
+  }
+  return years;
+}
+
+/** Albums with a slot on the clock's ring (see STUDIO_MIN_SONGS). */
+export function studioAlbumIds(data: GraphData): Set<string> {
+  const ids = new Set<string>();
+  for (const [album, songs] of songsByAlbumOf(data)) {
+    if (songs.length >= STUDIO_MIN_SONGS) ids.add(album);
+  }
+  return ids;
+}
+
 export function atlasLayout(data: GraphData): Map<string, LayoutPoint> {
   const byId = new Map(data.nodes.map((node) => [node.id, node]));
   const songsByAlbum = new Map<string, GraphNode[]>();
@@ -112,15 +152,8 @@ export function atlasLayout(data: GraphData): Map<string, LayoutPoint> {
     songs.push(song);
   }
 
-  // Album year: its earliest song.
   const albums = data.nodes.filter((node) => node.group === "album");
-  const yearOfAlbum = new Map<string, number>();
-  for (const album of albums) {
-    const years = (songsByAlbum.get(album.id) ?? [])
-      .map((song) => yearOf(song.release))
-      .filter((year): year is number => year !== null);
-    if (years.length) yearOfAlbum.set(album.id, Math.min(...years));
-  }
+  const yearOfAlbum = albumYears(data, songsByAlbum);
   const chronological = (a: GraphNode, b: GraphNode) =>
     (yearOfAlbum.get(a.id) ?? 9999) - (yearOfAlbum.get(b.id) ?? 9999) ||
     a.label.localeCompare(b.label);

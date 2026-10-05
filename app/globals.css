@@ -782,6 +782,12 @@ a:focus-visible {
 }
 
 /* A lens member under the cursor: its name stays in the column, underlined. */
+/* An album's year leads its name, lighter, so the ring reads as a timeline. */
+.atlas-label-year {
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
 .atlas-label.is-pointed {
   text-decoration: underline;
   text-underline-offset: 3px;

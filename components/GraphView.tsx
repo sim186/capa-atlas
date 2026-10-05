@@ -34,7 +34,7 @@ import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import { makeDiscTexture, makeShapeTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
-import { atlasLayout, CORE_EXTENT, LAYOUT_EXTENT } from "@/lib/atlasLayout";
+import { albumYears, atlasLayout, studioAlbumIds, CORE_EXTENT, LAYOUT_EXTENT } from "@/lib/atlasLayout";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
@@ -70,11 +70,26 @@ const DEFAULT_VISIBLE: Group[] = ["album", "figure", "concept"];
 // themes and figures; songs only surface when the visitor enables that layer,
 // and only the nearest few on screen get a name.
 const LABEL_MAX_DISTANCE: Record<Group, number> = {
-  concept: Infinity,
-  figure: Infinity,
-  album: Infinity,
+  concept: 1000,
+  figure: 1000,
+  album: 1000, // singles and features; studio albums are always named
   song: 330,
 };
+// Ambient labels compete in this order: studio albums name the clock first,
+// then the inner rings, then the halo of other releases, then songs.
+const LABEL_TIER: Record<Group, number> = { album: 2, figure: 1, concept: 1, song: 3 };
+// Ambient labels sit beside their dot, pointing away from the disc's
+// centre: this gap (px) from the dot, and half a label's height.
+const LABEL_GAP = 8;
+const LABEL_HALF_HEIGHT = 6;
+// A blocked ambient label tries once more this much further out (px).
+const LABEL_STEP_OUT = 16;
+// Ambient labels fade in and out over this long (ms) rather than popping.
+const LABEL_FADE_MS = 160;
+// A label already on screen keeps its place against a tighter margin than
+// a newcomer needs, so the orbit doesn't make names flicker.
+const LABEL_PAD = 10;
+const LABEL_PAD_KEEP = 3;
 // Keyboard navigation: pan step, zoom factor and the camera distance band.
 const KEY_ZOOM_STEP = 0.78;
 const MAX_CAMERA_DISTANCE = 1800;
@@ -432,6 +447,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   const barTimerRef = useRef<number | null>(null);
   const prevHoveredId = useRef<string | null>(null);
   const labelLayerRef = useRef<HTMLDivElement>(null);
+  // Ambient label fade state (0–1 by node id), the ids shown last frame, and
+  // that frame's time.
+  const labelFadeRef = useRef(new Map<string, number>());
+  const labelShownRef = useRef(new Set<string>());
+  const labelFrameRef = useRef(0);
   const labelDivsRef = useRef(
     new Map<string, { div: HTMLDivElement; group: Group; node: GraphNode }>()
   );
@@ -680,6 +700,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // the bottom), and forceCenter slid the whole disc off its targets.
   const layoutTargets = useMemo(() => atlasLayout(data), [data]);
   const layoutTargetsRef = useRef(layoutTargets);
+  // Album labels lead with their year, so the clock reads as a timeline.
+  const yearOfAlbum = useMemo(() => albumYears(data), [data]);
+  const studioAlbums = useMemo(() => studioAlbumIds(data), [data]);
   useEffect(() => {
     layoutTargetsRef.current = layoutTargets;
   }, [layoutTargets]);
@@ -1144,19 +1167,41 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         // vertical centre of the label box (labels sit above their dot,
         // lens labels beside it)
         boxY: number;
+        // ambient only: the dot, the outward direction and the alignment
+        radial?: { x: number; y: number; ux: number; uy: number; ax: number; ay: number };
       };
       const candidates: Candidate[] = [];
       // Lens labels compete for room too (heaviest first), so a big ring
       // shows the names that fit and the rest appear under the cursor.
       const lensCandidates: Candidate[] = [];
       const placed: Candidate[] = [];
-      const fits = (candidate: Candidate) =>
+      const fits = (candidate: Candidate, pad = LABEL_PAD) =>
         !placed.some(
           (other) =>
             Math.abs(candidate.screenY - other.screenY) < 13 &&
             Math.abs(candidate.screenX - other.screenX) <
-              candidate.halfWidth + other.halfWidth + 10
+              candidate.halfWidth + other.halfWidth + pad
         );
+      // Put an ambient label `gap` px out from its dot (see the candidate
+      // below) and update its collision box to match.
+      const placeRadial = (candidate: Candidate, gap: number) => {
+        const r = candidate.radial;
+        if (!r) return;
+        const anchorX = r.x + r.ux * gap;
+        const anchorY = r.y + r.uy * gap;
+        candidate.div.style.transform = `translate3d(${anchorX}px, ${anchorY}px, 0) translate(${(r.ax - 1) * 50}%, ${(r.ay - 1) * 50}%)`;
+        candidate.screenX = anchorX + r.ax * candidate.halfWidth;
+        candidate.screenY = candidate.boxY = anchorY + r.ay * LABEL_HALF_HEIGHT;
+      };
+      // The disc's centre on screen: ambient labels point away from it, so
+      // the album ring is named from outside and the inner rings stay clear.
+      let centreX = 0;
+      let centreY = 0;
+      if (dom) {
+        ndc.set(0, 0, 0).project(camera);
+        centreX = ((ndc.x + 1) / 2) * dom.clientWidth;
+        centreY = ((1 - ndc.y) / 2) * dom.clientHeight;
+      }
       const halfWidthOf = (div: HTMLDivElement) =>
         Math.min(110, Math.max(18, (div.textContent?.length ?? 0) * 3.2));
       // Ambient labels collide on their real width (measureLabel): the
@@ -1266,17 +1311,29 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         if (focus) continue;
 
         const ghostSong = group === "song" && ghostSongsRef.current;
-        if (!ghostSong && distance < LABEL_MAX_DISTANCE[group]) {
-          candidates.push({
+        if (!ghostSong && distance < Number(div.dataset.maxDistance)) {
+          // Outward from the centre: a name on the right of the disc starts
+          // at its dot, one on the left ends there, one at the top or bottom
+          // sits above or below it. The alignment blends between these, so a
+          // label glides round its dot as the clock turns instead of jumping.
+          const dx = screenX - centreX;
+          const dy = screenY - centreY;
+          const len = Math.hypot(dx, dy) || 1;
+          const ax = Math.max(-1, Math.min(1, (dx / len) * 3));
+          const ay = Math.max(-1, Math.min(1, (dy / len) * 3));
+          const candidate: Candidate = {
             div,
             distance,
             screenX,
             screenY,
             halfWidth: ambientHalfWidth,
-            rank: 0,
+            rank: Number(div.dataset.tier),
             node,
-            boxY: screenY - 14,
-          });
+            boxY: screenY,
+            radial: { x: screenX, y: screenY, ux: dx / len, uy: dy / len, ax, ay },
+          };
+          placeRadial(candidate, LABEL_GAP);
+          candidates.push(candidate);
         }
       }
       if (tip) tip.style.opacity = tipShown ? "1" : "0";
@@ -1288,21 +1345,54 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       }
       // However close the camera is, only the nearest non-overlapping ambient
       // labels show. The selection, its lens and the cursor bypass this budget.
-      candidates.sort((a, b) => a.distance - b.distance);
+      // Albums before the inner rings; within a tier, names already on
+      // screen keep their place, then the nearest win.
+      const wasShown = labelShownRef.current;
+      candidates.sort(
+        (a, b) =>
+          a.rank - b.rank ||
+          Number(wasShown.has(b.node.id)) - Number(wasShown.has(a.node.id)) ||
+          a.distance - b.distance
+      );
       const budget = liteRef.current ? PHONE_MAX_AMBIENT_LABELS : MAX_AMBIENT_LABELS;
-      let ambient = 0;
+      const shown = new Set<string>();
+      const ambientOpacity = new Map<string, number>();
       for (const candidate of candidates) {
-        if (ambient >= budget) break;
-        if (!fits(candidate)) continue;
+        if (shown.size >= budget) break;
+        const pad = wasShown.has(candidate.node.id) ? LABEL_PAD_KEEP : LABEL_PAD;
+        if (!fits(candidate, pad)) {
+          placeRadial(candidate, LABEL_GAP + LABEL_STEP_OUT);
+          if (!fits(candidate, pad)) {
+            placeRadial(candidate, LABEL_GAP);
+            continue;
+          }
+        }
         placed.push(candidate);
-        ambient += 1;
-        candidate.div.style.display = "block";
+        shown.add(candidate.node.id);
+        const depthOpacity = 1 - 0.45 * ((shown.size - 1) / budget);
+        ambientOpacity.set(candidate.node.id, depthOpacity);
+      }
+      // Fade: a newly placed name eases in, a displaced one eases out where
+      // it stood. Lit labels (selection, lens, cursor) never fade.
+      const frameMs = Math.min(100, now - (labelFrameRef.current || now));
+      labelFrameRef.current = now;
+      const step = reduceMotionRef.current ? 1 : frameMs / LABEL_FADE_MS;
+      const fades = new Map<string, number>();
+      for (const candidate of candidates) {
+        const id = candidate.node.id;
+        const target = shown.has(id) ? 1 : 0;
+        const was = labelFadeRef.current.get(id) ?? 0;
+        const fade = target > was ? Math.min(1, was + step) : Math.max(0, was - step);
+        if (fade <= 0) continue;
+        fades.set(id, fade);
         const baseOpacity = Number(candidate.div.dataset.baseOpacity ?? "0.5");
-        const depthOpacity = 1 - 0.45 * ((ambient - 1) / budget);
+        candidate.div.style.display = "block";
         candidate.div.style.opacity = String(
-          baseOpacity * depthOpacity * entranceFor(candidate.div.dataset.nodeId ?? "")
+          baseOpacity * (ambientOpacity.get(id) ?? 0.55) * fade * entranceFor(id)
         );
       }
+      labelFadeRef.current = fades;
+      labelShownRef.current = shown;
       // A name on screen is as good as its dot: pointing at a visible label
       // picks its node.
       if (picking) {
@@ -1813,18 +1903,31 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       labelDivsRef.current.get(String(n.id))?.div.remove();
       const div = document.createElement("div");
       div.className = "atlas-label";
-      div.textContent = n.label;
+      const year = n.group === "album" ? yearOfAlbum.get(n.id) : undefined;
+      if (year !== undefined) {
+        const tag = document.createElement("span");
+        tag.className = "atlas-label-year";
+        tag.textContent = `${year} `;
+        div.append(tag, n.label);
+      } else {
+        div.textContent = n.label;
+      }
       div.dataset.nodeId = n.id;
       div.style.display = "none";
       div.style.position = "absolute";
       div.style.left = "0";
       div.style.top = "0";
       const importance = Math.min(1, Math.max(0, ((n.val ?? 2) - 2) / 7));
-      div.dataset.baseOpacity = String(0.58 + importance * 0.32);
+      // Albums are the clock's spine and carry the overview; themes and
+      // figures are quieter inner rings, named once the camera comes close.
+      const lead = studioAlbums.has(n.id);
+      div.dataset.tier = String(lead ? 0 : LABEL_TIER[n.group]);
+      div.dataset.maxDistance = String(lead ? Infinity : LABEL_MAX_DISTANCE[n.group]);
+      div.dataset.baseOpacity = String(lead ? 0.6 + importance * 0.35 : 0.5 + importance * 0.2);
       div.dataset.rank = String(n.val ?? 2);
       div.style.setProperty(
         "--label-size",
-        `${(9 + importance * 3.5).toFixed(1)}px`
+        `${(lead ? 9 + importance * 3 : 9 + importance * 1).toFixed(1)}px`
       );
       labelLayerRef.current?.appendChild(div);
       measureLabel(div);
@@ -1832,7 +1935,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
 
       return group;
     },
-    [materials]
+    [materials, yearOfAlbum, studioAlbums]
   );
 
   useEffect(
