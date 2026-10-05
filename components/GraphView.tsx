@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DataTexture,
   Group as ThreeGroup,
+  MOUSE,
   type PerspectiveCamera,
   Sprite,
   SpriteMaterial,
@@ -66,6 +67,16 @@ function inkAlpha(hex: string, alpha: number) {
   )}, ${parseInt(n.slice(4, 6), 16)}, ${alpha})`;
 }
 const DEFAULT_VISIBLE: Group[] = ["album", "figure", "concept"];
+// Overview links bow toward the centre: the share of the way from a link's
+// midpoint to the disc's axis that its control point is pulled.
+const CHORD_PULL = 0.7;
+// How long the cursor rests on a node before its links light up.
+const HOVER_LINKS_DELAY_MS = 90;
+// Link ink in the overview: at rest, the hovered node's own links, and the
+// rest while a node is hovered.
+const LINK_ALPHA_REST = 0.09;
+const LINK_ALPHA_HOVER = 0.6;
+const LINK_ALPHA_BEHIND = 0.04;
 // Labels are layered by camera distance. The sparse overview can name albums,
 // themes and figures; songs only surface when the visitor enables that layer,
 // and only the nearest few on screen get a name.
@@ -188,6 +199,36 @@ function endpointId(endpoint: unknown) {
     return String(endpoint.id);
   }
   return String(endpoint);
+}
+
+/**
+ * Chord-style bend for a link between two layout homes: the curve bows
+ * toward the disc's axis, like a chord diagram, so links read as bundles
+ * through the middle instead of random curls. Returns the curvature and
+ * curve rotation three-forcegraph expects: its control point is
+ * (line × curvature) × Z (Y for a line along Z), rotated about the line by
+ * the curve rotation, plus the midpoint.
+ */
+function chordBend(a: Vec3, b: Vec3, pull: number) {
+  const start = new Vector3(a.x, a.y, a.z);
+  const line = new Vector3(b.x - a.x, b.y - a.y, b.z - a.z);
+  const length = line.length();
+  if (length < 1e-6) return { curvature: 0, rotation: 0 };
+  const axis = line.clone().divideScalar(length);
+  const base = line
+    .clone()
+    .cross(line.x !== 0 || line.y !== 0 ? new Vector3(0, 0, 1) : new Vector3(0, 1, 0));
+  // wanted offset: from the midpoint toward the centre, across the line
+  const wanted = start.add(line.clone().multiplyScalar(0.5)).negate();
+  wanted.sub(axis.clone().multiplyScalar(wanted.dot(axis))).multiplyScalar(pull);
+  const baseLength = base.length();
+  const wantedLength = wanted.length();
+  if (baseLength < 1e-6 || wantedLength < 1e-6) return { curvature: 0, rotation: 0 };
+  const rotation = Math.atan2(
+    base.clone().cross(wanted).dot(axis) / (baseLength * wantedLength),
+    base.dot(wanted) / (baseLength * wantedLength)
+  );
+  return { curvature: wantedLength / baseLength, rotation };
 }
 
 /** Lens slot order: one sector per category, the weightiest first in each. */
@@ -700,6 +741,41 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // the bottom), and forceCenter slid the whole disc off its targets.
   const layoutTargets = useMemo(() => atlasLayout(data), [data]);
   const layoutTargetsRef = useRef(layoutTargets);
+  // Every overview link bends toward the centre (see chordBend), worked out
+  // once from the fixed layout homes.
+  const chordBends = useMemo(() => {
+    const bends = new Map<string, { curvature: number; rotation: number }>();
+    for (const link of data.links) {
+      const a = layoutTargets.get(endpointId(link.source));
+      const b = layoutTargets.get(endpointId(link.target));
+      if (a && b) bends.set(linkKey(link), chordBend(a, b, CHORD_PULL));
+    }
+    return bends;
+  }, [data.links, layoutTargets]);
+  // Hovering a node (and resting there a moment, so a sweep across the map
+  // doesn't flash) lights its own links and brightens its neighbours. The
+  // lens, once a node is clicked, takes over from this.
+  const [hoverLinkedId, setHoverLinkedId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = hovered && !selected ? hovered.id : null;
+    const timer = window.setTimeout(() => setHoverLinkedId(id), id ? HOVER_LINKS_DELAY_MS : 0);
+    return () => window.clearTimeout(timer);
+  }, [hovered, selected]);
+  const hoverNeighborIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!hoverLinkedId) return ids;
+    for (const link of visibleData.links) {
+      const source = endpointId(link.source);
+      const target = endpointId(link.target);
+      if (source === hoverLinkedId) ids.add(target);
+      else if (target === hoverLinkedId) ids.add(source);
+    }
+    return ids;
+  }, [hoverLinkedId, visibleData.links]);
+  const hoverNeighborIdsRef = useRef(hoverNeighborIds);
+  useEffect(() => {
+    hoverNeighborIdsRef.current = hoverNeighborIds;
+  }, [hoverNeighborIds]);
   // Album labels lead with their year, so the clock reads as a timeline.
   const yearOfAlbum = useMemo(() => albumYears(data), [data]);
   const studioAlbums = useMemo(() => studioAlbumIds(data), [data]);
@@ -868,6 +944,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             minDistance: number;
             minPolarAngle: number;
             maxPolarAngle: number;
+            mouseButtons: { LEFT?: MOUSE; MIDDLE?: MOUSE; RIGHT?: MOUSE };
           }
         | undefined;
       if (!controls || typeof controls.minPolarAngle !== "number") {
@@ -884,6 +961,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       }
       controls.minPolarAngle = MIN_POLAR;
       controls.maxPolarAngle = MAX_POLAR;
+      // The wheel button turns the scene too (as in most 3D tools), instead
+      // of OrbitControls' default drag-to-zoom; the wheel itself still zooms.
+      controls.mouseButtons = { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN };
       controlsRef.current = controls;
     };
     apply();
@@ -1123,7 +1203,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         }
         const pointed = id === hoveredId || id === kbdIdRef.current;
         const state = !focus
-          ? pointed
+          ? pointed || hoverNeighborIdsRef.current.has(id)
             ? "hover"
             : "idle"
           : id === focus.self
@@ -2053,6 +2133,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           pointerRef.current.inside = false;
           pointerLeave();
         }}
+        onMouseDown={(event) => {
+          // a wheel press on the map turns it; don't let the browser start
+          // autoscroll (Windows, Linux) on top of that
+          if (event.button === 1 && !(event.target as HTMLElement).closest("nav, button, a, input")) {
+            event.preventDefault();
+          }
+        }}
         onPointerDown={(event) => {
           if ((event.target as HTMLElement).closest("nav, button, a, input")) return;
           userMovedRef.current = true;
@@ -2119,13 +2206,25 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           nodeThreeObject={makeNodeThreeObject}
           nodeLabel={() => ""}
           linkColor={(link) => {
-            if (!focus) return inkAlpha(theme.ink, lite ? 0.22 : 0.2);
+            if (!focus) {
+              if (!hoverLinkedId) return inkAlpha(theme.ink, lite ? 0.12 : LINK_ALPHA_REST);
+              const key = linkKey(link);
+              return key.startsWith(hoverLinkedId + ">") || key.endsWith(">" + hoverLinkedId)
+                ? inkAlpha(theme.ink, LINK_ALPHA_HOVER)
+                : inkAlpha(theme.ink, LINK_ALPHA_BEHIND);
+            }
             return primaryLinks?.has(linkKey(link))
               ? inkAlpha(theme.ink, 0.7)
               : inkAlpha(theme.ink, 0.12);
           }}
           linkWidth={(link) => {
-            if (!focus) return lite ? 0.25 : 0.3;
+            if (!focus) {
+              const own =
+                hoverLinkedId !== null &&
+                (endpointId(link.source) === hoverLinkedId ||
+                  endpointId(link.target) === hoverLinkedId);
+              return own ? 0.3 + 0.1 * Math.min(link.weight ?? 1, 4) : lite ? 0.25 : 0.3;
+            }
             // stronger links read thicker: weight 1 is a hairline, 6+ is bold
             return primaryLinks?.has(linkKey(link))
               ? 0.5 + 0.12 * Math.min(link.weight ?? 1, 6)
@@ -2138,18 +2237,18 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           linkDirectionalParticles={(link) =>
             !reduceMotion && !lite && focus && primaryLinks?.has(linkKey(link)) ? 3 : 0
           }
-          // Curls: every link bows out with a stable per-link twist, so the
-          // edge mesh reads as tangled ringlets instead of straight wires.
-          // Phones skip the curls: each curved edge is its own tube mesh (30
-          // segments), and with ~1200 edges that is the main GPU/CPU cost.
-          // Straight edges with a coarse cross-section are far cheaper.
+          // Chords: every overview link bows toward the disc's centre (see
+          // chordBend), so links bundle through the middle like a chord
+          // diagram. Phones skip the bends: each curved edge is its own tube
+          // mesh (30 segments), and with ~1200 edges that is the main GPU/CPU
+          // cost. Straight edges with a coarse cross-section are far cheaper.
           linkResolution={lite ? 3 : 6}
           // ...and the lens draws straight spokes: curls around a ring of
           // neighbours read as noise, a spoke reads as "linked to this".
           linkCurvature={(link) =>
-            lite || focus ? 0 : 0.45 + 0.5 * hash01(linkKey(link))
+            lite || focus ? 0 : chordBends.get(linkKey(link))?.curvature ?? 0
           }
-          linkCurveRotation={(link) => Math.PI * 2 * hash01(linkKey(link) + "r")}
+          linkCurveRotation={(link) => chordBends.get(linkKey(link))?.rotation ?? 0}
           linkDirectionalParticleWidth={3}
           linkDirectionalParticleSpeed={0.004}
           linkDirectionalParticleColor={() => theme.ink}
@@ -2163,6 +2262,14 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               const target = endpointId(link.target);
               const other = source === focus.self ? target : target === focus.self ? source : null;
               return other !== null && focus.ids.has(other);
+            }
+            // Theme co-occurrences (most of the links, all inside the rings)
+            // only show for the hovered node; the album-to-theme links that
+            // tie the rings to the clock stay as a faint backdrop.
+            if (link.kind === "co_occurs") {
+              const source = endpointId(link.source);
+              const target = endpointId(link.target);
+              if (source !== hoverLinkedId && target !== hoverLinkedId) return false;
             }
             if (!ghostSongs) return true;
             const hidden = (end: unknown) => {
