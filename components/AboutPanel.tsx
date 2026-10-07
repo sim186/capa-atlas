@@ -5,6 +5,7 @@ import { DrawablyCard } from "drawably/react";
 import { sound } from "@/lib/sound";
 import Link from "next/link";
 import type { Portrait } from "@/lib/graph";
+import { contactEmail } from "@/lib/site";
 import { useLocale, useT } from "@/lib/locale";
 
 /**
@@ -22,6 +23,9 @@ export default function AboutPanel({
   portraits?: Portrait[];
 }) {
   const [open, setOpen] = useState(false);
+  // null when the address is not configured (a fork, or CI without the secret):
+  // the panel then shows the author alone rather than a button that opens nothing.
+  const email = contactEmail();
   const locale = useLocale();
   const t = useT();
 
@@ -219,6 +223,27 @@ export default function AboutPanel({
               >
                 sim186
               </a>
+              {email && (
+                <>
+                  {" — "}
+                  {/*
+                    Never rendered as text, not even after a click: pressing it
+                    hands the address straight to the mail client and the words
+                    on screen never change. Nothing here is copyable, so nothing
+                    here is harvestable — but a reader who wants to write from a
+                    borrowed machine has to ask me for it another way.
+                  */}
+                  <button
+                    onClick={() => {
+                      play(() => sound.select());
+                      window.location.href = `mailto:${email}?subject=${encodeURIComponent(t.contactSubject)}`;
+                    }}
+                    className="underline underline-offset-2 hover:opacity-70"
+                  >
+                    {t.contactNote}
+                  </button>
+                </>
+              )}
             </li>
             <li>
               {t.creditCode} ·{" "}

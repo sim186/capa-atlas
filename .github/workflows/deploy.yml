@@ -31,6 +31,13 @@ jobs:
           # The PostHog project token is a public client-side key by design.
           NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: phc_BAXTaWMrWoyREmDcnWv6WbeLiHgaod3oZtcxbvwGtfnb
           NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+          # Contact address for the credits panel, split in three so no single
+          # value is an address. Repo secrets: Settings > Secrets and variables >
+          # Actions > NEXT_PUBLIC_CONTACT_USER / _DOMAIN / _TLD. Left unset, the
+          # panel drops the contact button instead of showing a dead one.
+          NEXT_PUBLIC_CONTACT_USER: ${{ secrets.NEXT_PUBLIC_CONTACT_USER }}
+          NEXT_PUBLIC_CONTACT_DOMAIN: ${{ secrets.NEXT_PUBLIC_CONTACT_DOMAIN }}
+          NEXT_PUBLIC_CONTACT_TLD: ${{ secrets.NEXT_PUBLIC_CONTACT_TLD }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

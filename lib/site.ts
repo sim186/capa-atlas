@@ -29,3 +29,31 @@ export const SITE_COPY: Record<
 };
 
 export const siteTitle = (locale: Locale) => `${SITE_NAME} — ${SITE_COPY[locale].tagline}`;
+
+/**
+ * Contact address for press and rights queries.
+ *
+ * Split into three variables and kept out of the repository: locally they live
+ * in .env.local (gitignored), on GitHub in Actions secrets read by
+ * .github/workflows/deploy.yml. The panel never displays the address and the
+ * static HTML never contains it as text: the pieces are joined at runtime, only
+ * when the contact button is pressed, and go straight into a `mailto:`. Bots
+ * that fetch and parse pages (the ones that build spam lists) find nothing, and
+ * there is nothing on screen to copy into a mailing list.
+ *
+ * The built bundle does carry the joined address, because GitHub Pages serves
+ * that bundle to anyone. This keeps the address out of the repo and out of the
+ * page markup; it cannot hide it from someone willing to read the JS.
+ */
+const CONTACT_ENV = {
+  user: process.env.NEXT_PUBLIC_CONTACT_USER,
+  domain: process.env.NEXT_PUBLIC_CONTACT_DOMAIN,
+  tld: process.env.NEXT_PUBLIC_CONTACT_TLD,
+};
+
+/** null when the address is not configured, so the panel can drop the button. */
+export const contactEmail = (): string | null => {
+  const { user, domain, tld } = CONTACT_ENV;
+  if (!user || !domain || !tld) return null;
+  return `${user}@${domain}.${tld}`;
+};
