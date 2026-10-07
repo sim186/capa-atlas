@@ -19,6 +19,7 @@ import {
   Group,
   GROUP_COLOR,
   LENS_GROUP_ORDER,
+  mapUrlKey,
   Portrait,
 } from "@/lib/graph";
 import { useT } from "@/lib/locale";
@@ -479,7 +480,16 @@ const DEEP_LINK_DELAY_MS = 1600;
 
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
 
-export default function GraphView({ data, portraits }: { data: GraphData; portraits: Portrait[] }) {
+export default function GraphView({
+  data,
+  portraits,
+  nodePaths,
+}: {
+  data: GraphData;
+  portraits: Portrait[];
+  /** Node id → its page, e.g. "/canzone/vengo-dalla-luna" (lib/atlasData.ts). */
+  nodePaths: Record<string, string>;
+}) {
   const t = useT();
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -2237,17 +2247,63 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     [allNeighbors, frameLens, lensMembersOf, play, visibleData.nodes, visibleGroups]
   );
 
-  // ?node=<id> (the node pages' "open in the map" link): once the curtain is
-  // up and the entrance has unfurled, open that node as if it were clicked.
+  // The address follows the selection: ?n=<group>/<slug>, the node page's
+  // path in this language. Each node opened is a history entry, so Back
+  // walks back through them, and a reload or a shared link reopens the same
+  // node once the curtain is up and the entrance has unfurled. ?node=<id>
+  // (the first links handed out) is still read.
+  const urlKeyById = useMemo(
+    () => new Map(Object.entries(nodePaths).map(([id, path]) => [id, mapUrlKey(path)])),
+    [nodePaths]
+  );
+  const nodeFromUrl = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const key = params.get("n");
+    const id = key ? [...urlKeyById].find(([, each]) => each === key)?.[0] : params.get("node");
+    return (id && nodeById.get(id)) || null;
+  }, [urlKeyById, nodeById]);
+  const focusNodeRef = useRef(focusNode);
+  const closeDetailRef = useRef(closeDetail);
+  useEffect(() => {
+    focusNodeRef.current = focusNode;
+    closeDetailRef.current = closeDetail;
+  });
+  // Off until the linked node (if any) is open, so the wait doesn't wipe it.
+  const urlSyncRef = useRef(false);
   const deepLinkDoneRef = useRef(false);
   useEffect(() => {
     if (!revealed || deepLinkDoneRef.current) return;
     deepLinkDoneRef.current = true;
-    const node = nodeById.get(new URLSearchParams(window.location.search).get("node") ?? "");
-    if (!node) return;
-    const timer = window.setTimeout(() => focusNode(node), DEEP_LINK_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [revealed, nodeById, focusNode]);
+    const node = nodeFromUrl();
+    if (!node) {
+      urlSyncRef.current = true;
+      return;
+    }
+    window.setTimeout(() => {
+      focusNodeRef.current(node);
+      urlSyncRef.current = true;
+    }, DEEP_LINK_DELAY_MS);
+  }, [revealed, nodeFromUrl]);
+  useEffect(() => {
+    if (!urlSyncRef.current) return;
+    const key = selected ? urlKeyById.get(selected.id) : undefined;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("n") === (key ?? null) && !params.has("node")) return;
+    const url = `${window.location.pathname}${key ? `?n=${key}` : ""}${window.location.hash}`;
+    // an old ?node= link is rewritten in place, not stacked
+    if (params.has("node")) window.history.replaceState(null, "", url);
+    else window.history.pushState(null, "", url);
+  }, [selected, urlKeyById]);
+  useEffect(() => {
+    const onPop = () => {
+      if (!urlSyncRef.current) return;
+      const node = nodeFromUrl();
+      if (node && node.id !== selectedRef.current?.id) focusNodeRef.current(node);
+      else if (!node && selectedRef.current) closeDetailRef.current();
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [nodeFromUrl]);
 
   // Keyboard navigation on the map. Arrows hop to the nearest node in that
   // direction on screen, Enter opens it, +/- zoom, Esc lets go. Ignored while
@@ -3339,6 +3395,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           onClose={isDesktop ? closeDetail : closeSheet}
           onNavigate={handleNavigate}
           nodeById={nodeById}
+          pagePath={nodePaths[panelNode.id]}
           distinctShapes={distinctShapes}
           onHoverNode={hoverFromPanel}
           onReturnFocus={returnFocus}

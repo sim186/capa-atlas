@@ -83,7 +83,11 @@ export default function AtlasPage({ locale }: { locale: Locale }) {
         ))}
       </div>
       <LocaleProvider locale={locale}>
-        <GraphView data={data} portraits={portraits} />
+        <GraphView
+          data={data}
+          portraits={portraits}
+          nodePaths={Object.fromEntries(data.nodes.map((n) => [n.id, nodePath(n, locale)]))}
+        />
       </LocaleProvider>
     </main>
   );

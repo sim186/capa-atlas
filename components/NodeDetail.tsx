@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BASE_PATH } from "@/lib/basePath";
 import GroupGlyph from "@/components/GroupGlyph";
@@ -28,6 +29,8 @@ interface NodeDetailProps {
   onHoverNode?: (node: GraphNode | null) => void;
   /** Any node by id: album track lists open their songs through it. */
   nodeById?: ReadonlyMap<string, GraphNode>;
+  /** The node's own page (/canzone/…), linked from the header. */
+  pagePath?: string;
   /** Phone sheet only: the portraits and which one this node's category wears. */
   portraits?: Portrait[];
   portraitIndex?: number;
@@ -195,7 +198,7 @@ function AboutSections({ about, italian }: { about?: { heading: string; text: st
  * meta row, hairline rule, title, body blocks and pager each fade up at
  * ~52ms intervals with a soft overshoot ease.
  */
-export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0, onReturnFocus }: NodeDetailProps) {
+export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, pagePath, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0, onReturnFocus }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
   const t = useT();
   const quotes = useQuotes(node);
@@ -305,6 +308,18 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
             </span>
             <span className="font-mono text-[0.64rem] tabular-nums tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
               {t.linkCount(linkCount)}
+              {pagePath && (
+                <>
+                  {" · "}
+                  <Link
+                    href={pagePath}
+                    title={t.nodePageOf(node.label)}
+                    className="underline decoration-dotted underline-offset-2 hover:text-[var(--atlas-ink)]"
+                  >
+                    {t.nodePage} ↗
+                  </Link>
+                </>
+              )}
             </span>
           </div>
 

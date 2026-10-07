@@ -114,6 +114,8 @@ const it = {
   // per-node pages (/canzone/…, /tema/…): the crawlable side of the atlas
   nodePageTitle: (label: string, group: string) => `${label} · ${group} nell'universo di Caparezza`,
   openInAtlas: "Apri nella mappa",
+  nodePage: "pagina",
+  nodePageOf: (label: string) => `Pagina di ${label}, da leggere e condividere`,
 };
 
 export type Dictionary = typeof it;
@@ -221,6 +223,8 @@ const en: Dictionary = {
 
   nodePageTitle: (label, group) => `${label} · ${group} in Caparezza's universe`,
   openInAtlas: "Open in the map",
+  nodePage: "page",
+  nodePageOf: (label) => `${label} as a page, to read and share`,
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = { it, en };

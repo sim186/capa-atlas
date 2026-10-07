@@ -80,6 +80,9 @@ export interface GraphLink {
   weight?: number;
 }
 
+/** The map's ?n= value for a node page path: "/en/song/x" → "song/x". */
+export const mapUrlKey = (pagePath: string) => pagePath.split("/").slice(-2).join("/");
+
 export interface GraphData {
   nodes: GraphNode[];
   links: GraphLink[];

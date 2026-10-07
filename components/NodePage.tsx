@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import GroupGlyph from "@/components/GroupGlyph";
 import { pageMetadata } from "@/components/RootDocument";
 import { findNode, loadQuotes, neighbours, nodeParams, nodePath } from "@/lib/atlasData";
-import type { GraphNode } from "@/lib/graph";
+import { mapUrlKey, type GraphNode } from "@/lib/graph";
 import { DICTIONARIES, type Locale } from "@/lib/i18n";
 import { SITE_COPY, SITE_NAME } from "@/lib/site";
 
@@ -140,7 +140,7 @@ export default async function NodePage({ locale, params }: { locale: Locale; par
 
         <p className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
           <Link
-            href={`${home}?node=${encodeURIComponent(node.id)}`}
+            href={`${home}?n=${mapUrlKey(nodePath(node, locale))}`}
             className="rounded-full border border-[var(--atlas-ink)] px-4 py-1.5 font-semibold"
           >
             {t.openInAtlas} →
