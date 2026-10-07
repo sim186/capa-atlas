@@ -20,8 +20,8 @@ if (!token) {
   // In production without a token: no-op, the app keeps working.
 } else {
   posthog.init(token, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
-    ui_host: "https://us.posthog.com",
+    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
+    ui_host: "https://eu.posthog.com",
     defaults: "2026-05-30",
     // Error tracking: capture unhandled exceptions.
     capture_exceptions: true,

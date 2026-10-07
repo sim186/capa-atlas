@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.158"],
   // Static export: the whole site is prerendered to `out/` and served as-is.
   // This rules out server features (rewrites, route handlers) — PostHog
-  // therefore talks directly to us.i.posthog.com, see instrumentation-client.ts.
+  // therefore talks directly to eu.i.posthog.com, see instrumentation-client.ts.
   output: "export",
   ...(isGhPages ? { basePath: BASE_PATH, assetPrefix: `${BASE_PATH}/` } : {}),
 };
