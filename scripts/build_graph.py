@@ -32,6 +32,8 @@ order, each linked to its song node when the song is in the graph.
 Album nodes (and the songs on them) also carry `cover`/`coverSource`/
 `coverSourceUrl` from data/covers.json (scripts/fetch_images.py) — URLs only,
 the artwork itself is never stored in the repo.
+Song nodes carry `youtube` ({id, kind}) from data/youtube.json
+(scripts/fetch_youtube.py) when Caparezza's channel has an upload for them.
 """
 
 import csv
@@ -47,6 +49,7 @@ CONCEPTS = os.path.join(ROOT, "data", "concepts.json")
 REFERENT_OVERRIDES_PATH = os.path.join(ROOT, "data", "referent_overrides.json")
 WIKIPEDIA_PATH = os.path.join(ROOT, "data", "wikipedia.json")
 COVERS_PATH = os.path.join(ROOT, "data", "covers.json")
+YOUTUBE_PATH = os.path.join(ROOT, "data", "youtube.json")
 OUT = os.path.join(ROOT, "public", "graphData.json")
 QUOTES_DIR = os.path.join(ROOT, "public", "quotes")
 CSV_OUT = os.path.join(ROOT, "data", "keywords.csv")
@@ -75,6 +78,14 @@ def load_covers() -> dict[str, dict]:
     if not os.path.exists(COVERS_PATH):
         return {}
     with open(COVERS_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_youtube() -> dict[str, dict]:
+    """song node id -> {id, kind, title}, built by fetch_youtube.py."""
+    if not os.path.exists(YOUTUBE_PATH):
+        return {}
+    with open(YOUTUBE_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -221,6 +232,7 @@ def main() -> int:
     referent_overrides = load_referent_overrides()
     wikipedia = load_wikipedia()
     covers = load_covers()
+    youtube = load_youtube()
 
     albums: dict[str, dict] = {}
     songs: dict[str, dict] = {}
@@ -334,6 +346,11 @@ def main() -> int:
             node["coverSource"] = cover["source"]
             if cover.get("sourceUrl"):
                 node["coverSourceUrl"] = cover["sourceUrl"]
+
+    for song in songs.values():
+        video = youtube.get(song["id"])
+        if video:
+            song["youtube"] = {"id": video["id"], "kind": video["kind"]}
 
     # concept/figure nodes: computed usage line, Wikipedia bio for figures,
     # and the hand-written `blurb` from data/concepts.json when present.

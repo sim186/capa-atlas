@@ -39,6 +39,9 @@ export interface GraphNode {
   cover?: string;
   coverSource?: string;
   coverSourceUrl?: string;
+  // song: best upload on Caparezza's own YouTube channel, from
+  // data/youtube.json — music video, lyric video, or official audio/art track
+  youtube?: { id: string; kind: "video" | "lyric" | "audio" };
   // annotated citations from the song, shown in the sidebar rather than as
   // their own graph nodes (there were 3600+ of them — mostly noise at the
   // graph level, but still worth surfacing once you're reading a song).

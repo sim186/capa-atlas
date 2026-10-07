@@ -56,6 +56,57 @@ function useQuotes(node: GraphNode): Quote[] | null {
   return loaded && loaded.file === file ? loaded.quotes : null;
 }
 
+/** Genius' mark: the black-on-yellow badge from its app icon. */
+function GeniusIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0">
+      <rect width="24" height="24" rx="4" fill="#FFFF64" />
+      <text x="12" y="17.5" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="16" fontWeight="900" fill="#000">
+        G
+      </text>
+    </svg>
+  );
+}
+
+/** Wikipedia's serif W, in the ink colour like its own monochrome logo. */
+function WikipediaIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor">
+      <text x="12" y="18" textAnchor="middle" fontFamily="'Linux Libertine', Georgia, 'Times New Roman', serif" fontSize="21">
+        W
+      </text>
+    </svg>
+  );
+}
+
+function GeniusLink({ href, label, className = "" }: { href: string; label: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`inline-flex items-center gap-1.5 font-mono uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)] ${className}`}
+    >
+      <GeniusIcon />
+      {label} ↗
+    </a>
+  );
+}
+
+function WikipediaLink({ href, className = "" }: { href: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)] ${className}`}
+    >
+      <WikipediaIcon />
+      Wikipedia ↗
+    </a>
+  );
+}
+
 function SpotifyLink({ href, className = "" }: { href: string; className?: string }) {
   return (
     <a
@@ -68,6 +119,26 @@ function SpotifyLink({ href, className = "" }: { href: string; className?: strin
         <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.59 14.44a.75.75 0 0 1-1.03.25c-2.82-1.72-6.37-2.11-10.56-1.15a.75.75 0 1 1-.3-1.47c4.58-.94 8.49-.49 11.64 1.43.35.21.46.68.25 1.03Zm1.37-3.04a.94.94 0 0 1-1.29.31c-3.23-1.98-8.15-2.55-11.97-1.39a.94.94 0 1 1-.55-1.8c4.36-1.32 9.8-.68 13.5 1.58.44.27.58.85.31 1.3Zm.12-3.16C14.2 7.9 7.1 7.67 3.98 8.62a1.13 1.13 0 1 1-.66-2.17c3.58-1.09 11.36-.87 15.67 1.69a1.13 1.13 0 0 1-.91 2.06Z" />
       </svg>
       Spotify ↗
+    </a>
+  );
+}
+
+const YOUTUBE_LABEL = { video: "Video", lyric: "Lyric video", audio: "Audio" } as const;
+
+/** The song on Caparezza's own YouTube channel (data/youtube.json). */
+function YouTubeLink({ video }: { video: NonNullable<GraphNode["youtube"]> }) {
+  return (
+    <a
+      href={`https://www.youtube.com/watch?v=${video.id}`}
+      target="_blank"
+      rel="noreferrer"
+      title="YouTube · canale ufficiale"
+      className="inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#FF0000]" fill="currentColor">
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" />
+      </svg>
+      {YOUTUBE_LABEL[video.kind]} ↗
     </a>
   );
 }
@@ -258,25 +329,12 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               <AboutSections about={node.about} />
               <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
                 {node.url && (
-                  <a
-                    href={node.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
-                  >
-                    Apri su Genius ↗
-                  </a>
+                  <GeniusLink href={node.url} label="Apri su Genius" className="text-[0.72rem]" />
                 )}
                 {node.descriptionUrl && (
-                  <a
-                    href={node.descriptionUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
-                  >
-                    Wikipedia ↗
-                  </a>
+                  <WikipediaLink href={node.descriptionUrl} />
                 )}
+                {node.youtube && <YouTubeLink video={node.youtube} />}
                 {spotifyUrl && <SpotifyLink href={spotifyUrl} />}
               </p>
             </div>
@@ -304,14 +362,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                           {quote.annotation}
                         </p>
                         {quote.url && (
-                          <a
-                            href={quote.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-2 inline-flex font-mono text-[0.68rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
-                          >
-                            Vedi su Genius ↗
-                          </a>
+                          <GeniusLink href={quote.url} label="Vedi su Genius" className="mt-2 text-[0.68rem]" />
                         )}
                       </div>
                     </details>
@@ -350,26 +401,12 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                     {node.bio}
                   </p>
                   {node.bioUrl && (
-                    <a
-                      href={node.bioUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
-                    >
-                      Wikipedia ↗
-                    </a>
+                    <WikipediaLink href={node.bioUrl} className="mt-3" />
                   )}
                 </div>
               )}
               {node.descriptionUrl && (
-                <a
-                  href={node.descriptionUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-flex font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
-                >
-                  Wikipedia ↗
-                </a>
+                <WikipediaLink href={node.descriptionUrl} className="mt-3" />
               )}
               {spotifyUrl && <SpotifyLink href={spotifyUrl} className="mt-3" />}
             </div>
