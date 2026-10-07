@@ -42,6 +42,11 @@ export interface GraphNode {
   // song: best upload on Caparezza's own YouTube channel, from
   // data/youtube.json — music video, lyric video, or official audio/art track
   youtube?: { id: string; kind: "video" | "lyric" | "audio" };
+  // English text for the /en atlas (build_graph.py); removed by
+  // lib/localize.ts before the graph reaches the browser
+  en?: Partial<Pick<GraphNode, "label" | "description" | "descriptionUrl" | "about" | "bio" | "bioUrl">>;
+  // English atlas only: fields still showing the Italian text, tagged "IT"
+  italian?: ("description" | "about" | "bio")[];
   // annotated citations from the song, shown in the sidebar rather than as
   // their own graph nodes (there were 3600+ of them — mostly noise at the
   // graph level, but still worth surfacing once you're reading a song).
@@ -80,23 +85,9 @@ export interface GraphData {
   links: GraphLink[];
 }
 
-export const GROUP_LABEL: Record<Group, string> = {
-  album: "Album",
-  song: "Canzone",
-  figure: "Figura / alter-ego",
-  concept: "Tema",
-};
-
 // The lens around a selection and the drawer's "Collegato a" list the same
 // members in the same blocks, in this order, each strongest link first.
 export const LENS_GROUP_ORDER: Group[] = ["album", "figure", "concept", "song"];
-// Block captions (plural: they head a list).
-export const LENS_GROUP_TITLE: Record<Group, string> = {
-  album: "Album",
-  figure: "Figure",
-  concept: "Temi",
-  song: "Canzoni",
-};
 
 // A restrained paper-atlas palette: high contrast enough to navigate, but
 // quiet enough that the structure—not a rainbow of nodes—remains primary.

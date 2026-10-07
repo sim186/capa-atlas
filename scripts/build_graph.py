@@ -32,6 +32,10 @@ order, each linked to its song node when the song is in the graph.
 Album nodes (and the songs on them) also carry `cover`/`coverSource`/
 `coverSourceUrl` from data/covers.json (scripts/fetch_images.py) — URLs only,
 the artwork itself is never stored in the repo.
+Every node may carry `en`: what the English atlas (/en) shows instead —
+`label` for themes/figures and "Singoli / altro", an English usage line, and
+English Wikipedia text from data/wikipedia_en.json (fetch_wikipedia_en.py).
+Fields it lacks fall back to the Italian ones.
 Song nodes carry `youtube` ({id, kind}) from data/youtube.json
 (scripts/fetch_youtube.py) when Caparezza's channel has an upload for them.
 """
@@ -50,6 +54,9 @@ REFERENT_OVERRIDES_PATH = os.path.join(ROOT, "data", "referent_overrides.json")
 WIKIPEDIA_PATH = os.path.join(ROOT, "data", "wikipedia.json")
 COVERS_PATH = os.path.join(ROOT, "data", "covers.json")
 YOUTUBE_PATH = os.path.join(ROOT, "data", "youtube.json")
+WIKIPEDIA_EN_PATH = os.path.join(ROOT, "data", "wikipedia_en.json")
+SINGLES = "Singoli / altro"
+SINGLES_EN = "Singles / other"
 OUT = os.path.join(ROOT, "public", "graphData.json")
 QUOTES_DIR = os.path.join(ROOT, "public", "quotes")
 CSV_OUT = os.path.join(ROOT, "data", "keywords.csv")
@@ -70,6 +77,14 @@ def load_wikipedia() -> dict[str, dict]:
         return {}
     with open(WIKIPEDIA_PATH, encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_wikipedia_en() -> dict[str, dict]:
+    """node id -> {title, extract, url, about}, built by fetch_wikipedia_en.py."""
+    if not os.path.exists(WIKIPEDIA_EN_PATH):
+        return {}
+    with open(WIKIPEDIA_EN_PATH, encoding="utf-8") as f:
+        return {k: v for k, v in json.load(f).items() if v}
 
 
 def load_covers() -> dict[str, dict]:
@@ -209,7 +224,7 @@ def usage_line(node: dict, songs_cited: list[tuple[dict, int]]) -> str:
     parts = [f"{verb} in {n} {'canzone' if n == 1 else 'canzoni'}"]
     per_album: dict[str, int] = {}
     for song, _ in songs_cited:
-        if song["album"] != "Singoli / altro":
+        if song["album"] != SINGLES:
             per_album[song["album"]] = per_album.get(song["album"], 0) + 1
     # a single song on an album isn't a pattern — only name albums with 2+
     top = [kv for kv in sorted(per_album.items(), key=lambda kv: (-kv[1], kv[0]))[:2] if kv[1] > 1]
@@ -225,6 +240,28 @@ def usage_line(node: dict, songs_cited: list[tuple[dict, int]]) -> str:
     return ". ".join(parts) + "."
 
 
+def usage_line_en(node: dict, songs_cited: list[tuple[dict, int]]) -> str:
+    """usage_line, in English."""
+    n = len(songs_cited)
+    verb = "Cited" if node["group"] == "figure" else "Recurs"
+    parts = [f"{verb} in {n} {'song' if n == 1 else 'songs'}"]
+    per_album: dict[str, int] = {}
+    for song, _ in songs_cited:
+        if song["album"] != SINGLES:
+            per_album[song["album"]] = per_album.get(song["album"], 0) + 1
+    top = [kv for kv in sorted(per_album.items(), key=lambda kv: (-kv[1], kv[0]))[:2] if kv[1] > 1]
+    if top:
+        parts[0] += ", above all on " + " and ".join(f"{a} ({c})" for a, c in top)
+    years = sorted(int(m.group()) for song, _ in songs_cited
+                   if (m := re.search(r"\d{4}", song.get("release") or "")))
+    if years:
+        parts.append(f"From {years[0]}" + (f" to {years[-1]}" if years[-1] != years[0] else ""))
+    strongest = max(songs_cited, key=lambda sc: (sc[1], sc[0]["label"]))
+    if n > 1 and strongest[1] > 1:
+        parts.append(f"Strongest in “{strongest[0]['label']}”")
+    return ". ".join(parts) + "."
+
+
 def main() -> int:
     refs = load_referents()
     concepts = json.load(open(CONCEPTS, encoding="utf-8"))["concepts"]
@@ -233,6 +270,7 @@ def main() -> int:
     wikipedia = load_wikipedia()
     covers = load_covers()
     youtube = load_youtube()
+    wikipedia_en = load_wikipedia_en()
 
     albums: dict[str, dict] = {}
     songs: dict[str, dict] = {}
@@ -244,7 +282,7 @@ def main() -> int:
 
     for r in refs:
         song_id, fragment = f"song:{r['songId']}", r["fragment"]
-        album_name = r.get("songAlbum") or "Singoli / altro"
+        album_name = r.get("songAlbum") or SINGLES
 
         album = albums.setdefault(album_name, {
             "id": f"album:{album_name}", "label": album_name, "group": "album", "val": 1,
@@ -333,7 +371,7 @@ def main() -> int:
                 node["descriptionUrl"] = entry["url"]
 
     for album_name, album in albums.items():
-        if album_name == "Singoli / altro":
+        if album_name == SINGLES:
             continue
         album_songs = [song for song in songs.values() if song["album"] == album_name]
         attach_tracks(album, wikipedia.get(album["id"]) or {}, album_songs)
@@ -369,6 +407,29 @@ def main() -> int:
             node["bio"] = bio["extract"]
             if bio.get("url"):
                 node["bioUrl"] = bio["url"]
+        en = {"label": concept_by_id[node_id.split(":", 1)[1]]["label_en"]}
+        if node_id in cited_by:
+            en["description"] = usage_line_en(node, cited_by[node_id])
+        bio_en = wikipedia_en.get(node_id)
+        if bio_en:
+            en["bio"] = bio_en["extract"]
+            if bio_en.get("url"):
+                en["bioUrl"] = bio_en["url"]
+        node["en"] = en
+
+    for node in list(albums.values()) + list(songs.values()):
+        en: dict = {}
+        if node["id"] == f"album:{SINGLES}":
+            en["label"] = SINGLES_EN
+        page = wikipedia_en.get(node["id"])
+        if page:
+            en["description"] = page["extract"]
+            if page.get("about"):
+                en["about"] = page["about"]
+            if page.get("url"):
+                en["descriptionUrl"] = page["url"]
+        if en:
+            node["en"] = en
 
     nodes = list(albums.values()) + list(songs.values()) + list(concepts_final.values())
 

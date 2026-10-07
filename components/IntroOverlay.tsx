@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import type { Portrait } from "@/lib/graph";
+import { useT } from "@/lib/locale";
 
 const WORDS = ["THE", "CAPA", "ATLAS"];
 const SEEN_KEY = "atlas-intro-seen";
@@ -34,6 +35,7 @@ export default function IntroOverlay({
   /** Called once, as the curtain starts to lift. */
   onReveal?: () => void;
 }) {
+  const t = useT();
   const [minDone, setMinDone] = useState(false);
   const [forced, setForced] = useState(false);
   const leaving = forced || (minDone && ready);
@@ -94,7 +96,7 @@ export default function IntroOverlay({
         className="relative h-px w-40 overflow-hidden sm:w-56"
         style={{ background: "var(--atlas-hair)" }}
         role="progressbar"
-        aria-label="Caricamento della mappa"
+        aria-label={t.loadingMapLabel}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(progress * 100)}
@@ -105,7 +107,7 @@ export default function IntroOverlay({
         />
       </div>
       <p className="relative text-xs opacity-60">
-        {ready ? "Clicca per entrare" : "Carico la mappa…"}
+        {ready ? t.clickToEnter : t.loadingMap}
       </p>
     </div>
   );

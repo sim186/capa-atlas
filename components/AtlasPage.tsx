@@ -2,18 +2,20 @@ import fs from "node:fs";
 import path from "node:path";
 import GraphView from "@/components/GraphView";
 import type { GraphData, Portrait } from "@/lib/graph";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE } from "@/lib/site";
+import { DICTIONARIES, type Locale } from "@/lib/i18n";
+import { LocaleProvider } from "@/lib/locale";
+import { localizeGraph } from "@/lib/localize";
+import { SITE_COPY, SITE_NAME, siteTitle } from "@/lib/site";
 
-export const dynamic = "force-static";
-
-export default function Home() {
+/** The whole atlas in one language; app/(it)/page.tsx and app/(en)/en/page.tsx. */
+export default function AtlasPage({ locale }: { locale: Locale }) {
   let data: GraphData | null = null;
   try {
     const raw = fs.readFileSync(
       path.join(process.cwd(), "public", "graphData.json"),
       "utf-8"
     );
-    data = JSON.parse(raw) as GraphData;
+    data = localizeGraph(JSON.parse(raw) as GraphData, locale);
   } catch {
     // no data yet
   }
@@ -52,9 +54,9 @@ export default function Home() {
     <main className="h-full">
       {/* Crawler / screen-reader view of what the canvas draws. */}
       <div className="sr-only">
-        <h1>{SITE_TITLE}</h1>
-        <p>{SITE_DESCRIPTION}</p>
-        <h2>Album</h2>
+        <h1>{siteTitle(locale)}</h1>
+        <p>{SITE_COPY[locale].description}</p>
+        <h2>{DICTIONARIES[locale].groupPlural.album}</h2>
         <ul>
           {albums.map((a) => (
             <li key={a.id}>
@@ -71,7 +73,9 @@ export default function Home() {
           ))}
         </ul>
       </div>
-      <GraphView data={data} portraits={portraits} />
+      <LocaleProvider locale={locale}>
+        <GraphView data={data} portraits={portraits} />
+      </LocaleProvider>
     </main>
   );
 }

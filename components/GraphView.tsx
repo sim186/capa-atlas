@@ -18,11 +18,10 @@ import {
   GraphNode,
   Group,
   GROUP_COLOR,
-  GROUP_LABEL,
   LENS_GROUP_ORDER,
-  LENS_GROUP_TITLE,
   Portrait,
 } from "@/lib/graph";
+import { useT } from "@/lib/locale";
 import GroupGlyph from "@/components/GroupGlyph";
 import {
   DrawablyButton,
@@ -49,12 +48,6 @@ const ALL_GROUPS: Group[] = ["album", "song", "figure", "concept"];
 // the build script prunes weak theme co-occurrences before they reach it.
 type LinkKind = GraphLink["kind"];
 const ALL_KINDS: LinkKind[] = ["on", "refers", "album_refers", "co_occurs"];
-const KIND_LABEL: Record<LinkKind, string> = {
-  on: "album",
-  refers: "citazioni",
-  album_refers: "album ↔ temi",
-  co_occurs: "tematiche",
-};
 // The overview is the editorial layer: albums, themes and figures connect
 // directly. Song-level evidence is opt-in because 254 songs and their 1,171
 // edges turn the opening view into a dense ball.
@@ -481,6 +474,7 @@ const PRIMARY_LINKS_PHONE = 10;
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
 
 export default function GraphView({ data, portraits }: { data: GraphData; portraits: Portrait[] }) {
+  const t = useT();
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const searchRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<GraphNode | null>(null);
@@ -1116,7 +1110,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     const heads = layout.heads.map(({ group, count, more, slot }) => {
       const div = document.createElement("div");
       div.className = "atlas-lens-head";
-      div.textContent = more ? `${LENS_GROUP_TITLE[group]}, segue` : `${LENS_GROUP_TITLE[group]} · ${count}`;
+      div.textContent = more ? t.lensMore(t.groupPlural[group]) : `${t.groupPlural[group]} · ${count}`;
       div.style.display = "none";
       layer?.appendChild(div);
       return { div, at: toWorld(slot), side: slot.side };
@@ -1146,7 +1140,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       for (const head of heads) head.div.remove();
       lensHeadsRef.current = [];
     };
-  }, [selected, selectedNeighbors, visibleData.nodes]);
+  }, [selected, selectedNeighbors, t, visibleData.nodes]);
 
   // Clamp the orbit tilt as soon as the controls exist (they're created
   // lazily by 3d-force-graph, hence the retry loop).
@@ -2794,8 +2788,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               <>
                 <span className="atlas-tip-name">{hovered.label}</span>
                 <span className="atlas-tip-kind">
-                  {GROUP_LABEL[hovered.group]}
-                  {selected && hovered.id !== selected.id ? " · clicca per aprire" : ""}
+                  {t.group[hovered.group]}
+                  {selected && hovered.id !== selected.id ? t.clickToOpen : ""}
                 </span>
               </>
             )}
@@ -2805,7 +2799,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         {/* breadcrumb of the walk through the lens */}
         {isDesktop && trail.length > 0 && selected && (
           <nav
-            aria-label="Percorso"
+            aria-label={t.trail}
             className="atlas-trail absolute left-[12.5rem] top-9 z-10 flex items-center gap-1.5 font-mono text-xs"
             style={{ maxWidth: `calc(100% - 12.5rem - ${desktopPanelWidth()}px - 2rem)` }}
           >
@@ -2815,9 +2809,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 fit();
               }}
               className="atlas-trail-step"
-              title="Torna alla vista d'insieme"
+              title={t.backToOverview}
             >
-              Atlante
+              {t.atlas}
             </button>
             {trail.map((crumb, index) => {
               const current = index === trail.length - 1;
@@ -2847,14 +2841,14 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               setControlsOpen((open) => !open);
               window.setTimeout(() => searchRef.current?.focus(), 0);
             }}
-            aria-label="Cerca e filtra"
+            aria-label={t.searchAndFilter}
             aria-expanded={controlsOpen}
-            title="Cerca e filtra ( / )"
+            title={`${t.searchAndFilter} ( / )`}
             variant={controlsOpen ? "solid" : "outline"}
             width={1.6}
             className="atlas-ink-btn h-12 px-4 text-sm tracking-wide"
           >
-            ⌕ Cerca e filtra
+            ⌕ {t.searchAndFilter}
           </DrawablyButton>
         </div>
         )}
@@ -2895,8 +2889,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               onKeyDown={(event) => {
                 if (event.key === "Enter" && results[0]) focusNode(results[0]);
               }}
-              placeholder="cerca nell'atlante  /"
-              aria-label="Cerca nel catalogo"
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchLabel}
               width={1.6}
               className="block w-full"
             />
@@ -2907,7 +2901,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--atlas-hair)" }}>
                 {results.length === 0 ? (
                   <p className="py-2 opacity-70">
-                    Nessun risultato per «{query.trim()}». Prova con un titolo o un tema.
+                    {t.noResults(query.trim())}
                   </p>
                 ) : (
                   <ul
@@ -2941,7 +2935,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             ) : (
               <>
                 <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
-                  <p className="mb-3 text-[0.7rem] font-bold opacity-70">Mostra</p>
+                  <p className="mb-3 text-[0.7rem] font-bold opacity-70">{t.show}</p>
                   <div className="flex flex-wrap gap-2">
                     {ALL_GROUPS.map((group) => {
                       const enabled = layerOn(group);
@@ -2964,7 +2958,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                               : "px-3 py-1.5 text-[0.72rem] font-medium tracking-wide opacity-45"
                           }
                         >
-                          {GROUP_LABEL[group]} · {stats[group] ?? 0}
+                          {t.group[group]} · {stats[group] ?? 0}
                         </DrawablyButton>
                       );
                     })}
@@ -2972,7 +2966,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 </div>
 
                 <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
-                  <p className="mb-3 text-[0.7rem] font-bold opacity-70">Legami</p>
+                  <p className="mb-3 text-[0.7rem] font-bold opacity-70">{t.links}</p>
                   <div className="flex flex-wrap gap-2">
                     {ALL_KINDS.map((kind) => {
                       const enabled = visibleKinds.has(kind);
@@ -2986,7 +2980,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                           width={1.4}
                           className="px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                         >
-                          {KIND_LABEL[kind]} · {kindStats[kind]}
+                          {t.linkKind[kind]} · {kindStats[kind]}
                         </DrawablyButton>
                       );
                     })}
@@ -2995,7 +2989,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
 
                 {lite && (
                   <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
-                    <p className="mb-3 text-[0.7rem] font-bold opacity-70">Vista</p>
+                    <p className="mb-3 text-[0.7rem] font-bold opacity-70">{t.view}</p>
                     <div className="flex flex-wrap gap-2">
                       <DrawablyButton
                         key={`color-${colorMode}`}
@@ -3005,7 +2999,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                         width={1.4}
                         className="atlas-ink-btn px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                       >
-                        {colorMode === "group" ? "colori" : "grigio"}
+                        {colorMode === "group" ? t.colors : t.grey}
                       </DrawablyButton>
                       <DrawablyButton
                         key={`sound-${muted}`}
@@ -3015,7 +3009,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                         width={1.4}
                         className="atlas-ink-btn px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                       >
-                        {muted ? "suono off" : "suono on"}
+                        {muted ? t.soundOff : t.soundOn}
                       </DrawablyButton>
                     </div>
                   </div>
@@ -3024,7 +3018,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             )}
 
             <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
-              <p className="mb-3 text-[0.7rem] font-bold opacity-70">Accessibilità</p>
+              <p className="mb-3 text-[0.7rem] font-bold opacity-70">{t.accessibility}</p>
               <DrawablyButton
                 key={`shapes-${distinctShapes}`}
                 onClick={toggleShapes}
@@ -3032,9 +3026,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 variant={distinctShapes ? "solid" : "outline"}
                 width={1.4}
                 className="atlas-ink-btn px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
-                title="Un simbolo diverso per ogni categoria: rombo, cerchio, triangolo, quadrato"
+                title={t.shapesTitle}
               >
-                {distinctShapes ? "forme diverse: on" : "forme diverse: off"}
+                {distinctShapes ? t.shapesOn : t.shapesOff}
               </DrawablyButton>
             </div>
 
@@ -3043,7 +3037,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               style={{ borderColor: "var(--atlas-hair)" }}
             >
               <span className="opacity-70">
-                {visibleData.nodes.length} / {data.nodes.length} nodi
+                {t.nodesCount(visibleData.nodes.length, data.nodes.length)}
               </span>
               <span className="flex gap-4">
                 <button
@@ -3054,10 +3048,10 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                   aria-pressed={browse}
                   className="underline underline-offset-2 hover:opacity-70"
                 >
-                  {browse ? "filtri" : "elenco"}
+                  {browse ? t.filters : t.list}
                 </button>
                 <button onClick={fit} className="underline underline-offset-2 hover:opacity-70">
-                  inquadra tutto
+                  {t.fitAll}
                 </button>
               </span>
             </div>
@@ -3067,7 +3061,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
 
         <p className="sr-only" aria-live="polite">
           {kbdNode
-            ? `${kbdNode.label}, ${GROUP_LABEL[kbdNode.group]}. Invio per aprire.`
+            ? t.kbdAnnounce(kbdNode.label, t.group[kbdNode.group])
             : ""}
         </p>
 
@@ -3076,9 +3070,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         <div className="pointer-events-none absolute bottom-7 left-7 z-10">
           <p className="atlas-pen text-2xl tracking-[-0.02em]">THE CAPA ATLAS</p>
           <p className="mt-1 max-w-[17rem] text-xs leading-snug opacity-70">
-            Trascina per ruotare, scorri per zoomare. Clicca un nodo per aprirlo,
-            Esc per tornare. Da tastiera: frecce per spostarti, +/− per lo zoom,
-            Invio per aprire.
+            {t.desktopHint}
           </p>
         </div>
         )}
@@ -3095,8 +3087,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 strokeLinejoin="round"
               />
             </svg>
-            <p className="atlas-pen text-xl leading-none">Trascina per esplorare</p>
-            <p className="text-xs opacity-65">pizzica per zoomare, tocca un nodo per aprirlo</p>
+            <p className="atlas-pen text-xl leading-none">{t.dragToExplore}</p>
+            <p className="text-xs opacity-65">{t.touchHint}</p>
           </div>
         )}
 
@@ -3110,7 +3102,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                   barHidden ? "bottom-3" : "bottom-[4.5rem]"
                 }`
           }`}
-          aria-label="Categorie"
+          aria-label={t.categories}
         >
           {ALL_GROUPS.map((group) => {
             const enabled = layerOn(group);
@@ -3119,7 +3111,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 <button
                   onClick={() => toggleLayer(group)}
                   aria-pressed={enabled}
-                  title={enabled ? `Nascondi: ${GROUP_LABEL[group]}` : `Mostra: ${GROUP_LABEL[group]}`}
+                  title={enabled ? t.hideGroup(t.group[group]) : t.showGroup(t.group[group])}
                   className="atlas-legend-item flex items-center gap-2 py-1 text-xs"
                   style={{ opacity: enabled ? 1 : 0.4 }}
                 >
@@ -3129,7 +3121,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                     size={12}
                     color={colorMode === "group" && !selected ? GROUP_COLOR[group] : theme.node}
                   />
-                  <span>{GROUP_LABEL[group]}</span>
+                  <span>{t.group[group]}</span>
                 </button>
               </li>
             );
@@ -3142,8 +3134,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         {isDesktop && !selected && (
           <button
             onClick={snapTopView}
-            aria-label="Vista dall'alto"
-            title="Vista dall'alto"
+            aria-label={t.topView}
+            title={t.topView}
             className="atlas-gizmo absolute bottom-7 right-7 z-10"
           >
             <span className="atlas-gizmo-orbit" />
@@ -3165,33 +3157,33 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             aria-pressed={colorMode === "group"}
             title={
               colorMode === "group"
-                ? "Colori per categoria attivi: clicca per il grigio"
-                : "Grigio: clicca per colorare per categoria"
+                ? t.colorsOnTitle
+                : t.colorsOffTitle
             }
             variant={colorMode === "group" ? "solid" : "outline"}
             width={1.4}
             className="atlas-ink-btn h-10 text-xs tracking-wide"
           >
-            {colorMode === "group" ? "colori" : "grigio"}
+            {colorMode === "group" ? t.colors : t.grey}
           </DrawablyButton>
           <DrawablyButton
             key={muted ? "muted" : "sound"}
             onClick={() => setMuted((value) => !value)}
             aria-pressed={!muted}
-            title={muted ? "Attiva i suoni" : "Disattiva i suoni"}
+            title={muted ? t.unmuteTitle : t.muteTitle}
             variant={muted ? "outline" : "solid"}
             width={1.4}
             className="atlas-ink-btn h-10 text-xs tracking-wide"
           >
-            {muted ? "suono off" : "suono on"}
+            {muted ? t.soundOff : t.soundOn}
           </DrawablyButton>
           <DrawablyButton
             onClick={fit}
-            title="Torna alla vista d'insieme"
+            title={t.backToOverview}
             width={1.6}
             className="atlas-ink-btn h-10 text-xs tracking-wide"
           >
-            ⟲ inquadra
+            {t.fit}
           </DrawablyButton>
         </div>
         )}
@@ -3210,7 +3202,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               }}
               width={1.4}
               className="atlas-ink-btn h-10 min-w-0 px-4 text-sm"
-              aria-label={`Apri il dettaglio di ${selected.label}`}
+              aria-label={t.openDetailOf(selected.label)}
             >
               <span className="block max-w-[11rem] truncate">{selected.label}</span>
             </DrawablyButton>
@@ -3218,7 +3210,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               onClick={closeDetail}
               width={1.4}
               className="atlas-ink-btn h-10 w-10 flex-none p-0"
-              aria-label="Deseleziona"
+              aria-label={t.deselect}
             >
               <span className="atlas-close-mark" />
             </DrawablyButton>
@@ -3228,7 +3220,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         {/* phone tab bar: map · list · search. The sheet has its own pager. */}
         {!isDesktop && !sheetOpen && (
           <nav
-            aria-label="Navigazione"
+            aria-label={t.navigation}
             className="absolute inset-x-0 bottom-0 z-10 flex border-t transition-transform duration-300"
             style={{
               transform: barHidden ? "translateY(100%)" : undefined,
@@ -3239,9 +3231,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           >
             {(
               [
-                ["map", "Mappa"],
-                ["list", "Elenco"],
-                ["search", "Cerca"],
+                ["map", t.tabMap],
+                ["list", t.tabList],
+                ["search", t.tabSearch],
               ] as const
             ).map(([tab, label]) => {
               const active = (controlsOpen ? (browse ? "list" : "search") : "map") === tab;

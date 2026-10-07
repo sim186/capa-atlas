@@ -5,7 +5,8 @@ import { BASE_PATH } from "@/lib/basePath";
 import GroupGlyph from "@/components/GroupGlyph";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import type { GraphNode, Portrait, Quote } from "@/lib/graph";
-import { GROUP_LABEL, LENS_GROUP_ORDER, LENS_GROUP_TITLE, type Group } from "@/lib/graph";
+import { LENS_GROUP_ORDER } from "@/lib/graph";
+import { useT } from "@/lib/locale";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
 import { useIsDesktop } from "@/lib/useIsDesktop";
@@ -123,34 +124,49 @@ function SpotifyLink({ href, className = "" }: { href: string; className?: strin
   );
 }
 
-const YOUTUBE_LABEL = { video: "Video", lyric: "Lyric video", audio: "Audio" } as const;
-
 /** The song on Caparezza's own YouTube channel (data/youtube.json). */
 function YouTubeLink({ video }: { video: NonNullable<GraphNode["youtube"]> }) {
+  const t = useT();
   return (
     <a
       href={`https://www.youtube.com/watch?v=${video.id}`}
       target="_blank"
       rel="noreferrer"
-      title="YouTube · canale ufficiale"
+      title={t.youtubeTitle}
       className="inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#FF0000]" fill="currentColor">
         <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" />
       </svg>
-      {YOUTUBE_LABEL[video.kind]} ↗
+      {t.youtubeKind[video.kind]} ↗
     </a>
   );
 }
 
+/** English atlas: marks text still in Italian (no English source for it). */
+function ItalianTag({ show }: { show?: boolean }) {
+  const t = useT();
+  if (!show || !t.italianTag) return null;
+  return (
+    <span
+      title="In Italian"
+      className="mr-1.5 inline-block rounded-sm border px-1 align-[0.12em] font-mono text-[0.55rem] font-bold leading-[1.35] tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_60%,transparent)]"
+      style={{ borderColor: "var(--atlas-hair)" }}
+    >
+      {t.italianTag}
+    </span>
+  );
+}
+
 /** Wikipedia sections on what the album/song is about (concept, meaning, tracks). */
-function AboutSections({ about }: { about?: { heading: string; text: string }[] }) {
+function AboutSections({ about, italian }: { about?: { heading: string; text: string }[]; italian?: boolean }) {
   if (!about?.length) return null;
   return (
     <div className="mt-4 space-y-4">
       {about.map((section) => (
         <section key={section.heading}>
           <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+            <ItalianTag show={italian} />
             {section.heading}
           </h3>
           {section.text
@@ -178,6 +194,7 @@ function AboutSections({ about }: { about?: { heading: string; text: string }[] 
  */
 export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
+  const t = useT();
   const quotes = useQuotes(node);
   // Back-history for the pager and the direction of the last hop, used to
   // slide content in from the correct side. Both are state so render can
@@ -240,7 +257,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
   }, [goNext, goPrev]);
 
   const title = node.label;
-  const groupLabel = GROUP_LABEL[node.group as Group] ?? node.group;
+  const groupLabel = t.group[node.group] ?? node.group;
   const spotifyUrl = spotifySearchUrl(node);
 
   const body = (
@@ -266,7 +283,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               {groupLabel}
             </span>
             <span className="font-mono text-[0.64rem] tabular-nums tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_45%,transparent)]">
-              {linkCount} collegamenti
+              {t.linkCount(linkCount)}
             </span>
           </div>
 
@@ -285,7 +302,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               {/* eslint-disable-next-line @next/next/no-img-element -- third-party artwork, loaded from its source, never proxied or stored */}
               <img
                 src={node.cover}
-                alt={`Copertina di ${node.group === "album" ? node.label : node.album}`}
+                alt={t.coverOf(node.group === "album" ? node.label : node.album)}
                 width={112}
                 height={112}
                 loading="lazy"
@@ -316,20 +333,21 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               <p className="text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]">
                 {node.album && (
                   <span className="block">
-                    Album · <span className="font-medium">{node.album}</span>
+                    {t.albumField} · <span className="font-medium">{node.album}</span>
                   </span>
                 )}
-                {node.release && <span className="block">Uscita · {node.release}</span>}
+                {node.release && <span className="block">{t.releaseField} · {node.release}</span>}
               </p>
               {node.description && (
                 <p className="mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                  <ItalianTag show={node.italian?.includes("description")} />
                   {node.description}
                 </p>
               )}
-              <AboutSections about={node.about} />
+              <AboutSections about={node.about} italian={node.italian?.includes("about")} />
               <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
                 {node.url && (
-                  <GeniusLink href={node.url} label="Apri su Genius" className="text-[0.72rem]" />
+                  <GeniusLink href={node.url} label={t.openOnGenius} className="text-[0.72rem]" />
                 )}
                 {node.descriptionUrl && (
                   <WikipediaLink href={node.descriptionUrl} />
@@ -343,11 +361,16 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
           {node.group === "song" && node.quoteCount && (
             <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
               <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
-                Citazioni annotate · {node.quoteCount}
+                {t.annotatedQuotes} · {node.quoteCount}
               </p>
+              {t.quotesNote && (
+                <p className="mb-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+                  {t.quotesNote}
+                </p>
+              )}
               {quotes === null && (
                 <p className="font-mono text-[0.72rem] uppercase tracking-[0.14em] opacity-55">
-                  Carico…
+                  {t.loading}
                 </p>
               )}
               <ul className="flex flex-col gap-2">
@@ -362,7 +385,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                           {quote.annotation}
                         </p>
                         {quote.url && (
-                          <GeniusLink href={quote.url} label="Vedi su Genius" className="mt-2 text-[0.68rem]" />
+                          <GeniusLink href={quote.url} label={t.seeOnGenius} className="mt-2 text-[0.68rem]" />
                         )}
                       </div>
                     </details>
@@ -386,18 +409,17 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                     : "text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]"
                 }
               >
-                {node.description ??
-                  `Un elemento dell'atlante Caparezza, collegato a ${linkCount} ${
-                    linkCount === 1 ? "nodo" : "nodi"
-                  }.`}
+                <ItalianTag show={node.italian?.includes("description")} />
+                {node.description ?? t.fallbackDescription(linkCount)}
               </p>
-              <AboutSections about={node.about} />
+              <AboutSections about={node.about} italian={node.italian?.includes("about")} />
               {node.bio && (
                 <div className="mt-5">
                   <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
-                    Chi è
+                    {t.whoIs}
                   </h3>
                   <p className="text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                    <ItalianTag show={node.italian?.includes("bio")} />
                     {node.bio}
                   </p>
                   {node.bioUrl && (
@@ -415,7 +437,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
           {node.group === "album" && node.tracks && node.tracks.length > 1 && (
             <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
               <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
-                Tracce · {node.tracks.length}
+                {t.tracks} · {node.tracks.length}
               </p>
               <ol className="flex flex-col">
                 {node.tracks.map((track, index) => {
@@ -454,7 +476,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
 
           <div className="atlas-reveal mt-6 pb-4" style={{ "--i": 4 } as React.CSSProperties}>
             <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
-              Collegato a
+              {t.linkedTo}
             </p>
             {/* Same blocks, order and captions as the lens on the map. */}
             <div className="flex flex-col gap-4">
@@ -465,7 +487,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                   <section key={group}>
                     <h3 className="mb-2 inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
                       <GroupGlyph group={group} size={9} distinct={distinctShapes} />
-                      {LENS_GROUP_TITLE[group]} · {block.length}
+                      {t.groupPlural[group]} · {block.length}
                     </h3>
                     <ul className="flex flex-wrap gap-2">
                       {block.map((neighbor) => (
@@ -474,7 +496,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                             onClick={() => openNeighbor(neighbor)}
                             width={1.4}
                             className="atlas-pen atlas-pill max-w-[16rem] truncate text-[0.82rem]"
-                            title={`${neighbor.label} · ${GROUP_LABEL[neighbor.group]}`}
+                            title={`${neighbor.label} · ${t.group[neighbor.group]}`}
                           >
                             <span className="atlas-roll">
                               <span>{neighbor.label}</span>
@@ -490,8 +512,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
             </div>
             {linkCount > neighbors.length && (
               <p className="mt-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
-                I {neighbors.length} legami più forti, come sulla mappa. Altri{" "}
-                {linkCount - neighbors.length} più deboli non sono mostrati.
+                {t.strongestOnly(neighbors.length, linkCount - neighbors.length)}
               </p>
             )}
           </div>
@@ -519,7 +540,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
           </DrawablyBadge>
           <span className="min-w-0 flex-1">
             <span className="block text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_70%,transparent)]">
-              Indietro
+              {t.back}
             </span>
           </span>
         </button>
@@ -535,7 +556,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               {neighbors[0] ? (
                 <span className="inline-flex items-center gap-1.5">
                   <GroupGlyph group={neighbors[0].group} size={9} distinct={distinctShapes} />
-                  {GROUP_LABEL[neighbors[0].group]}
+                  {t.group[neighbors[0].group]}
                 </span>
               ) : (
                 "—"
@@ -564,13 +585,13 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
         ref={surfaceRef}
         className="atlas-panel"
         data-open={open}
-        aria-label="Dettaglio nodo"
+        aria-label={t.nodeDetail}
       >
         <DrawablyButton
           onClick={onClose}
           width={1.4}
           className="atlas-panel-close h-10 w-10 p-0"
-          aria-label="Chiudi pannello"
+          aria-label={t.closePanel}
         >
           <span className="atlas-close-mark" />
         </DrawablyButton>
@@ -586,11 +607,11 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
       className="atlas-sheet"
       data-open={open}
       role="dialog"
-      aria-label="Dettaglio nodo"
+      aria-label={t.nodeDetail}
     >
       <div className="atlas-sheet-bar">
         <button onClick={onClose} className="atlas-back">
-          <span aria-hidden>←</span> Mappa
+          <span aria-hidden>←</span> {t.tabMap}
         </button>
       </div>
       {body}

@@ -12,7 +12,7 @@ const ARTIST = "Caparezza";
  */
 export function spotifySearchUrl(node: GraphNode): string | undefined {
   if (node.group !== "song" && node.group !== "album") return undefined;
-  if (node.group === "album" && node.label === "Singoli / altro") return undefined;
+  if (node.id === "album:Singoli / altro") return undefined;
 
   return `https://open.spotify.com/search/${encodeURIComponent(`${ARTIST} ${node.label}`)}`;
 }

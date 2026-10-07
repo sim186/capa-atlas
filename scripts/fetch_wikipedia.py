@@ -173,6 +173,7 @@ SKIP_SECTIONS = {
     "certifications", "critical reception", "reception", "release", "promotion",
     "music video", "notes", "references", "external links", "see also",
     "credits", "release history", "accolades", "tour", "sales",
+    "commercial performance", "bonus tracks", "track list", "chart performance",
 }
 HEADING_RE = re.compile(r"^(={2,6})\s*(.*?)\s*\1\s*$")
 MAX_SECTION_CHARS = 1400

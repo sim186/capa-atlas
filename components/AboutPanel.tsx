@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { DrawablyCard } from "drawably/react";
 import { sound } from "@/lib/sound";
+import Link from "next/link";
 import type { Portrait } from "@/lib/graph";
+import { useLocale, useT } from "@/lib/locale";
 
 /**
  * The "i" in the top-right corner — same gesture as the AI Coding
@@ -20,6 +22,8 @@ export default function AboutPanel({
   portraits?: Portrait[];
 }) {
   const [open, setOpen] = useState(false);
+  const locale = useLocale();
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -32,18 +36,29 @@ export default function AboutPanel({
 
   return (
     <div className="absolute right-6 top-6 z-20 flex flex-col items-end gap-3">
-      <button
-        onClick={() => {
-          setOpen((value) => !value);
-          play(() => sound.select());
-        }}
-        aria-label={open ? "Chiudi info" : "Informazioni sul progetto"}
-        aria-expanded={open}
-        data-on={open}
-        className="atlas-circle-btn atlas-pen text-lg leading-none"
-      >
-        i
-      </button>
+      <div className="flex items-center gap-2">
+        {/* the other language: a separate page (own <html lang>), so a full load */}
+        <Link
+          href={t.otherLanguage.href}
+          hrefLang={locale === "it" ? "en" : "it"}
+          title={t.otherLanguage.title}
+          className="atlas-circle-btn font-mono text-[0.68rem] font-bold tracking-[0.06em]"
+        >
+          {t.otherLanguage.label}
+        </Link>
+        <button
+          onClick={() => {
+            setOpen((value) => !value);
+            play(() => sound.select());
+          }}
+          aria-label={open ? t.aboutClose : t.aboutOpen}
+          aria-expanded={open}
+          data-on={open}
+          className="atlas-circle-btn atlas-pen text-lg leading-none"
+        >
+          i
+        </button>
+      </div>
 
       {open && (
         // opaque + scrollable: on a phone the card must stay above the tab bar
@@ -61,6 +76,51 @@ export default function AboutPanel({
             animationDelay: "0ms",
           } as React.CSSProperties}
         >
+{locale === "en" ? (
+            <>
+          <p className="atlas-pen text-xl tracking-[-0.02em]">Why this atlas</p>
+          <div className="atlas-rule my-4" style={{ "--i": 1 } as React.CSSProperties} />
+
+          <p>
+            Caparezza writes lyrics that work like hypertext: every keyword
+            underlined on Genius is a pointer, a quote, a character. The notes
+            talk to each other across the albums — Vincent van Gogh answers
+            consumerism, rebirth comes back from record to record. I wanted to
+            see that whole web, not read it one song at a time.
+          </p>
+
+          <p className="mt-4">
+            The idea comes from the{" "}
+            <a
+              href="https://aicodingdictionary.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:opacity-70"
+            >
+              AI Coding Dictionary
+            </a>{" "}
+            by{" "}
+            <a
+              href="https://github.com/mattpocock/dictionary-of-ai-coding"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:opacity-70"
+            >
+              Matt Pocock
+            </a>
+            : a dictionary you browse as a graph of concepts. Moved from the
+            words of AI to the words of a songwriter, it became this atlas.
+          </p>
+
+          <p className="mt-4">
+            This is the English edition: the interface, themes and Wikipedia
+            summaries are in English where an English page exists. Lyrics and
+            Genius annotations stay in Italian, and Italian text is marked{" "}
+            <span className="font-mono text-[0.7rem] font-bold">IT</span>.
+          </p>
+            </>
+          ) : (
+            <>
           <p className="atlas-pen text-xl tracking-[-0.02em]">Perché questo atlas</p>
           <div className="atlas-rule my-4" style={{ "--i": 1 } as React.CSSProperties} />
 
@@ -94,14 +154,16 @@ export default function AboutPanel({
             : un dizionario navigabile come grafo di concetti. Spostato dalle
             parole dell&apos;AI ai parole di un cantautore, è nato questo atlas.
           </p>
+            </>
+          )}
 
           <div className="atlas-rule my-5" style={{ "--i": 2 } as React.CSSProperties} />
           <p className="mb-3 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-55">
-            Crediti
+            {t.credits}
           </p>
           <ul className="space-y-1.5 font-mono text-xs">
             <li>
-              Dati ·{" "}
+              {t.creditData} ·{" "}
               <a
                 href="https://genius.com/artists/Caparezza"
                 target="_blank"
@@ -110,10 +172,10 @@ export default function AboutPanel({
               >
                 Genius
               </a>{" "}
-              (annotazioni pubbliche, no API key)
+              {t.creditDataNote}
             </li>
             <li>
-              Ispirazione ·{" "}
+              {t.creditInspiration} ·{" "}
               <a
                 href="https://github.com/mattpocock/dictionary-of-ai-coding"
                 target="_blank"
@@ -122,10 +184,10 @@ export default function AboutPanel({
               >
                 dictionary-of-ai-coding
               </a>{" "}
-              di Matt Pocock
+              {t.by} Matt Pocock
             </li>
             <li>
-              UI disegnata a mano ·{" "}
+              {t.creditUi} ·{" "}
               <a
                 href="https://github.com/Axyl101/drawably"
                 target="_blank"
@@ -136,7 +198,7 @@ export default function AboutPanel({
               </a>
             </li>
             <li>
-              Grafo 3D ·{" "}
+              {t.creditGraph} ·{" "}
               <a
                 href="https://github.com/vasturiano/react-force-graph"
                 target="_blank"
@@ -145,10 +207,10 @@ export default function AboutPanel({
               >
                 react-force-graph-3d
               </a>{" "}
-              di Vasco Asturiano
+              {t.by} Vasco Asturiano
             </li>
             <li>
-              Autore ·{" "}
+              {t.creditAuthor} ·{" "}
               <a
                 href="https://github.com/sim186"
                 target="_blank"
@@ -159,7 +221,7 @@ export default function AboutPanel({
               </a>
             </li>
             <li>
-              Codice ·{" "}
+              {t.creditCode} ·{" "}
               <a
                 href="https://github.com/sim186/capa-atlas"
                 target="_blank"
@@ -174,7 +236,7 @@ export default function AboutPanel({
           {portraits.length > 0 && (
             <>
               <p className="mb-2 mt-5 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-55">
-                Foto di sfondo
+                {t.backgroundPhotos}
               </p>
               <ul className="space-y-1.5 font-mono text-xs">
                 {portraits.map((portrait) => (
@@ -208,12 +270,11 @@ export default function AboutPanel({
           )}
 
           <p className="mt-5 text-xs leading-snug opacity-65">
-            Progetto fan non ufficiale, non affiliato a Caparezza.
+            {t.unofficial}
           </p>
 
           <p className="mt-2 text-xs leading-snug opacity-65">
-            Le copertine degli album appartengono ai rispettivi titolari e sono
-            mostrate a scopo illustrativo, caricate da Cover Art Archive e iTunes.
+            {t.coversNote}
           </p>
         </DrawablyCard>
         </div>
