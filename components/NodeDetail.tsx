@@ -5,7 +5,7 @@ import { BASE_PATH } from "@/lib/basePath";
 import GroupGlyph from "@/components/GroupGlyph";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import type { GraphNode, Portrait, Quote } from "@/lib/graph";
-import { GROUP_LABEL, type Group } from "@/lib/graph";
+import { GROUP_LABEL, LENS_GROUP_ORDER, LENS_GROUP_TITLE, type Group } from "@/lib/graph";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
 import { useIsDesktop } from "@/lib/useIsDesktop";
@@ -456,26 +456,38 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
             <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
               Collegato a
             </p>
-            <ul className="flex flex-wrap gap-2">
-              {neighbors.map((neighbor) => (
-                <li key={neighbor.id} {...hoverProps(neighbor)}>
-                  <DrawablyButton
-                    onClick={() => openNeighbor(neighbor)}
-                    width={1.4}
-                    className="atlas-pen atlas-pill max-w-[16rem] truncate text-[0.82rem]"
-                    title={`${neighbor.label} · ${GROUP_LABEL[neighbor.group]}`}
-                  >
-                    <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
-                      <GroupGlyph group={neighbor.group} size={9} distinct={distinctShapes} />
-                      <span className="atlas-roll min-w-0 truncate">
-                        <span>{neighbor.label}</span>
-                        <span>{neighbor.label}</span>
-                      </span>
-                    </span>
-                  </DrawablyButton>
-                </li>
-              ))}
-            </ul>
+            {/* Same blocks, order and captions as the lens on the map. */}
+            <div className="flex flex-col gap-4">
+              {LENS_GROUP_ORDER.map((group) => {
+                const block = neighbors.filter((neighbor) => neighbor.group === group);
+                if (block.length === 0) return null;
+                return (
+                  <section key={group}>
+                    <h3 className="mb-2 inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+                      <GroupGlyph group={group} size={9} distinct={distinctShapes} />
+                      {LENS_GROUP_TITLE[group]} · {block.length}
+                    </h3>
+                    <ul className="flex flex-wrap gap-2">
+                      {block.map((neighbor) => (
+                        <li key={neighbor.id} {...hoverProps(neighbor)}>
+                          <DrawablyButton
+                            onClick={() => openNeighbor(neighbor)}
+                            width={1.4}
+                            className="atlas-pen atlas-pill max-w-[16rem] truncate text-[0.82rem]"
+                            title={`${neighbor.label} · ${GROUP_LABEL[neighbor.group]}`}
+                          >
+                            <span className="atlas-roll">
+                              <span>{neighbor.label}</span>
+                              <span>{neighbor.label}</span>
+                            </span>
+                          </DrawablyButton>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
             {linkCount > neighbors.length && (
               <p className="mt-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
                 I {neighbors.length} legami più forti, come sulla mappa. Altri{" "}

@@ -19,6 +19,8 @@ import {
   Group,
   GROUP_COLOR,
   GROUP_LABEL,
+  LENS_GROUP_ORDER,
+  LENS_GROUP_TITLE,
   Portrait,
 } from "@/lib/graph";
 import GroupGlyph from "@/components/GroupGlyph";
@@ -177,14 +179,6 @@ const HOVER_SOUND_DWELL_MS = 140;
 // Screen px around the cursor within which the nearest node is picked.
 const PICK_RADIUS = 18;
 const IDLE_ORBIT_RESUME_MS = 4000;
-const LENS_GROUP_ORDER: Group[] = ["album", "figure", "concept", "song"];
-// Lens block captions (plural: they head a list).
-const LENS_GROUP_TITLE: Record<Group, string> = {
-  album: "Album",
-  figure: "Figure",
-  concept: "Temi",
-  song: "Canzoni",
-};
 // Splitting a category across the two arcs costs this many rows of
 // imbalance: a block stays whole unless keeping it so leaves one arc far
 // longer than the other.
@@ -256,16 +250,6 @@ function chordBend(a: Vec3, b: Vec3, pull: number) {
   return { curvature: wantedLength / baseLength, rotation };
 }
 
-/** Lens slot order: one sector per category, the weightiest first in each. */
-function lensOrder(nodes: readonly GraphNode[]) {
-  return [...nodes].sort(
-    (a, b) =>
-      LENS_GROUP_ORDER.indexOf(a.group) - LENS_GROUP_ORDER.indexOf(b.group) ||
-      (b.val ?? 1) - (a.val ?? 1) ||
-      a.label.localeCompare(b.label)
-  );
-}
-
 type LensRow =
   | { kind: "head"; group: Group; count: number; more: boolean }
   | { kind: "node"; node: GraphNode }
@@ -281,7 +265,8 @@ type LensSlot = { x: number; y: number; side: number };
  * gets a "segue" caption.
  */
 function lensLayout(nodes: readonly GraphNode[]) {
-  const blocks = LENS_GROUP_ORDER.map((group) => lensOrder(nodes.filter((n) => n.group === group))).filter(
+  // `nodes` arrive strongest link first (lensMembersOf); each block keeps that order.
+  const blocks = LENS_GROUP_ORDER.map((group) => nodes.filter((n) => n.group === group)).filter(
     (block) => block.length > 0
   );
   const rows: LensRow[] = [];

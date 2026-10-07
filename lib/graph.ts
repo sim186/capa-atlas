@@ -87,6 +87,17 @@ export const GROUP_LABEL: Record<Group, string> = {
   concept: "Tema",
 };
 
+// The lens around a selection and the drawer's "Collegato a" list the same
+// members in the same blocks, in this order, each strongest link first.
+export const LENS_GROUP_ORDER: Group[] = ["album", "figure", "concept", "song"];
+// Block captions (plural: they head a list).
+export const LENS_GROUP_TITLE: Record<Group, string> = {
+  album: "Album",
+  figure: "Figure",
+  concept: "Temi",
+  song: "Canzoni",
+};
+
 // A restrained paper-atlas palette: high contrast enough to navigate, but
 // quiet enough that the structure—not a rainbow of nodes—remains primary.
 export const GROUP_COLOR: Record<Group, string> = {
