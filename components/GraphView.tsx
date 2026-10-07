@@ -703,20 +703,27 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   );
   // The lens shows a node's direct links whatever the layer toggles say: an
   // album whose only links are songs must not open onto an empty ring. Big
-  // hubs keep their strongest LENS_MAX_MEMBERS; the panel lists the rest.
+  // hubs keep their strongest LENS_MAX_MEMBERS; the panel lists the same.
   const lensMembersOf = useCallback(
-    (id: string) =>
-      [...(linkStrength.get(id) ?? new Map<string, number>())]
+    (id: string) => {
+      // An album is made of its tracks: they take the first slots, in disc
+      // order, and its strongest themes fill the rest.
+      const trackIds = nodeById.get(id)?.tracks?.flatMap((track) => (track.id ? [track.id] : [])) ?? [];
+      const trackIndex = new Map(trackIds.map((trackId, index) => [trackId, index]));
+      const rank = (nodeId: string) => trackIndex.get(nodeId) ?? Infinity;
+      return [...(linkStrength.get(id) ?? new Map<string, number>())]
         .map(([other, weight]) => ({ node: nodeById.get(other), weight }))
         .filter((entry): entry is { node: GraphNode; weight: number } => !!entry.node)
         .sort(
           (a, b) =>
+            (rank(a.node.id) === rank(b.node.id) ? 0 : rank(a.node.id) < rank(b.node.id) ? -1 : 1) ||
             b.weight - a.weight ||
             (b.node.val ?? 1) - (a.node.val ?? 1) ||
             a.node.label.localeCompare(b.node.label)
         )
         .slice(0, LENS_MAX_MEMBERS)
-        .map((entry) => entry.node),
+        .map((entry) => entry.node);
+    },
     [linkStrength, nodeById]
   );
   const selectedNeighbors = useMemo(
