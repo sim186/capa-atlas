@@ -662,6 +662,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       fgRef.current?.resumeAnimation();
     }
   }, []);
+  const hoverFromPanel = useCallback(
+    (node: GraphNode | null) => {
+      panelHoverIdRef.current = node?.id ?? null;
+      wake(400);
+    },
+    [wake]
+  );
   // The names on screen last frame and where (box centre, half width): a
   // tap on a name opens its node (see pickAtTap).
   const tapLabelsRef = useRef<{ node: GraphNode; x: number; y: number; halfWidth: number }[]>([]);
@@ -791,9 +798,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     }
   }, [visibleData.nodes]);
 
-  // The detail drawer is a list, not a drawing: it uses every link, so hiding
-  // a group or a link kind doesn't empty its "Collegato a". (The map's lens is
-  // capped; see lensMembersOf.)
+  // Every link of every node, whatever the layer toggles say.
   const buildNeighbors = useCallback(
     (links: readonly { source: unknown; target: unknown }[]) => {
       const byId = new Map(data.nodes.map((node) => [node.id, node]));
@@ -826,8 +831,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     [buildNeighbors, data.links]
   );
 
+  // The drawer lists exactly what the lens draws (same members, same order),
+  // so "Collegato a" and the ring around the selection never disagree. The
+  // weaker links past the cap are only counted.
   const panelNodeNeighbors = useMemo(
-    () => (panelNode ? allNeighbors.get(panelNode.id) ?? [] : []),
+    () => (panelNode ? lensMembersOf(panelNode.id) : []),
+    [lensMembersOf, panelNode]
+  );
+  const panelNodeLinkCount = useMemo(
+    () => (panelNode ? allNeighbors.get(panelNode.id)?.length ?? 0 : 0),
     [allNeighbors, panelNode]
   );
   const highlightedIds = useMemo(() => {
@@ -892,6 +904,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // Keyboard cursor: the node the arrow keys are currently "on". The tick loop
   // names and enlarges it; the state copy feeds the screen-reader announcement.
   const kbdIdRef = useRef<string | null>(null);
+  // A connection or track the pointer rests on in the detail drawer: its node
+  // is lit on the map like the keyboard cursor, tying the list to the scene.
+  const panelHoverIdRef = useRef<string | null>(null);
   const [kbdNode, setKbdNode] = useState<GraphNode | null>(null);
   const gizmoDotRef = useRef<HTMLDivElement | null>(null);
   const gizmoHeadingRef = useRef<HTMLSpanElement | null>(null);
@@ -1458,7 +1473,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           sprite.visible = !ghost;
           sprite.raycast = ghost ? () => {} : hit;
         }
-        const pointed = id === hoveredId || id === kbdIdRef.current;
+        const pointed =
+          id === hoveredId || id === kbdIdRef.current || id === panelHoverIdRef.current;
         const state = !focus
           ? pointed || hoverNeighborIdsRef.current.has(id)
             ? "hover"
@@ -1679,7 +1695,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         }
         const above = () => `translate3d(${screenX}px, ${screenY - 8}px, 0) translate(-50%, -100%)`;
 
-        const cursor = id === kbdIdRef.current;
+        const cursor = id === kbdIdRef.current || id === panelHoverIdRef.current;
         const self = focus !== null && id === focus.self;
         const inLens = focus !== null && !self && focus.ids.has(id);
         const entrance = entranceFor(id);
@@ -1695,8 +1711,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         // covers the same spot, so pointing at the name keeps the pick). A
         // lens member keeps its name in its column, underlined instead.
         const pointed = id === hoveredId;
-        if (entry.pointedClass !== (pointed && inLens)) {
-          entry.pointedClass = pointed && inLens;
+        const underlined = (pointed || id === panelHoverIdRef.current) && inLens;
+        if (entry.pointedClass !== underlined) {
+          entry.pointedClass = underlined;
           div.classList.toggle("is-pointed", entry.pointedClass);
         }
         if (pointed && !inLens) {
@@ -1714,7 +1731,9 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           );
           continue;
         }
-        if (self || cursor) {
+        // A lens member keeps its slot in the column even under a cursor:
+        // it is lit and underlined in place, not lifted onto its dot.
+        if (self || (cursor && !inLens)) {
           setLabelStyle(entry, "display", "block");
           setLabelStyle(entry, "transform", above());
           placed.push({ entry, distance, screenX, screenY, halfWidth, rank: Infinity, boxY: screenY - 14, transform: "", maxWidth: "" });
@@ -1736,7 +1755,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             screenX: screenX + side * (shownHalf + 10),
             screenY,
             halfWidth: shownHalf,
-            rank: pointed ? Infinity : entry.rank,
+            rank: pointed || cursor ? Infinity : entry.rank,
             boxY: screenY,
             transform:
               side === 1
@@ -3266,10 +3285,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         <NodeDetail
           node={panelNode}
           neighbors={panelNodeNeighbors}
-          hiddenGroups={ALL_GROUPS.filter((group) => !visibleGroups.has(group))}
+          linkCount={panelNodeLinkCount}
           open={isDesktop ? selected !== null : sheetOpen}
           onClose={isDesktop ? closeDetail : closeSheet}
           onNavigate={handleNavigate}
+          nodeById={nodeById}
+          distinctShapes={distinctShapes}
+          onHoverNode={hoverFromPanel}
           portraits={portraits}
           portraitIndex={backdropIndex}
         />

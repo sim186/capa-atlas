@@ -13,7 +13,27 @@
     "heading": "Titolo",
     "text": "In occasione della presentazione dell'album, avvenuta il 14 settembre 2017 presso la Fabbrica Orobia di Milano, il rapper ha chiarito il significato del numero 709, che rappresenta una sorta di crisi d'identità che il cantante ha avuto negli anni precedenti. Il numero 7 rappresenta il suo nome Michele, composto da sette lettere, mentre il numero 9 il nome d'arte Caparezza, composto da nove. Nella stessa sede ha dichiarato anche che per ogni brano si è divertito a trovare delle contrapposizioni tra parole di sette e nove lettere, in modo da riuscire a enfatizzare il significato introspettivo dell'album. Il numero 0, invece, rappresenta la continua scelta fra il 7 e il 9, ed è anche un rimando alla forma circolare di un disco musicale."
    }
-  ]
+  ],
+  "tracklist": [
+   "Prosopagnosia (Il reato - Michele o Caparezza) (con John De Leo)",
+   "Prisoner 709 (La pena - Compact o streaming)",
+   "La caduta di Atlante (Il peso - Sopruso o giustizia)",
+   "Forever Jung (Lo psicologo - Guarire o ammalarsi) (con DMC)",
+   "Confusianesimo (Il conforto - Ragione o religione)",
+   "Il testo che avrei voluto scrivere (La lettera - Romanzo o biografia)",
+   "Una chiave (Il colloquio - Aprirsi o chiudersi)",
+   "Ti fa stare bene (L'ora d'aria - Frivolo o impegnato)",
+   "Migliora la tua memoria con un click (Il flashback - Ricorda o dimentica) (con Max Gazzè)",
+   "Larsen (La tortura - Perdono o punizione)",
+   "Sogno di potere (La rivolta - Servire o comandare)",
+   "L'uomo che premette (La guardia - Innocuo o criminale)",
+   "Minimoog (L'infermeria - Graffio o cicatrice) (con John De Leo)",
+   "L'infinto (La finestra - Persone o programmi)",
+   "Autoipnotica (L'evasione - Fuggire o ritornare)",
+   "Prosopagno sia! (La latitanza - Libertà o prigionia)",
+   "Prosopagno sia! (La latitanza - Libertà o prigionia) (Hidden Version)"
+  ],
+  "trackNotes": []
  },
  "album:Museica": {
   "title": "Museica",
@@ -24,10 +44,106 @@
    {
     "heading": "Descrizione",
     "text": "Il titolo dell'album è frutto di un incrocio tra le parole \"musica\" (essendo appunto un album), \"museo\" (dal momento che ogni brano è ispirato ad un'opera d'arte) e \"sei\" (è il sesto album dell'artista pugliese). Lo stesso Caparezza ha descritto Museica con le seguenti parole:  La copertina dell'album riprende un quadro di Domenico Dell'Osso realizzato proprio per l'artista, dal titolo omonimo all'album.\nL'album viaggia fra arte e violenza: secondo Caparezza «la maggior parte delle cose che animano questa Terra sono frutto di violenze. Per sfuggire all'inquietudine di vivere si cerca di costruire una realtà parallela, si crea un mondo ideale; l'arte è salvifica».\nNell'ottobre 2014 l'album viene inserito nella rosa dei finalisti per la Targa Tenco come \"album dell'anno\", aggiudicandosi il premio."
+   }
+  ],
+  "tracklist": [
+   "Canzone all'entrata",
+   "Avrai ragione tu (ritratto)",
+   "Mica van Gogh",
+   "Non me lo posso permettere",
+   "Figli d'arte",
+   "Comunque dada",
+   "Giotto Beat",
+   "Cover",
+   "China Town",
+   "Canzone a metà",
+   "Teste di Modì",
+   "Argenti vive",
+   "Compro horror",
+   "Kitaro",
+   "Troppo politico",
+   "Sfogati",
+   "Fai da tela (feat. Diego Perrone)",
+   "È tardi (feat. Michael Franti)",
+   "Canzone all'uscita",
+   "Museica Documentario (Short Version)"
+  ],
+  "trackNotes": [
+   {
+    "title": "Canzone all'entrata",
+    "text": "Come deducibile dal titolo, si tratta del brano di apertura di Museica, con il quale Caparezza intrattiene la gente in fila in attesa di entrare nel museo."
    },
    {
-    "heading": "Brani",
-    "text": "Canzone all'entrata.\nCome deducibile dal titolo, si tratta del brano di apertura di Museica, con il quale Caparezza intrattiene la gente in fila in attesa di entrare nel museo.\n\n\nAvrai ragione tu (ritratto).\n\nQuarto singolo estratto dall'album, Caparezza, ispirandosi al graffito Mio Dio, aiutami a sopravvivere a questo amore mortale di Dmitrij Vrubel', ritratta le sue posizioni e si scusa con i bersagli delle sue invettive, ma solo perché glielo ordina «il plotone di bolscevichi che alberga nella sua testa».\n\n\nMica van Gogh.\n\nQuinto ed ultimo singolo estratto dall'album, questa è la canzone \"primogenita\" dell'album: l'artista infatti di un viaggio ad Amsterdam ammette che \"tra le prostitute e la marijuana ha scelto van Gogh\" e si è appassionato alle sue opere e ai suoi scritti. Da qui l'idea di scrivere un album ispirato a delle opere d'arte. In questo brano traccia un parallelo tra la vita tormentata dell'artista olandese e quella di una persona qualunque, in particolare si rivolge all'odierno adolescente medio e lo paragona continuamente a van Gogh (ad esempio: «Lui 300 lettere, letteratura fine, tu 160 caratteri, due faccine, fine»); ad uscire vincitore dal confronto è l'artista olandese.\n\n\nNon me lo posso permettere.\n\nÈ il primo singolo dell'album ed è stato pubblicato il 21 marzo 2014."
+    "title": "Avrai ragione tu (ritratto)",
+    "text": "Quarto singolo estratto dall'album, Caparezza, ispirandosi al graffito Mio Dio, aiutami a sopravvivere a questo amore mortale di Dmitrij Vrubel', ritratta le sue posizioni e si scusa con i bersagli delle sue invettive, ma solo perché glielo ordina «il plotone di bolscevichi che alberga nella sua testa»."
+   },
+   {
+    "title": "Mica van Gogh",
+    "text": "Quinto ed ultimo singolo estratto dall'album, questa è la canzone \"primogenita\" dell'album: l'artista infatti di un viaggio ad Amsterdam ammette che \"tra le prostitute e la marijuana ha scelto van Gogh\" e si è appassionato alle sue opere e ai suoi scritti. Da qui l'idea di scrivere un album ispirato a delle opere d'arte. In questo brano traccia un parallelo tra la vita tormentata dell'artista olandese e quella di una persona qualunque, in particolare si rivolge all'odierno adolescente medio e lo paragona continuamente a van Gogh (ad esempio: «Lui 300 lettere, letteratura fine, tu 160 caratteri, due faccine, fine»); ad uscire vincitore dal confronto è l'artista olandese."
+   },
+   {
+    "title": "Non me lo posso permettere",
+    "text": "È il primo singolo dell'album ed è stato pubblicato il 21 marzo 2014. Secondo le parole dello stesso Caparezza, il brano è ispirato ai Tre studi di Lucian Freud, un trittico del pittore irlandese Francis Bacon realizzato nel 1969 e venduto in un'asta per la cifra di oltre 140 milioni di dollari, offrendo lui «lo spunto per sviscerare la frase più pronunciata di questi ultimi anni»."
+   },
+   {
+    "title": "Figli d'arte",
+    "text": "Caparezza si mette nei panni del figlio di un famoso cantante e parla dell'assenza del padre che, essendo sempre impegnato tra palco e fan, non ha mai tempo per lui o lo ignora, quasi come se volesse più bene al suo pubblico che al proprio figlio.\n\nIl brano è stato ispirato dal dipinto di Francisco Goya, Saturno che divora i suoi figli:"
+   },
+   {
+    "title": "Comunque dada",
+    "text": "Si parla del rifiuto della violenza e della guerra da parte dei dadaisti che, piuttosto, preferiscono ritrovarsi al Cabaret Voltaire per dissacrare l'arte. A tal proposito, il brano è stato ispirato dal ready-made L.H.O.O.Q. di Marcel Duchamp, in cui viene rappresentata una Gioconda con i baffi."
+   },
+   {
+    "title": "Giotto Beat",
+    "text": "Denuncia la mancanza di prospettiva in Italia; l'invocazione di Giotto deriva dal doppio significato della parola \"prospettiva\" (quella riguardante il futuro e quella visiva, che fu il punto di forza dell'arte di Giotto).\n\nIl brano è stato ispirato dal dipinto dello stesso Giotto, Coretti:"
+   },
+   {
+    "title": "Cover",
+    "text": "È stato il primo brano ad essere estratto dall'album. Per esso è stato realizzato un videoclip, girato da Calu nel deserto del Mojave (California), e cita sia nel testo che nel video varie copertine di numerosi album famosi del passato, come Innuendo dei Queen, War degli U2, Fear of the Dark degli Iron Maiden, Nevermind dei Nirvana e The Velvet Underground & Nico dei Velvet Underground con Nico, disegnato da Andy Warhol.\n\nÈ stato ispirato dalla celebre Banana di Andy Warhol:"
+   },
+   {
+    "title": "China Town",
+    "text": "Terzo singolo estratto dall'album, si tratta di un brano dalla melodia quasi malinconica, definita dallo stesso Caparezza come la sua prima ballata. Il testo è una dichiarazione d'amore verso la scrittura e l'inchiostro (appunto la \"china\"). Esso è stato ispirato dal Quadrato nero di Kazimir Severinovič Malevič."
+   },
+   {
+    "title": "Canzone a metà",
+    "text": "Si tratta del brano posizionato a metà dell'album. Il brano è anche una critica ironica a tutte le cose lasciate a metà per paura di fallire o per mancanza di coraggio e volontà (ad esempio smettere di fumare). Nel testo vengono citate varie opere incompiute come i Prigioni di Michelangelo Buonarroti, la Turandot di Giacomo Puccini e Il sogno di Dickens di Robert William Buss, da cui il brano trae ispirazione."
+   },
+   {
+    "title": "Teste di Modì",
+    "text": "Ispirato dall'opera Ritratto di Jeanne Hébuterne del celebre falsario Elmyr de Hory, il brano parla della famosa beffa delle Teste di Modì: queste teste, secondo la leggenda, sarebbero state gettate nel Fosso mediceo dallo stesso Modigliani, sconfortato dai giudizi negativi al suo lavoro. Quando nel 1984 vennero ritrovate tre sculture proprio nel Fosso mediceo, i critici affermarono con sicurezza che quelle fossero le opere di Modigliani e immediatamente vennero inaugurate mostre e scritti libri sul ritrovamento; ma un mese dopo l'avvenuto, tre studenti livornesi dichiararono di essere loro gli autori della seconda testa e come controprova la rifecero in diretta TV. Anche le altre due teste erano dei falsi, creati dal pittore Angelo Froglia per \"verificare fino a che punto la gente, i critici, i mass-media creano dei miti\".\nPer il brano è stato realizzato un lyric video, diretto da Fernando Luceri e pubblicato il 24 luglio sul canale YouTube di Caparezza, nel quale compaiono Pietro Luridiana, Michele Ghelarducci e Piefrancesco Ferrucci, gli autori della seconda testa."
+   },
+   {
+    "title": "Argenti vive",
+    "text": "Caparezza dà voce a Filippo Argenti, contemporaneo di Dante Alighieri messo da quest'ultimo all'inferno nella Divina Commedia; adesso Argenti può rispondere a Dante e raccontare la sua versione dei fatti.\n\nArgenti vive è ispirato dall'illustrazione di Gustave Doré Virgil Pushes Filippo Argenti Back into the River Styx: \nPer questo brano è stato realizzato un videoclip, diretto da Roberto Tafuro e pubblicato il 3 luglio 2015."
+   },
+   {
+    "title": "Compro horror",
+    "text": "Ispirato dal dipinto Concetto spaziale, attesa di Lucio Fontana, il brano parla del crescente spazio che TV e giornali riservano alla cronaca nera. In merito a ciò, Caparezza ha spiegato che le opere di Fontana «diventano il pretesto per raccontare l'attenzione morbosa di chiunque verso i fatti di cronaca nera. Il Compro Horror valuta la tua salma e la paga più di tutti».\nPer il brano è stato realizzato un videoclip a 360 gradi, diretto da Alex Bufalo e pubblicato il 28 settembre 2015."
+   },
+   {
+    "title": "Kitaro",
+    "text": "Si tratta di una rivisitazione della sigla del popolare anime giapponese GeGeGe no Kitarō ed è ispirata all'opera Hiratsuka di Shigeru Mizuki."
+   },
+   {
+    "title": "Troppo politico",
+    "text": "Con questo brano, ispirato dal celebre dipinto di Giuseppe Pellizza da Volpedo Il quarto stato, Caparezza risponde a tutti coloro che lo criticano di essere troppo politico e di parlare quasi esclusivamente di politica: «È quello che pensano io sia. I miei detrattori, intendo. Non so se prenderla come offesa o complimento, nel frattempo ci scherzo su»."
+   },
+   {
+    "title": "Sfogati",
+    "text": "Viene presa di mira la critica continua e volgare a tutto ciò che non ci piace, del tipo \"Bah, questo lo so fare pure io\"; Caparezza invita l'ascoltatore a sfogare tutta la sua rabbia su di lui.\nIl brano è ispirato alla Testa di tigre di Antonio Ligabue."
+   },
+   {
+    "title": "Fai da tela",
+    "text": "Brano preferito di Caparezza, lo stesso spiega che «ognuno di noi è una tela bianca che viene dipinta dai giudizi altrui; viviamo nell'illusione di essere noi stessi, in realtà siamo come ci dipingono gli altri».\nIl brano è ispirato al dipinto The Little Deer di Frida Kahlo."
+   },
+   {
+    "title": "È tardi",
+    "text": "Secondo singolo estratto dall'album, il brano parla della frenesia della società odierna, così frenetica che è sempre troppo tardi per qualsiasi cosa. È ispirato al dipinto La persistenza della memoria di Salvador Dalí, in cui l'ambiente, fra cui anche tre orologi, appare dilatato e floscio: il tempo dunque è relativo, metafisico, e Caparezza spiega: «forse è tardi, ma non mi fermerò»."
+   },
+   {
+    "title": "Canzone all'uscita",
+    "text": "Con questo brano Caparezza intrattiene i visitatori verso l'uscita del museo. Secondo le sue stesse parole, il brano svolge «una sorta di riassunto di ciò che hanno visto per inoculare loro la voglia di ritornare in galleria e ricominciare il viaggio»."
    }
   ]
  },
@@ -41,7 +157,25 @@
     "heading": "Descrizione",
     "text": "I quattordici brani che compongono l'album sono caratterizzati da uno stile compositivo e da un rapporto qualitativo tra ricercatezza dei testi e delle rime, che differenziano Caparezza dagli altri rapper italiani già affermati. Le tematiche affrontate sono varie e spaziano dal rapporto dell'artista con la realtà sociale italiana, compresa quella della sua terra di origine (Giuda me) e con quella musicale (La legge dell'ortica), fino al razzismo (Vengo dalla Luna), alla denuncia per la cosiddetta TV spazzatura (L'età dei figuranti) e alla forte critica a tutte le guerre (Follie preferenziali). Non mancano tuttavia brani più personali, tra cui Limiti, Il secondo secondo me e Jodellavitanonhocapitouncazzo.\nDal punto di vista musicale, invece, Verità supposte presenta varie sperimentazioni sonore che si discostano dall'hip hop, passando dal nu metal di Dualismi (brano ispirato all'omonima poesia di Arrigo Boito) al tango di Stango e sbronzo fino all'elettronica di Vengo dalla Luna e al tip-tap nel finale di Fuori dal tunnel.\nAll'interno dell'album è inoltre presente il brano Nel paese dei balordi, la cui prima versione venne incisa nel 1998 per il demo Ricomincio da Capa."
    }
-  ]
+  ],
+  "tracklist": [
+   "Il secondo secondo me",
+   "Nessuna razza",
+   "La legge dell'ortica",
+   "Stango e sbronzo",
+   "Limiti",
+   "Vengo dalla Luna",
+   "Dagli all'untore",
+   "Fuori dal tunnel",
+   "Giuda me",
+   "Nel paese dei balordi",
+   "L'età dei figuranti",
+   "Follie preferenziali",
+   "Dualismi",
+   "Jodellavitanonhocapitouncazzo",
+   "La sindrome di Lorena"
+  ],
+  "trackNotes": []
  },
  "album:Exuvia": {},
  "album:Tequila ": {},
@@ -54,10 +188,80 @@
    {
     "heading": "Descrizione",
     "text": "Concepito come supporto musicale al suo libro Saghe mentali. Viaggio allucinante in una testa di capa, l'album vede come ospiti speciali noti doppiatori italiani di attori hollywoodiani come Michele Kalamera (Clint Eastwood), Pasquale Anselmo (Nicolas Cage), Dario Penne (Anthony Hopkins) e Christian Iansante negli ultimi secondi del brano Il circo delle pantegane, e vede anche la collaborazione di Cinzia Fiorato, telegiornalista del TG1 che apre e chiude l'ascolto. Al disco partecipa anche il gruppo musicale milanese Ministri con il pezzo Ulisse (You Listen).\nCaparezza definisce questo concept come un \"fonoromanzo\", neologismo che indica una sorta di \"fotoromanzo sonoro\": come filo comune c'è la storia di Ilaria, che a causa di un varco temporale si ritrova catapultata dal 1968 ad oggi. La storia prosegue con l'innamoramento di Caparezza nei confronti di Ilaria che, condizionata dalla società attuale, si rifiuta di tornare indietro trasformandosi da giovane hippy a ragazza dei giorni nostri che segue tutte le mode e le tendenze del momento, perdendo il suo spirito rivoluzionario, e finendo con lo sposarsi con Carneade, del \"fronte dell'uomo qualcuno\".\nTale partito costruirà uno spazioporto in Puglia, una grande opera assolutamente inutile il cui vero scopo è quello di far vincere le elezioni al fronte."
+   }
+  ],
+  "tracklist": [
+   "La rivoluzione del sessintutto",
+   "Ulisse (You Listen)",
+   "Non mettere le mani in tasca",
+   "Pimpami la storia",
+   "Ilaria condizionata",
+   "La grande opera",
+   "Vieni a ballare in Puglia",
+   "Abiura di me",
+   "Cacca nello spazio",
+   "Il circo delle pantegane",
+   "Un vero uomo dovrebbe lavare i piatti",
+   "Io diventerò qualcuno",
+   "Eroe (storia di Luigi delle Bicocche)",
+   "Bonobo Power"
+  ],
+  "trackNotes": [
+   {
+    "title": "La rivoluzione del sessintutto",
+    "text": "Caparezza ricorda i concerti italiani di Jimi Hendrix e fa un confronto tra la rivoluzione dell'autunno caldo e la liberazione sessuale odierna che sfocia nella sessuofobia, che giustifica il calembour del titolo. Cita anche la groupie Cynthia Plaster Caster, divenuta famosa per avere fatto dei calchi dei genitali di Hendrix ed altri artisti. Al termine del brano, emula Hendrix compiendo l'atto di spaccare la chitarra sulle casse degli amplificatori: con questo pretesto narrativo, si crea un varco spazio-temporale attraverso la scarica elettrica generata, e l'incontro con Ilaria."
    },
    {
-    "heading": "I brani",
-    "text": "La rivoluzione del sessintutto.\n\nCaparezza ricorda i concerti italiani di Jimi Hendrix e fa un confronto tra la rivoluzione dell'autunno caldo e la liberazione sessuale odierna che sfocia nella sessuofobia, che giustifica il calembour del titolo. Cita anche la groupie Cynthia Plaster Caster, divenuta famosa per avere fatto dei calchi dei genitali di Hendrix ed altri artisti. Al termine del brano, emula Hendrix compiendo l'atto di spaccare la chitarra sulle casse degli amplificatori: con questo pretesto narrativo, si crea un varco spazio-temporale attraverso la scarica elettrica generata, e l'incontro con Ilaria.\n\n\nUlisse (You Listen).\nL'incontro tra Caparezza e Ilaria viene paragonato a quello tra Ulisse e le sirene. Ascoltare il richiamo delle sirene fa riferimento alla capacità di ascoltare la propria voce interiore; da qui l'assonanza tra le pronunce di Ulisse (all'inglese iulisses) con you listen (\"tu ascolti\"). La canzone parla del cantante assuefatto dal carattere di Ilaria.\n\n\nNon mettere le mani in tasca.\nCaparezza è arrestato per avere delle tasche, simbolo della memoria collettiva; da qui la voce del potere che fa della menzogna e della manipolazione il proprio credo."
+    "title": "Ulisse (You Listen)",
+    "text": "L'incontro tra Caparezza e Ilaria viene paragonato a quello tra Ulisse e le sirene. Ascoltare il richiamo delle sirene fa riferimento alla capacità di ascoltare la propria voce interiore; da qui l'assonanza tra le pronunce di Ulisse (all'inglese iulisses) con you listen (\"tu ascolti\"). La canzone parla del cantante assuefatto dal carattere di Ilaria."
+   },
+   {
+    "title": "Non mettere le mani in tasca",
+    "text": "Caparezza è arrestato per avere delle tasche, simbolo della memoria collettiva; da qui la voce del potere che fa della menzogna e della manipolazione il proprio credo. Chiaro il riferimento alla Chiesa cattolica, accusata di oscurantismo."
+   },
+   {
+    "title": "Pimpami la storia",
+    "text": "Dal gergo giovanile (dove pimpare sta per il verbo \"modificare\", \"personalizzare\"), qui parla uno studente sfaccendato che guarda a fatti e personaggi storici con uno sguardo che tende al parossismo e alla caricatura, facendo così il gioco del potere che vuole promuovere l'ignoranza presso le giovani generazioni.\nUn'altra traduzione forse più corretta dello slang inglese \"to pimp\", dedotta dal testo della canzone e in riferimento anche al programma televisivo di MTV Pimp My Ride, è \"truccare\"."
+   },
+   {
+    "title": "Ilaria condizionata",
+    "text": "Caparezza descrive Ilaria e gioca sul doppio senso dell'\"aria condizionata\", sia perché è stata condizionata dalla società odierna, sia perché Ilaria - come l'aria - lo ha raffreddato, deluso dall'atteggiamento della ragazza di cui si era invaghito."
+   },
+   {
+    "title": "La grande opera",
+    "text": "Parla l'ideologo dello spazioporto pugliese, imponente opera spaziale creata soprattutto a scopi propagandistici. Caparezza fa riferimento alla Massoneria, alla Salerno-Reggio Calabria, al ponte sullo stretto di Messina, all'edilizia italiana, all'alta velocità ferroviaria in Val di Susa e a Punta Perotti, opere che non sono mai più state ultimate."
+   },
+   {
+    "title": "Vieni a ballare in Puglia",
+    "text": "Ballare sta per \"morire\": denunciando la piaga dei caduti sul lavoro e altri problemi della sua regione, compiendo un atto di amore per la sua terra. La canzone, come precedentemente Fuori dal tunnel, è stata erroneamente interpretata, visto che molte persone considerano la traccia una lode verso la terra del cantante."
+   },
+   {
+    "title": "Abiura di me",
+    "text": "Ispirandosi al mondo dei videogiochi, Caparezza dichiara il suo fermo proposito di voler passare sempre ad un «livello successivo», come uomo e come artista, anche a costo di abiurare un domani quello che era stato ieri (così come ha già fatto con il suo precedente personaggio, Mikimix)."
+   },
+   {
+    "title": "Cacca nello spazio",
+    "text": "Mentre Caparezza è condannato a spalare escrementi animali al circo, vengono inaugurati i viaggi per lo spazioporto, con una pletora di personaggi del jet set che si mettono in mostra: egli sembra volere avvisare eventuali extraterrestri dell'arrivo di questi individui da lui identificati come i veri escrementi del pianeta Terra."
+   },
+   {
+    "title": "Il circo delle pantegane",
+    "text": "Descrizione simbolica in chiave esistenziale di un circo popolato da grossi topi, dove si trascina tristemente la vita."
+   },
+   {
+    "title": "Un vero uomo dovrebbe lavare i piatti",
+    "text": "Caparezza va controcorrente, rispetto ai più retrivi stereotipi, sull'identikit dell'uomo ideale."
+   },
+   {
+    "title": "Io diventerò qualcuno",
+    "text": "Imitando le melodie dello Zecchino d'Oro, di cui viene imitata una voce infantile, contiene una citazione iniziale sul programma politico del Fronte dell'Uomo Qualunque di Guglielmo Giannini nell'immediato dopoguerra. Traendo spunto dal qualunquismo, Caparezza individua il qualcunismo, del Fronte dell'Uomo Qualcuno, basato su valori opposti quali ignoranza, egocentrismo ed esibizionismo."
+   },
+   {
+    "title": "Eroe (storia di Luigi delle Bicocche)",
+    "text": "Denuncia sociale dell'eroe-operaio, costretto a lavorare per la libertà e in condizioni estremamente precarie, che per portare lo stipendio a casa deve sopportare la fatica e il continuo cambiamento di lavoro."
+   },
+   {
+    "title": "Bonobo Power",
+    "text": "Chiusura sul bonobo, scevra da ogni sorta di convenzioni, incluse quelle di tipo religioso, sessuale, etnico, e quindi \"l'evoluzione dell'uomo\" moderno, avente pudore di fare cose da \"scimmia\"."
    }
   ]
  },
@@ -71,7 +275,24 @@
     "heading": "Descrizione",
     "text": "A più di quattro anni dall'uscita di Exuvia, Caparezza ritorna con un progetto che unisce la sua anima di musicista a quella di appassionato e sceneggiatore di fumetti: l'album, infatti, era stato inizialmente concepito come una sorta di colonna sonora di un fumetto sull'immaginazione e sulla rinnovata voglia di fare musica ma lo stesso artista ha ammesso che va considerato come un progetto dotato di una sua autonomia narrativa, pur essendo complementare al fumetto. Non è tuttavia il primo lavoro a comprendere ed essere ispirato a un libro: nel 2008, l'album Le dimensioni del mio caos accompagnava l'opera letteraria del cantautore Saghe mentali."
    }
-  ]
+  ],
+  "tracklist": [
+   "Fluttuo, orbito",
+   "Il pianeta delle idee",
+   "Io sono il viaggio",
+   "Darktar",
+   "A comic book saved my life",
+   "Il banditore",
+   "Autovorbit",
+   "Curiosity (oltre il bagliore)",
+   "Gli occhi della mente",
+   "Come la musica elettronica",
+   "The NDE",
+   "Pathosfera",
+   "Cosmonaufrago",
+   "Perlificat"
+  ],
+  "trackNotes": []
  },
  "album:Viva l’Italia (Soundtrack)": {},
  "album:Zappa": {},
@@ -85,10 +306,34 @@
    {
     "heading": "Descrizione",
     "text": "Sì può dire che questo sia il primo concept album del cantante, dato che l'idea di base è quella della morte di Caparezza e della successiva reincarnazione del suo spirito: nella prima traccia Caparezza \"muore\", come viene teorizzato nell'ultima traccia dell'album precedente, Jodellavitanonhocapitouncazzo, per poi vivere una vita diversa in ogni traccia, fino alla risurrezione e rinascita nell'ultima traccia Habemus Capa. Secondo lo stesso Caparezza, la morte dell'autore di solito porterebbe a un aumento in termini di dischi venduti, per questo ha scelto di morire mentre era ancora in vita, per guadagnare anche lui dall'evento.\nOriginariamente, però, il concept dell'album avrebbe dovuto essere una sorta di rilettura della Divina Commedia alla luce della società odierna, in cui ogni canzone avrebbe mostrato una particolare faccia della società e il contrappasso ad essa legato."
-   },
+   }
+  ],
+  "tracklist": [
+   "Mors mea tacci tua (Intro)",
+   "Annunciatemi al pubblico",
+   "Torna Catalessi",
+   "Gli insetti del podere",
+   "Dalla parte del toro",
+   "Ninna nanna di Mazzarò",
+   "Il silenzio dei colpevoli",
+   "Profilo psichico",
+   "La mia parte intollerante",
+   "Inno verdano",
+   "Epocalisse",
+   "Tii-yan",
+   "The Auditels Family",
+   "Ti giri",
+   "Titoli",
+   "Felici ma trimoni",
+   "Sssaasss",
+   "Sono troppo stitico",
+   "Habemus Capa",
+   "La mia parte intollerante (Boosta RMX)"
+  ],
+  "trackNotes": [
    {
-    "heading": "Brani",
-    "text": "Mors mea tacci tua ha un titolo che si rifà all'espressione latina mors tua vita mea (morte tua, vita mia), che si mescola all'ingiuria dialettale «li mortacci tua». Campiona l'ultimo verso di Jodellavitanonhocapitouncazzo, brano di chiusura del precedente Verità supposte, dove dice appunto «mamma quanti dischi venderanno se mi spengo», dando lo spunto all'idea di questo nuovo lavoro. Inoltre il brano si apre con un ulteriore campione della sua voce, preso dal brano Dualismi, penultima traccia del precedente album, prima del solo di chitarra finale.\nIn Annunciatemi al pubblico Caparezza cadavere immagina i commenti dell'opinione pubblica al suo funerale, e li immagina tutti malfidati e travisanti quello che lui era stato."
+    "title": null,
+    "text": "Mors mea tacci tua ha un titolo che si rifà all'espressione latina mors tua vita mea (morte tua, vita mia), che si mescola all'ingiuria dialettale «li mortacci tua». Campiona l'ultimo verso di Jodellavitanonhocapitouncazzo, brano di chiusura del precedente Verità supposte, dove dice appunto «mamma quanti dischi venderanno se mi spengo», dando lo spunto all'idea di questo nuovo lavoro. Inoltre il brano si apre con un ulteriore campione della sua voce, preso dal brano Dualismi, penultima traccia del precedente album, prima del solo di chitarra finale.\nIn Annunciatemi al pubblico Caparezza cadavere immagina i commenti dell'opinione pubblica al suo funerale, e li immagina tutti malfidati e travisanti quello che lui era stato. Tra gli altri, c'è chi lo definisce come «quello fuori dal tunnel-el-el della droga»: questo commento si riferisce all'uso fuorviante che è stato fatto del suo successo Fuori dal tunnel, come succede a molti artisti incompresi.\nIn Torna Catalessi Caparezza è nei panni del padrone di un cane: la bestia in realtà rappresenta una provocazione contro il ritmo troppo frenetico della vita attuale, alla quale Caparezza preferisce piuttosto un momento di assoluta stasi: il calembour si rifà al titolo del film Torna a casa, Lassie!, con protagonista il famoso cane collie.\nGli insetti del podere contiene una carrellata di usi e malcostumi del nostro tempo, i cui colpevoli sono rappresentati sotto forma di insetti fastidiosi e nocivi. Questi insetti sono paragonabili ai politici italiani, con un continuo doppio senso.\nIn Dalla parte del toro si immagina il duello tra un toro e un torero. Queste due figure sono in realtà due metafore. Il toro rappresenta il popolo, il torero il politico o l'uomo di potere e influente. Il cantautore fa sapere già dal titolo da che parte sta.\nNinna nanna di Mazzarò è una canzone in cui un badante tenta di tenere sveglio un bambino per salvaguardarlo da Mazzarò, famoso personaggio di Giovanni Verga, protagonista della novella La roba, il quale ha trascorso la sua esistenza ad accumulare ingordamente beni di ogni genere e che si identifica oggi in molti personaggi della classe dirigente e industriale.\nIl silenzio dei colpevoli è un brano in cui Caparezza, capovolgendo il titolo del film Il silenzio degli innocenti, invita le vittime della nostra società a far sentire la propria voce, perché secondo lui chi tace sulle malefatte altrui ne è complice («Chi tace soggiace alla volontà del loquace»). La canzone è seguita dall'intermezzo Profilo psichico.\nNe La mia parte intollerante, in una sorta di razzismo per giusta causa, Caparezza si immedesima in un giovane studente che prende le distanze da un certo rampantismo di molti suoi coetanei.\nInno Verdano è un brano contenente chiari riferimenti alla Lega Nord; Caparezza dà ironicamente la voce a un secessionista padano fervente e autarchico dalla bandiera verde. Compare, come neologismo, l'espressione: «Ma che cosa sta seccedendo?».\nIn Epocalisse sono presenti riferimenti a gettito su altri malcostumi dei tempi odierni, inclusi numerosi episodi di cronaca e citazioni del vocabolario informatico (Gesù fa rima con yahoo = iahù). Il calembour suggerisce che si stia vivendo l'epoca dell'Apocalisse. Nella canzone è presente una sorta di dialogo tra un ragazzo che crede che quest'epoca sia la \"fine del mondo\" intesa come disgrazia, e un altro che crede che questo secolo sia la \"fine del mondo\" intesa come divertimento e sballo. Contiene un campionamento del brano Limiti, presente in Verità supposte. La canzone è seguita dall'intermezzo Tii-yan.\nIn The Auditels Family Caparezza si chiede chi e dove siano coloro che col meter Auditel decidono sui destini delle trasmissioni televisive, sollevando dubbi sulla loro stessa esistenza, e quindi ipotizzando una regia occulta che manipoli i risultati e quindi i palinsesti televisivi. La musica riprende alcuni temi dell'horror umoristico, dalla famiglia Addams al Rocky Horror Picture Show. La \"malatelevisione\", come viene definita da Caparezza, rende gli uomini sempre più passivi, tramutando l'età della democrazia, che hanno conquistato con impegno nel corso della storia, in un'età dei \"figuranti\" in cui il massimo esercizio democratico per l'uomo è il voto in un reality show.\nTi giri è una satira diretta ai telegiornali che danno peso ad informazioni insignificanti e sull'informazione manipolata, da cui il calembour del titolo.\nIn Titoli si affronta, nei panni di un broker che sfoggia un campionario di titoli di borsa di valori, il cui significato è incomprensibile ai più: satira accesa sull'economia oligarchica.\nFelici ma trimoni vede l'io narrante rappresentato da un prete. In dialetto barese «trimoni» vuol dire «stupidi»: da qui una denuncia contro gli sposalizi per interesse, all'insegna dell'appariscenza e del glamour più sfrontato. La canzone è seguita dall'intermezzo Sssaasss.\nIn Sono troppo stitico, nelle sembianze di Norman Bates, Caparezza immagina il delitto di un folle che ha l'imbarazzo della scelta su come eliminare la propria donna, ma sa di poter contare sulla sua insospettabilità. Il ritornello dice «sono troppo stitico per fare lo stronzo» e prende la campionatura da un brano del Quartetto Cetra, Però mi vuole bene, che era umoristicamente incentrato sullo stesso tema.\nIn Habemus Capa, nell'annunciare la sua rinascita in stile papale, Caparezza riassume ancora il suo credo musicale, e prende l'occasione per ironizzare sul suo passato artistico come Mikimix (lo si può facilmente capire nelle frasi «Ti piace Capa? Ma quello è lo scemo di Sanremo!» e «Ma sei tu Mikimix? Tu l'hai detto!»)."
    }
   ]
  },
@@ -108,10 +353,87 @@
    {
     "heading": "Descrizione",
     "text": "Anticipato il 28 gennaio dal singolo Goodbye Malinconia, il quale ha visto la partecipazione di Tony Hadley, Il sogno eretico ha debuttato alla seconda posizione della classifica italiana degli album e dopo quasi due mesi dalla sua uscita, è stato certificato disco d'oro per le oltre 30 000 copie vendute. Il 4 novembre 2011, il disco viene certificato anche disco di platino, superando quindi le 60 000 copie vendute.\nIl sogno eretico è un disco politico e impegnato, che critica la classe dirigente italiana, l'ipocrisia sociale e le convenzioni. Il titolo gioca con le parole \"sogno\" ed \"eretico\" per indicare il desiderio di libertà di pensiero e di ribellione contro l'autorità."
+   }
+  ],
+  "tracklist": [
+   "Nessun dorma",
+   "Tutti dormano",
+   "Chi se ne frega della musica",
+   "Il dito medio di Galileo",
+   "Sono il tuo sogno eretico",
+   "Cose che non capisco",
+   "Goodbye Malinconia (feat. Tony Hadley)",
+   "La marchetta di Popolino",
+   "La fine di Gaia",
+   "House Credibility",
+   "Kevin Spacey",
+   "Legalize the Premier (feat. Alborosie)",
+   "Messa in moto",
+   "Non siete stato voi",
+   "La ghigliottina",
+   "Ti sorrido mentre affogo",
+   "Lottavo, capitolo"
+  ],
+  "trackNotes": [
+   {
+    "title": "Nessun dorma e Tutti dormano",
+    "text": "I primi due brani sono antitetici. Il primo, tratto dalla romanza Nessun dorma, di Giacomo Puccini, invita metaforicamente i presenti a non dormire e prestare attenzione allo spettacolo. Secondo l'autore, infatti, «il disinteresse può essere una delle cause del declino di un paese»: «se accadono delle cose è perché probabilmente non c'è la dovuta attenzione» e questa «mancata attenzione spesso coincide col sopore». Nessun dorma è quindi un invito a «rimanere con gli occhi aperti» e a «mantenere sveglia la propria parte critica». Il secondo pezzo inizia con una sonora ronfata, che anticipa il terzo brano, Chi se ne frega della musica."
    },
    {
-    "heading": "Brani",
-    "text": "Nessun dorma e Tutti dormano.\nI primi due brani sono antitetici. Il primo, tratto dalla romanza Nessun dorma, di Giacomo Puccini, invita metaforicamente i presenti a non dormire e prestare attenzione allo spettacolo. Secondo l'autore, infatti, «il disinteresse può essere una delle cause del declino di un paese»: «se accadono delle cose è perché probabilmente non c'è la dovuta attenzione» e questa «mancata attenzione spesso coincide col sopore». Nessun dorma è quindi un invito a «rimanere con gli occhi aperti» e a «mantenere sveglia la propria parte critica». Il secondo pezzo inizia con una sonora ronfata, che anticipa il terzo brano, Chi se ne frega della musica.\n\n\nChi se ne frega della musica.\n\nIl brano critica con ironia il mondo musicale italiano e le sue contraddizioni, a partire dall'interesse smodato per ciò che l'artista «fa di extramusicale», per «tutto il contorno». Il brano tratta anche del legame tra musica, internet e i fenomeni televisivi."
+    "title": "Chi se ne frega della musica",
+    "text": "Il brano critica con ironia il mondo musicale italiano e le sue contraddizioni, a partire dall'interesse smodato per ciò che l'artista «fa di extramusicale», per «tutto il contorno». Il brano tratta anche del legame tra musica, internet e i fenomeni televisivi. L'autore ha affermato che «le classifiche di iTunes sono uguali a quelle della TV» e che nel web «le notizie alternative ci sono ma è difficile che qualcuno se le vada a cercare»."
+   },
+   {
+    "title": "Il dito medio di Galileo",
+    "text": "La canzone, prendendo ad esempio la vicenda di Galileo Galilei, si configura come un'aspra critica alla mancanza di senso critico e alla sottomissione ai dogmi religiosi, politici o sociali, atteggiamenti dei quali la Chiesa cattolica viene presa a simbolo. Caparezza ha affermato di aver scritto il brano «dopo aver scoperto che nel Museo della Scienza di Firenze è realmente custodito il dito medio di Galileo, strappato al cadavere dello scienziato durante una riesumazione». Nel pezzo l'autore porta «in processione questa reliquia laica che, infilata nell'opportuno orifizio, trasforma gli uomini-pecora in uomini, e basta. È come se Galileo dicesse: \"Mi avete confinato, mi avete costretto all'abiura, ed ora tiè!\"».\nLa chiusura del brano contiene un campionamento di un estratto di una lezione del professor Enrico Bellone sul pensiero di Galileo, la cui registrazione è stata pubblicata da La Repubblica e L'Espresso nella collana Beautiful Minds. In particolare, il frammento utilizzato parla dei rapporti tra Galileo e il Vaticano e delle accuse di eresia a suo carico."
+   },
+   {
+    "title": "Sono il tuo sogno eretico",
+    "text": "Il brano si pone a difesa delle personalità rivoluzionarie che hanno cercato di manifestare la propria opinione, ma che sono state condannate come eretici dalla Chiesa. Si struttura in tre strofe, adottando rispettivamente le figure di Giovanna d'Arco, Girolamo Savonarola e Giordano Bruno.\nIl 16 gennaio 2012 è stato pubblicato il videoclip del brano, diretto da Calu e che mostra Caparezza nelle segrete di un castello che si aggira con una torcia tentando inutilmente di scappare, venendo infine preso e condannato."
+   },
+   {
+    "title": "Cose che non capisco",
+    "text": "Secondo l'autore Cose che non capisco è un «pezzo contro tutte le persone che nella vita mi hanno detto che mi faccio troppi problemi». Il brano critica in particolare la strumentalizzazione dell'informazione e una certa televisione. L'autore ha affermato: «Io amo la tv in realtà proprio per questo non amo la banalizzazione. Sono del '73, sono cresciuto con la tv. Ma non mi piace com'è diventata, la pochezza intellettuale, l'esibizione della vita privata, gli opinionisti a go go, le liti indotte a scopo Auditel e il fatto che non ci sia più la musica in TV». La chiusura del brano contiene un campionamento di un dialogo originale del film Sogni d'oro di e con Nanni Moretti."
+   },
+   {
+    "title": "Goodbye Malinconia",
+    "text": "Cantato in collaborazione con Tony Hadley, il brano parla del contesto culturale, sociale e politico di Malincònia, metafora dell'Italia, paese da cui tutti se ne vanno, la cui «situazione è più grave di un basso tuba». L'obiettivo del brano è, secondo l'autore, quello di «fotografare un momento» e di prendere la «sensazione di malinconia», nata dall'esperienza vissuta a Londra parlando con gli emigrati italiani che «loro malgrado non sarebbero più tornati nella nazione dove non riuscivano a vivere», e di «trasferirla su un pezzo», per mezzo delle sequenze armoniche e di un cantato tipico degli anni ottanta."
+   },
+   {
+    "title": "La marchetta di Popolino",
+    "text": "Il brano, definito dall'autore come «il pezzo più violento che abbia scritto da quando scrivo con consapevolezza», fa continui riferimenti ai personaggi di Topolino, quasi per antonomasia, per tracciare i lineamenti dell'attuale realtà sociale. Parla del \"popolino\", ovvero la parte di un popolo caratterizzata da rozzezza, volgarità e arretratezza culturale. Come affermato da Caparezza, l'idea del pezzo nasce dalla domanda: «non è che per caso alcune persone fanno in piccolo quello che i politici fanno in grande?». «Magari è già lì [nella popolazione] che viene inoculato il germe della malefatta», si è risposto il cantautore."
+   },
+   {
+    "title": "La fine di Gaia",
+    "text": "Critica le varie teorie apocalittiche e teorie del complotto, quali la fine del mondo nel 2012 (basata sul calendario maya), le scie chimiche, i rettiliani o le invasioni aliene."
+   },
+   {
+    "title": "House Credibility",
+    "text": "Questo brano mette in discussione la sensazione di sicurezza che si ha della propria casa, dipingendola come luogo dove effettivamente possono verificarsi gravi incidenti."
+   },
+   {
+    "title": "Kevin Spacey",
+    "text": "Caparezza introduce la canzone informando gli ascoltatori che dopo aver sentito il brano avranno un valido motivo per odiarlo, dopodiché, rappando, inizia a raccontare i finali di molti film famosi, parte dei quali hanno avuto Kevin Spacey o anche Bruce Willis nel cast di attori."
+   },
+   {
+    "title": "Legalize the Premier",
+    "text": "La canzone è un reggae eseguito con Alborosie. Secondo Caparezza, il brano parla di un «seme che è stato inoculato nel sistema politico italiano», per cui chi raggiunge il vertice della scala politica sa che può «modificare le leggi a proprio piacimento, a proprio uso e consumo», ad esempio «per depenalizzare reati che lo riguardano».\nQuesto atteggiamento, secondo il cantautore, «da quindici anni a questa parte ha fatto crescere una nuova generazione di politici che ora sanno che si può fare, spesso alla luce del sole». Il pezzo non è quindi dedicato esclusivamente a Silvio Berlusconi, ma anche a tutti i premier che verranno dopo, «perché una volta che hai asfaltato una strada ci possono passare tutti»."
+   },
+   {
+    "title": "Messa in moto",
+    "text": "Nel brano prende la parola Dio che, stanco di essere perseguitato dalle preghiere ripetitive e dai lamenti dei fedeli, fugge a bordo di una moto. Caparezza ha spiegato questo brano affermando: «chissà per quale motivo nel campo della religione si mette sempre in rilievo il dolore, [...] non è che bisogna rapportarsi col proprio dio sempre fomentati da un dramma». «Se esistesse un dio, se fosse il dio di questa Terra, una Terra selvaggia, dove la natura tutto è fuorché piagnona e frignona, è molto vivace, anche violenta, e molto d'impeto, [...] una persona in grado di fare questo se dovesse esistere sicuramente potrebbe essere annoverata tra i rocker e non avrebbe nulla a che spartire con le canzoni della Chiesa»."
+   },
+   {
+    "title": "Non siete Stato voi",
+    "text": "La canzone assume un tono serio e tragico e vuole essere un \"manifesto di questo momento\", condanna aspramente la classe dirigente, ipocrita, incapace di riconoscere le proprie colpe e di portare avanti il Paese. Come affermato dall'autore, si tratta di un brano \"composto di pancia\", uno sfogo nato dall'\"indignazione fortissima e la rabbia\" in cui \"non c'è un filo di ironia\" e nemmeno la tipica voce nasale per la quale il cantante è conosciuto. Tant'è che quest'ultimo lo ha definito un \"pezzo di Michele Salvemini e non di Caparezza\"."
+   },
+   {
+    "title": "La ghigliottina",
+    "text": "Il brano ribadisce la situazione sociopolitica italiana: né la maggioranza né l'opposizione sono in grado di svolgere il proprio ruolo e le proteste del popolo non vengono ascoltate. Secondo l'autore, infatti, «c'è sempre chi tenta o di delegittimarle o di farle passare inosservate», chi accusa «tutti di essere condizionati da questa o quella parte politica», e quindi «dopo tutte queste manifestazioni non accade nulla». Vengono fatti molti riferimenti alla rivoluzione francese, come la ghigliottina, Danton, la «liberté».\nDel brano è stato realizzato un videoclip ambientato in un museo immaginario nel quale compaiono numerosi quadri, tra i quali La libertà che guida il popolo di Eugène Delacroix, Napoleone a cavallo di Jacques-Louis David, Luigi XVI di Francia di Antoine-François Callet e Il bacio di Francesco Hayez."
+   },
+   {
+    "title": "Ti sorrido mentre affogo",
+    "text": "Il cantautore, stufo delle critiche ricevute ai suoi testi, dichiara che non gli interessa «essere capito» e che non vuole necessariamente «andare d'accordo», ma vuole soltanto essere così com'è e andare per la sua strada. Sono presenti i campionamenti della canzone Capito?! del gruppo Gatti di Vicolo Miracoli e del sonoro D'accordo?! detto da Wanna Marchi. La canzone è una lista di aforismi."
    }
   ]
  },
@@ -143,7 +465,9 @@
     "heading": "Composition",
     "text": "Il mondo è nostro was produced by Tiziano Ferro himself, Marco Sonzini, Tha Supreme and Sting, who also duets with Ferro on \"For Her Love - Sempre amata\". The album featured the songwriting contributions of Brunori Sas and Dimartino, with vocal collaborations by Caparezza, Ambra Angiolini and Roberto Vecchioni. Ferro has described the creative process and the meaning of the album:As early as the second or third studio album, I started to think, \"Tiziano, you have nothing more to say.\" In 2020, with the pandemic, that fear came back stronger than before. I looked in the mirror and asked myself what I really did in life. I answered, \"I sing for people.\" Maybe it is a trivial thing, but people like me who have a long history in music are unfortunately spoiled, or rather, comfortable: I have a group of people who work with me, who stimulate me, who help me to do things that alone you can no longer think about. And instead this time alone, with my music-making program and a computer, I'm back to the essence. Like in my little room as a kid.\n\nThe Spanish version of the album was translated by Ferro himself, José Manuel Moles and Juan Mari Montes."
    }
-  ]
+  ],
+  "tracklist": [],
+  "trackNotes": []
  },
  "album:La strada giusta": {},
  "album:SuoNoGlobal": {},

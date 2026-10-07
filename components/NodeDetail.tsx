@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BASE_PATH } from "@/lib/basePath";
+import GroupGlyph from "@/components/GroupGlyph";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import type { GraphNode, Portrait, Quote } from "@/lib/graph";
 import { GROUP_LABEL, type Group } from "@/lib/graph";
@@ -13,13 +14,19 @@ import { spotifySearchUrl } from "@/lib/spotify";
 interface NodeDetailProps {
   node: GraphNode;
   neighbors: GraphNode[];
-  /** Groups currently switched off on the map: their neighbours are listed dimmed. */
-  hiddenGroups?: GraphNode["group"][];
+  /** All of the node's links; `neighbors` is the strongest of them, as the lens draws them. */
+  linkCount?: number;
   /** Drives the slide-in/out transition; parent controls unmount. */
   open: boolean;
   onClose: () => void;
   /** Walk to a connected node. dir: 1 = forward, -1 = back. */
   onNavigate: (node: GraphNode, dir: 1 | -1) => void;
+  /** The "forme" accessibility option: category markers use distinct silhouettes. */
+  distinctShapes?: boolean;
+  /** The pointer resting on (or leaving) a connection or track: lights it on the map. */
+  onHoverNode?: (node: GraphNode | null) => void;
+  /** Any node by id: album track lists open their songs through it. */
+  nodeById?: ReadonlyMap<string, GraphNode>;
   /** Phone sheet only: the portraits and which one this node's category wears. */
   portraits?: Portrait[];
   portraitIndex?: number;
@@ -98,7 +105,7 @@ function AboutSections({ about }: { about?: { heading: string; text: string }[] 
  * meta row, hairline rule, title, body blocks and pager each fade up at
  * ~52ms intervals with a soft overshoot ease.
  */
-export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, onClose, onNavigate, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
+export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
   const quotes = useQuotes(node);
   // Back-history for the pager and the direction of the last hop, used to
@@ -114,6 +121,17 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
     const sketch = drawablyCard(surface, { width: 1.6, roughness: 0.8 });
     return () => sketch.destroy();
   }, [isDesktop]);
+
+  // Hover lights a node on the map. A mouse only: on touch the sheet covers
+  // the map, and a tap fires enter without a matching leave. Cleared when the
+  // drawer moves on, since the hovered row unmounts without a leave event.
+  const hoverProps = (target: GraphNode) => ({
+    onPointerEnter: (event: React.PointerEvent) => {
+      if (event.pointerType === "mouse") onHoverNode?.(target);
+    },
+    onPointerLeave: () => onHoverNode?.(null),
+  });
+  useEffect(() => () => onHoverNode?.(null), [node.id, onHoverNode]);
 
   const goNext = useCallback(() => {
     if (neighbors.length === 0) return;
@@ -172,11 +190,12 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
             className="atlas-reveal flex items-baseline justify-between gap-4 pr-12"
             style={{ "--i": 0 } as React.CSSProperties}
           >
-            <span className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-[color-mix(in_oklch,var(--atlas-ink)_64%,transparent)]">
+            <span className="inline-flex items-center gap-2 self-center text-[0.64rem] font-bold uppercase tracking-[0.18em] text-[color-mix(in_oklch,var(--atlas-ink)_64%,transparent)]">
+              <GroupGlyph group={node.group} size={11} distinct={distinctShapes} />
               {groupLabel}
             </span>
             <span className="font-mono text-[0.64rem] tabular-nums tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_45%,transparent)]">
-              {neighbors.length} collegamenti
+              {linkCount} collegamenti
             </span>
           </div>
 
@@ -317,8 +336,8 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
                 }
               >
                 {node.description ??
-                  `Un elemento dell'atlante Caparezza, collegato a ${neighbors.length} ${
-                    neighbors.length === 1 ? "nodo" : "nodi"
+                  `Un elemento dell'atlante Caparezza, collegato a ${linkCount} ${
+                    linkCount === 1 ? "nodo" : "nodi"
                   }.`}
               </p>
               <AboutSections about={node.about} />
@@ -356,6 +375,44 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
             </div>
           )}
 
+          {node.group === "album" && node.tracks && node.tracks.length > 1 && (
+            <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
+              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+                Tracce · {node.tracks.length}
+              </p>
+              <ol className="flex flex-col">
+                {node.tracks.map((track, index) => {
+                  const song = track.id ? nodeById?.get(track.id) : undefined;
+                  const number = (
+                    <span className="w-6 flex-none font-mono text-[0.68rem] tabular-nums text-[color-mix(in_oklch,var(--atlas-ink)_45%,transparent)]">
+                      {index + 1}
+                    </span>
+                  );
+                  return (
+                    <li key={`${index}:${track.label}`} className="border-b" style={{ borderColor: "var(--atlas-hair)" }}>
+                      {song ? (
+                        <button
+                          {...hoverProps(song)}
+                          onClick={() => openNeighbor(song)}
+                          className="group flex w-full items-baseline gap-2 py-2 text-left text-[0.9rem] leading-snug"
+                          style={{ color: "var(--atlas-ink)" }}
+                        >
+                          {number}
+                          <span className="min-w-0 flex-1 underline-offset-4 group-hover:underline">{track.label}</span>
+                        </button>
+                      ) : (
+                        <span className="flex items-baseline gap-2 py-2 text-[0.9rem] leading-snug" style={{ color: "var(--atlas-ink)" }}>
+                          {number}
+                          <span className="min-w-0 flex-1">{track.label}</span>
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          )}
+
           <span className="atlas-rule mt-8" style={{ "--i": 3 } as React.CSSProperties} />
 
           <div className="atlas-reveal mt-6 pb-4" style={{ "--i": 4 } as React.CSSProperties}>
@@ -363,29 +420,31 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
               Collegato a
             </p>
             <ul className="flex flex-wrap gap-2">
-              {neighbors.slice(0, 40).map((neighbor) => (
-                <li
-                  key={neighbor.id}
-                  className={hiddenGroups.includes(neighbor.group) ? "opacity-55" : undefined}
-                >
+              {neighbors.map((neighbor) => (
+                <li key={neighbor.id} {...hoverProps(neighbor)}>
                   <DrawablyButton
                     onClick={() => openNeighbor(neighbor)}
                     width={1.4}
                     className="atlas-pen atlas-pill max-w-[16rem] truncate text-[0.82rem]"
-                    title={
-                      hiddenGroups.includes(neighbor.group)
-                        ? `${neighbor.label} (nascosto sulla mappa)`
-                        : neighbor.label
-                    }
+                    title={`${neighbor.label} · ${GROUP_LABEL[neighbor.group]}`}
                   >
-                    <span className="atlas-roll">
-                      <span>{neighbor.label}</span>
-                      <span>{neighbor.label}</span>
+                    <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+                      <GroupGlyph group={neighbor.group} size={9} distinct={distinctShapes} />
+                      <span className="atlas-roll min-w-0 truncate">
+                        <span>{neighbor.label}</span>
+                        <span>{neighbor.label}</span>
+                      </span>
                     </span>
                   </DrawablyButton>
                 </li>
               ))}
             </ul>
+            {linkCount > neighbors.length && (
+              <p className="mt-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+                I {neighbors.length} legami più forti, come sulla mappa. Altri{" "}
+                {linkCount - neighbors.length} più deboli non sono mostrati.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -424,7 +483,14 @@ export default function NodeDetail({ node, neighbors, hiddenGroups = [], open, o
         >
           <span className="min-w-0 flex-1">
             <span className="block text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_70%,transparent)]">
-              {neighbors.length > 0 ? groupLabel : "—"}
+              {neighbors[0] ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <GroupGlyph group={neighbors[0].group} size={9} distinct={distinctShapes} />
+                  {GROUP_LABEL[neighbors[0].group]}
+                </span>
+              ) : (
+                "—"
+              )}
             </span>
             <span className="atlas-roll max-w-full truncate text-[0.82rem] font-medium">
               <span>{neighbors[0]?.label ?? "—"}</span>

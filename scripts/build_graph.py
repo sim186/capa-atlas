@@ -26,6 +26,9 @@ Also writes data/keywords.csv for spreadsheet-friendly browsing.
 Album/song nodes additionally carry a `description`/`descriptionUrl` when
 data/wikipedia.json (built by scripts/fetch_wikipedia.py) has an entry for
 that node id — most tracks won't, only singles/albums with their own page.
+An album page's per-track commentary ("Brani") goes to the songs it
+describes, not the album; the album carries `tracks`, its track list in disc
+order, each linked to its song node when the song is in the graph.
 Album nodes (and the songs on them) also carry `cover`/`coverSource`/
 `coverSourceUrl` from data/covers.json (scripts/fetch_images.py) — URLs only,
 the artwork itself is never stored in the repo.
@@ -36,6 +39,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw", "referents.jsonl")
@@ -111,6 +115,74 @@ def classify(fragment: str, annotation: str, song_title: str, concepts: list[dic
         if cid not in hits:
             hits.append(cid)
     return hits
+
+
+def title_key(title: str) -> str:
+    """Loose song-title identity across Genius and Wikipedia: no
+    parentheticals (feat., subtitles), accents, case or punctuation. Spaces
+    stay: "Prosopagnosia" and "Prosopagno sia!" are two different tracks."""
+    title = re.sub(r"\([^)]*\)", "", title)
+    title = unicodedata.normalize("NFKD", title.casefold())
+    title = "".join(ch if ch.isalnum() or ch.isspace() else "" for ch in title)
+    return " ".join(title.split())
+
+
+def note_targets(note_title: str, by_key: dict[str, dict]) -> list[dict]:
+    """Songs a per-track sub-heading names: one title, or a pair such as
+    "Nessun dorma e Tutti dormano"."""
+    whole = by_key.get(title_key(note_title))
+    if whole:
+        return [whole]
+    parts = re.split(r"\s+e\s+|\s*/\s*|,\s*", note_title)
+    return [by_key[k] for k in map(title_key, parts) if k in by_key]
+
+
+def paragraph_target(paragraph: str, by_key: dict[str, dict]) -> dict | None:
+    """The song a paragraph opens on, when a section has no per-track
+    sub-headings ("In Annunciatemi al pubblico Caparezza ...")."""
+    head = title_key(paragraph[:90])
+    found = [(head.find(k), song) for k, song in by_key.items() if len(k) > 3 and k in head]
+    found = [entry for entry in found if entry[0] <= 6]  # "In ", "Il brano ", ...
+    return min(found, key=lambda entry: entry[0])[1] if found else None
+
+
+def attach_tracks(album: dict, entry: dict, album_songs: list[dict]) -> None:
+    """Move the album page's per-track commentary onto its songs and give the
+    album its track list."""
+    by_key = {title_key(song["label"]): song for song in album_songs}
+    notes: dict[str, list[str]] = {}
+    for note in entry.get("trackNotes", []):
+        if note["title"]:
+            for song in note_targets(note["title"], by_key):
+                notes.setdefault(song["id"], []).append(note["text"])
+            continue
+        last = None
+        for paragraph in filter(None, (p.strip() for p in note["text"].split("\n"))):
+            last = paragraph_target(paragraph, by_key) or last
+            if last:
+                notes.setdefault(last["id"], []).append(paragraph)
+    for song in album_songs:
+        if song["id"] not in notes or song.get("about"):
+            continue  # a song with its own page already says what it is about
+        song["about"] = [{"heading": "Il brano", "text": "\n".join(notes[song["id"]])}]
+        if entry.get("url") and not song.get("descriptionUrl"):
+            song["descriptionUrl"] = entry["url"]
+
+    tracks, seen = [], set()
+    for title in entry.get("tracklist", []):
+        key = title_key(title)
+        if key in seen:
+            continue
+        seen.add(key)
+        song = by_key.get(key)
+        tracks.append({"label": song["label"] if song else re.sub(r"\s*\((?:feat|con)\.? [^)]*\)", "", title)}
+                      | ({"id": song["id"]} if song else {}))
+    # songs Wikipedia doesn't list (bonus tracks, or no page at all)
+    for song in sorted(album_songs, key=lambda song: song["label"].casefold()):
+        if title_key(song["label"]) not in seen:
+            tracks.append({"label": song["label"], "id": song["id"]})
+    if tracks:
+        album["tracks"] = tracks
 
 
 def clean(label: str, maxlen: int = 46) -> str:
@@ -247,6 +319,12 @@ def main() -> int:
                 node["about"] = entry["about"]
             if entry.get("url"):
                 node["descriptionUrl"] = entry["url"]
+
+    for album_name, album in albums.items():
+        if album_name == "Singoli / altro":
+            continue
+        album_songs = [song for song in songs.values() if song["album"] == album_name]
+        attach_tracks(album, wikipedia.get(album["id"]) or {}, album_songs)
 
     for node in list(albums.values()) + list(songs.values()):
         album_id = node["id"] if node["group"] == "album" else f"album:{node.get('album')}"

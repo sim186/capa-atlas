@@ -46,6 +46,9 @@ export interface GraphNode {
   // per-song file in public/quotes/ that the detail panel fetches on demand.
   quoteCount?: number;
   quotesFile?: string;
+  // album: track list in disc order (Wikipedia "Tracce", else the songs in
+  // the graph); `id` is the song node when that track is in the atlas.
+  tracks?: { label: string; id?: string }[];
 }
 
 /** A freely licensed photo of Caparezza from Wikimedia Commons (data/portraits.json). */
