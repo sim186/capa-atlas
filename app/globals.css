@@ -4,7 +4,7 @@
   --atlas-bg: #ececec;
   --atlas-ink: #171717;
   --atlas-node: #1c1c1c;
-  --atlas-label: rgba(23, 23, 23, 0.55);
+  --atlas-label: rgba(23, 23, 23, 0.78);
   --atlas-label-hi: #171717;
   --atlas-hair: color-mix(in oklch, var(--atlas-ink) 16%, transparent);
   --atlas-hair-strong: color-mix(in oklch, var(--atlas-ink) 30%, transparent);
@@ -514,7 +514,7 @@ button:hover .atlas-roll > span {
 }
 .atlas-tip-kind {
   font-size: 9.5px;
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 /* Breadcrumb of the walk through the selection lens. */
@@ -596,7 +596,7 @@ button:hover .atlas-roll > span {
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--atlas-ink);
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 /* ------------------------------------------------------------------ */
@@ -663,7 +663,7 @@ a:focus-visible {
 /* Phone tab bar */
 .atlas-tab {
   color: var(--atlas-ink);
-  opacity: 0.6;
+  opacity: 0.72;
   border-top: 2px solid transparent;
   margin-top: -1px;
   transition: opacity 0.2s;
@@ -828,11 +828,21 @@ a:focus-visible {
 
 /* An album's year leads its name, lighter, so the ring reads as a timeline. */
 .atlas-label-year {
-  opacity: 0.55;
+  opacity: 0.85;
   font-variant-numeric: tabular-nums;
 }
 
 .atlas-label.is-pointed {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* The map region (GraphView) takes keyboard focus as a whole: an inset ring,
+   since the region fills the viewport. */
+.atlas-stage:focus {
+  outline: none;
+}
+.atlas-stage:focus-visible {
+  outline: 2px solid var(--atlas-ink);
+  outline-offset: -4px;
 }

@@ -45,6 +45,7 @@ export default function AboutPanel({
         <Link
           href={t.otherLanguage.href}
           hrefLang={locale === "it" ? "en" : "it"}
+          lang={locale === "it" ? "en" : "it"}
           title={t.otherLanguage.title}
           className="atlas-circle-btn font-mono text-[0.68rem] font-bold tracking-[0.06em]"
         >
@@ -162,7 +163,7 @@ export default function AboutPanel({
           )}
 
           <div className="atlas-rule my-5" style={{ "--i": 2 } as React.CSSProperties} />
-          <p className="mb-3 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-55">
+          <p className="mb-3 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-70">
             {t.credits}
           </p>
           <ul className="space-y-1.5 font-mono text-xs">
@@ -260,7 +261,7 @@ export default function AboutPanel({
 
           {portraits.length > 0 && (
             <>
-              <p className="mb-2 mt-5 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-55">
+              <p className="mb-2 mt-5 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] opacity-70">
                 {t.backgroundPhotos}
               </p>
               <ul className="space-y-1.5 font-mono text-xs">
@@ -294,11 +295,11 @@ export default function AboutPanel({
             </>
           )}
 
-          <p className="mt-5 text-xs leading-snug opacity-65">
+          <p className="mt-5 text-xs leading-snug opacity-70">
             {t.unofficial}
           </p>
 
-          <p className="mt-2 text-xs leading-snug opacity-65">
+          <p className="mt-2 text-xs leading-snug opacity-70">
             {t.coversNote}
           </p>
         </DrawablyCard>

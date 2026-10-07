@@ -32,6 +32,7 @@ import { CATEGORY_THEMES, MONO_THEME, type AtlasTheme } from "@/lib/theme";
 import { sound } from "@/lib/sound";
 import { DESKTOP_QUERY, TOUCH_QUERY, useIsDesktop, useIsTouch } from "@/lib/useIsDesktop";
 import NodeDetail from "@/components/NodeDetail";
+import SketchToggle from "@/components/SketchToggle";
 import IntroOverlay from "@/components/IntroOverlay";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
 import { makeDiscTexture, makeShapeTexture } from "@/lib/shapeTextures";
@@ -106,6 +107,8 @@ const ENTRANCE_MS = 1900;
 const QUIET_FRAMES = 20;
 // Keyboard navigation: pan step, zoom factor and the camera distance band.
 const KEY_ZOOM_STEP = 0.78;
+/** How long the flux runs along a new selection's links (WCAG 2.2.2: ≤ 5s). */
+const FLUX_MS = 4500;
 const MAX_CAMERA_DISTANCE = 1800;
 // Below this camera distance a disc fills the screen; keep the visitor out.
 const MIN_CAMERA_DISTANCE = 150;
@@ -894,6 +897,17 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
   // is lit on the map like the keyboard cursor, tying the list to the scene.
   const panelHoverIdRef = useRef<string | null>(null);
   const [kbdNode, setKbdNode] = useState<GraphNode | null>(null);
+
+  // The flux along the selection's links is motion nobody asked for: it plays
+  // for FLUX_MS after each selection, then stops (WCAG 2.2.2).
+  const [fluxDoneId, setFluxDoneId] = useState<string | null>(null);
+  const fluxOn = selected !== null && fluxDoneId !== selected.id;
+  useEffect(() => {
+    if (!selected) return;
+    const id = selected.id;
+    const timer = window.setTimeout(() => setFluxDoneId(id), FLUX_MS);
+    return () => window.clearTimeout(timer);
+  }, [selected]);
   const gizmoDotRef = useRef<HTMLDivElement | null>(null);
   const gizmoHeadingRef = useRef<HTMLSpanElement | null>(null);
 
@@ -1989,7 +2003,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         if (selected) closeDetail();
         setControlsOpen(false);
       }
-      if (event.key === "/" && document.activeElement !== searchRef.current) {
+      if (event.key === "/" && document.activeElement === stageRef.current) {
         event.preventDefault();
         setControlsOpen(true);
         window.setTimeout(() => searchRef.current?.focus(), 0);
@@ -2106,8 +2120,29 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     });
   };
 
+  // Where keyboard focus was when the detail opened, so closing it can hand
+  // focus back instead of dropping it on <body>.
+  const openerRef = useRef<Element | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const returnFocus = useCallback(() => {
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (opener === document.body || opener === stageRef.current) {
+      // opened from the map itself: back to it, where its keys work again
+      stageRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    if (opener instanceof HTMLElement && opener.isConnected) {
+      opener.focus();
+      return;
+    }
+    // the opener is gone (a search result unmounts on select)
+    document.querySelector<HTMLElement>("[data-return-focus]")?.focus();
+  }, []);
+
   const focusNode = useCallback(
     (node: GraphNode) => {
+      if (!selectedRef.current) openerRef.current = document.activeElement;
       // Pin the layout where it stands. Opening a lens adds its guests to the
       // graph, which wakes the simulation; pinned, nothing else moves. (Layer
       // toggles release the pins and let the atlas re-settle.) Displaced lens
@@ -2206,8 +2241,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     const project = new Vector3();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
-      const active = document.activeElement;
-      if (active && active !== document.body && !(active as HTMLElement).dataset.atlasStage) return;
+      if (document.activeElement !== stageRef.current) return;
       const fg = fgRef.current;
       const camera = fg?.camera() as PerspectiveCamera | undefined;
       const controls = controlsRef.current;
@@ -2564,6 +2598,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
       <div
         // Keep graph labels below controls and detail panels.
         className="relative isolate flex-1"
+        // the phone detail is a full page: the map under it is out of reach
+        inert={!isDesktop && sheetOpen && panelNode !== null}
         style={{ cursor: hovered ? "pointer" : undefined }}
         // Wheel / trackpad zoom is no pointerdown: without this the start-up
         // camera follow kept re-fitting and snapped the visitor back out.
@@ -2629,145 +2665,158 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         }}
       >
         <PortraitBackdrop portraits={portraits} index={backdropIndex} />
-        <ForceGraph3D
-          ref={fgRef}
-          graphData={visibleData}
-          width={undefined}
-          height={undefined}
-          // Trackball (the lib default) ships with staticMoving=false, i.e.
-          // built-in momentum on rotate/zoom. Orbit has no residual motion
-          // once input stops.
-          controlType="orbit"
-          enableNodeDrag={false}
-          // Read once at creation. At a pixel ratio of 2 MSAA buys little and
-          // costs a lot of fill-rate on phone GPUs.
-          rendererConfig={{
-            antialias:
-              typeof window === "undefined" ||
-              (window.innerWidth >= 800 && !window.matchMedia("(pointer: coarse)").matches),
-            powerPreference: "high-performance",
-          }}
-          // transparent clear colour: the stage div paints the theme colour and
-          // the portrait backdrop sits between it and the canvas
-          backgroundColor="rgba(0,0,0,0)"
-          showNavInfo={false}
-          nodeVal={(node) => node.val ?? 2}
-          nodeThreeObject={makeNodeThreeObject}
-          nodeLabel={() => ""}
-          linkColor={(link) => {
-            if (!focus) {
-              if (!hoverLinkedId) return inkAlpha(theme.ink, lite ? 0.12 : LINK_ALPHA_REST);
-              const key = linkKey(link);
-              return key.startsWith(hoverLinkedId + ">") || key.endsWith(">" + hoverLinkedId)
-                ? inkAlpha(theme.ink, LINK_ALPHA_HOVER)
-                : inkAlpha(theme.ink, LINK_ALPHA_BEHIND);
+        {/* The map as one keyboard stop. Its keys (arrows, Enter, +/−, /) only
+            act while it has focus, so they never fire from elsewhere on the
+            page; a click on the canvas focuses it too. */}
+        <div
+          ref={stageRef}
+          tabIndex={0}
+          role="application"
+          aria-label={t.mapLabel}
+          aria-describedby={isDesktop ? "atlas-map-hint" : undefined}
+          data-atlas-stage="true"
+          className="atlas-stage"
+        >
+          <ForceGraph3D
+            ref={fgRef}
+            graphData={visibleData}
+            width={undefined}
+            height={undefined}
+            // Trackball (the lib default) ships with staticMoving=false, i.e.
+            // built-in momentum on rotate/zoom. Orbit has no residual motion
+            // once input stops.
+            controlType="orbit"
+            enableNodeDrag={false}
+            // Read once at creation. At a pixel ratio of 2 MSAA buys little and
+            // costs a lot of fill-rate on phone GPUs.
+            rendererConfig={{
+              antialias:
+                typeof window === "undefined" ||
+                (window.innerWidth >= 800 && !window.matchMedia("(pointer: coarse)").matches),
+              powerPreference: "high-performance",
+            }}
+            // transparent clear colour: the stage div paints the theme colour and
+            // the portrait backdrop sits between it and the canvas
+            backgroundColor="rgba(0,0,0,0)"
+            showNavInfo={false}
+            nodeVal={(node) => node.val ?? 2}
+            nodeThreeObject={makeNodeThreeObject}
+            nodeLabel={() => ""}
+            linkColor={(link) => {
+              if (!focus) {
+                if (!hoverLinkedId) return inkAlpha(theme.ink, lite ? 0.12 : LINK_ALPHA_REST);
+                const key = linkKey(link);
+                return key.startsWith(hoverLinkedId + ">") || key.endsWith(">" + hoverLinkedId)
+                  ? inkAlpha(theme.ink, LINK_ALPHA_HOVER)
+                  : inkAlpha(theme.ink, LINK_ALPHA_BEHIND);
+              }
+              return primaryLinks?.has(linkKey(link))
+                ? inkAlpha(theme.ink, 0.7)
+                : inkAlpha(theme.ink, 0.12);
+            }}
+            linkWidth={(link) => {
+              if (!focus) {
+                const own =
+                  hoverLinkedId !== null &&
+                  (endpointId(link.source) === hoverLinkedId ||
+                    endpointId(link.target) === hoverLinkedId);
+                return own ? 0.3 + 0.1 * Math.min(link.weight ?? 1, 4) : lite ? 0.25 : 0.3;
+              }
+              // stronger links read thicker: weight 1 is a hairline, 6+ is bold
+              return primaryLinks?.has(linkKey(link))
+                ? 0.5 + 0.12 * Math.min(link.weight ?? 1, 6)
+                : 0.15;
+            }}
+            // The "flux" from the dictionary graph: bright dots streaming
+            // along the selected node's primary edges only. Count 0 hides the
+            // particle layer per link; the accessor re-runs on every render,
+            // which is what lets selection changes propagate.
+            linkDirectionalParticles={(link) =>
+              !reduceMotion && !lite && fluxOn && focus && primaryLinks?.has(linkKey(link)) ? 3 : 0
             }
-            return primaryLinks?.has(linkKey(link))
-              ? inkAlpha(theme.ink, 0.7)
-              : inkAlpha(theme.ink, 0.12);
-          }}
-          linkWidth={(link) => {
-            if (!focus) {
-              const own =
-                hoverLinkedId !== null &&
-                (endpointId(link.source) === hoverLinkedId ||
-                  endpointId(link.target) === hoverLinkedId);
-              return own ? 0.3 + 0.1 * Math.min(link.weight ?? 1, 4) : lite ? 0.25 : 0.3;
+            // Chords: every overview link bows toward the disc's centre (see
+            // chordBend), so links bundle through the middle like a chord
+            // diagram. Phones skip the bends: each curved edge is its own tube
+            // mesh (30 segments), and with ~1200 edges that is the main GPU/CPU
+            // cost. Straight edges with a coarse cross-section are far cheaper.
+            linkResolution={lite ? 3 : 6}
+            // ...and the lens draws straight spokes: curls around a ring of
+            // neighbours read as noise, a spoke reads as "linked to this".
+            linkCurvature={(link) =>
+              lite || focus ? 0 : chordBends.get(linkKey(link))?.curvature ?? 0
             }
-            // stronger links read thicker: weight 1 is a hairline, 6+ is bold
-            return primaryLinks?.has(linkKey(link))
-              ? 0.5 + 0.12 * Math.min(link.weight ?? 1, 6)
-              : 0.15;
-          }}
-          // The "flux" from the dictionary graph: bright dots streaming
-          // along the selected node's primary edges only. Count 0 hides the
-          // particle layer per link; the accessor re-runs on every render,
-          // which is what lets selection changes propagate.
-          linkDirectionalParticles={(link) =>
-            !reduceMotion && !lite && focus && primaryLinks?.has(linkKey(link)) ? 3 : 0
-          }
-          // Chords: every overview link bows toward the disc's centre (see
-          // chordBend), so links bundle through the middle like a chord
-          // diagram. Phones skip the bends: each curved edge is its own tube
-          // mesh (30 segments), and with ~1200 edges that is the main GPU/CPU
-          // cost. Straight edges with a coarse cross-section are far cheaper.
-          linkResolution={lite ? 3 : 6}
-          // ...and the lens draws straight spokes: curls around a ring of
-          // neighbours read as noise, a spoke reads as "linked to this".
-          linkCurvature={(link) =>
-            lite || focus ? 0 : chordBends.get(linkKey(link))?.curvature ?? 0
-          }
-          linkCurveRotation={(link) => chordBends.get(linkKey(link))?.rotation ?? 0}
-          linkDirectionalParticleWidth={3}
-          linkDirectionalParticleSpeed={0.004}
-          linkDirectionalParticleColor={() => theme.ink}
-          linkOpacity={0.9}
-          linkVisibility={(link) => {
-            // Selected: only that node's own edges are drawn at all. Hidden
-            // links cost nothing, unlike merely transparent ones.
-            if (focus) {
-              // only spokes from the selection to the members of its lens
-              const source = endpointId(link.source);
-              const target = endpointId(link.target);
-              const other = source === focus.self ? target : target === focus.self ? source : null;
-              return other !== null && focus.ids.has(other);
+            linkCurveRotation={(link) => chordBends.get(linkKey(link))?.rotation ?? 0}
+            linkDirectionalParticleWidth={3}
+            linkDirectionalParticleSpeed={0.004}
+            linkDirectionalParticleColor={() => theme.ink}
+            linkOpacity={0.9}
+            linkVisibility={(link) => {
+              // Selected: only that node's own edges are drawn at all. Hidden
+              // links cost nothing, unlike merely transparent ones.
+              if (focus) {
+                // only spokes from the selection to the members of its lens
+                const source = endpointId(link.source);
+                const target = endpointId(link.target);
+                const other = source === focus.self ? target : target === focus.self ? source : null;
+                return other !== null && focus.ids.has(other);
+              }
+              // Theme co-occurrences (most of the links, all inside the rings)
+              // only show for the hovered node; the album-to-theme links that
+              // tie the rings to the clock stay as a faint backdrop.
+              if (link.kind === "co_occurs") {
+                const source = endpointId(link.source);
+                const target = endpointId(link.target);
+                if (source !== hoverLinkedId && target !== hoverLinkedId) return false;
+              }
+              if (!ghostSongs) return true;
+              const hidden = (end: unknown) => {
+                const id = endpointId(end);
+                return groupById.get(id) === "song" && !highlightedIds.has(id);
+              };
+              return !hidden(link.source) && !hidden(link.target);
+            }}
+            onEngineTick={() => {
+              wake(300);
+              const n = ++tickCountRef.current;
+              if (n <= WARM_TICKS && n % 8 === 0) setWarmTicks(n);
+            }}
+            // Phones: the layout has settled long before d3's default 15s,
+            // and the render loop can't rest while the engine runs.
+            cooldownTime={lite ? 6000 : 15000}
+            onEngineStop={() => {
+              layoutDoneRef.current = true;
+              if (refitOnEngineStopRef.current) {
+                refitOnEngineStopRef.current = false;
+                fit();
+                return;
+              }
+              // The one start-up correction: the layout has settled after the
+              // curtain lifted, and the visitor hasn't moved the camera yet.
+              if (revealedRef.current && !settleFitDoneRef.current) {
+                settleFitDoneRef.current = true;
+                if (userMovedRef.current) return;
+                // a phone's frame comes from the layout's own geometry, so
+                // the settled layout is already in it
+                if (!liteRef.current) fgRef.current?.zoomToFit(flightMs(1400), FIT_PADDING);
+              }
+            }}
+            // The click opens what the render loop picked (nearest to the
+            // cursor, or a pointed name), which may differ from the disc a ray
+            // hit first.
+            // (On touch, the disc a tap's ray met may lie under someone's name.)
+            onNodeClick={(node, event) =>
+              focusNode(
+                (lite ? pickAtTap(event) : hoveredNodeRef.current) ?? (node as GraphNode)
+              )
             }
-            // Theme co-occurrences (most of the links, all inside the rings)
-            // only show for the hovered node; the album-to-theme links that
-            // tie the rings to the clock stay as a faint backdrop.
-            if (link.kind === "co_occurs") {
-              const source = endpointId(link.source);
-              const target = endpointId(link.target);
-              if (source !== hoverLinkedId && target !== hoverLinkedId) return false;
-            }
-            if (!ghostSongs) return true;
-            const hidden = (end: unknown) => {
-              const id = endpointId(end);
-              return groupById.get(id) === "song" && !highlightedIds.has(id);
-            };
-            return !hidden(link.source) && !hidden(link.target);
-          }}
-          onEngineTick={() => {
-            wake(300);
-            const n = ++tickCountRef.current;
-            if (n <= WARM_TICKS && n % 8 === 0) setWarmTicks(n);
-          }}
-          // Phones: the layout has settled long before d3's default 15s,
-          // and the render loop can't rest while the engine runs.
-          cooldownTime={lite ? 6000 : 15000}
-          onEngineStop={() => {
-            layoutDoneRef.current = true;
-            if (refitOnEngineStopRef.current) {
-              refitOnEngineStopRef.current = false;
-              fit();
-              return;
-            }
-            // The one start-up correction: the layout has settled after the
-            // curtain lifted, and the visitor hasn't moved the camera yet.
-            if (revealedRef.current && !settleFitDoneRef.current) {
-              settleFitDoneRef.current = true;
-              if (userMovedRef.current) return;
-              // a phone's frame comes from the layout's own geometry, so
-              // the settled layout is already in it
-              if (!liteRef.current) fgRef.current?.zoomToFit(flightMs(1400), FIT_PADDING);
-            }
-          }}
-          // The click opens what the render loop picked (nearest to the
-          // cursor, or a pointed name), which may differ from the disc a ray
-          // hit first.
-          // (On touch, the disc a tap's ray met may lie under someone's name.)
-          onNodeClick={(node, event) =>
-            focusNode(
-              (lite ? pickAtTap(event) : hoveredNodeRef.current) ?? (node as GraphNode)
-            )
-          }
-          // Clicking empty space is the gesture for "deselect" — the only
-          // two ways the current selection changes are a click on another
-          // note and a click on empty canvas (hover never touches it).
-          onBackgroundClick={handleBackgroundClick}
-          // hover is picked by the render loop instead (see "Pointer picking")
-          showPointerCursor={false}
-        />
+            // Clicking empty space is the gesture for "deselect" — the only
+            // two ways the current selection changes are a click on another
+            // note and a click on empty canvas (hover never touches it).
+            onBackgroundClick={handleBackgroundClick}
+            // hover is picked by the render loop instead (see "Pointer picking")
+            showPointerCursor={false}
+          />
+        </div>
         <div
           ref={labelLayerRef}
           aria-hidden="true"
@@ -2835,21 +2884,21 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         {/* top-left: one entry point for search + filters (also bound to "/") */}
         {isDesktop && (
         <div className="absolute left-6 top-6 z-10">
-          <DrawablyButton
-            key={controlsOpen ? "open" : "closed"}
+          <SketchToggle
             onClick={() => {
               setControlsOpen((open) => !open);
               window.setTimeout(() => searchRef.current?.focus(), 0);
             }}
             aria-label={t.searchAndFilter}
             aria-expanded={controlsOpen}
+            data-return-focus
             title={`${t.searchAndFilter} ( / )`}
             variant={controlsOpen ? "solid" : "outline"}
             width={1.6}
             className="atlas-ink-btn h-12 px-4 text-sm tracking-wide"
           >
             ⌕ {t.searchAndFilter}
-          </DrawablyButton>
+          </SketchToggle>
         </div>
         )}
 
@@ -2922,7 +2971,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                           <GroupGlyph group={node.group} distinct={distinctShapes} />
                           <span className="min-w-0 flex-1 truncate">{node.label}</span>
                           {node.group === "song" && node.album && (
-                            <span className="max-w-[40%] shrink-0 truncate opacity-50">
+                            <span className="max-w-[40%] shrink-0 truncate opacity-70">
                               {node.album}
                             </span>
                           )}
@@ -2940,8 +2989,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                     {ALL_GROUPS.map((group) => {
                       const enabled = layerOn(group);
                       return (
-                        <DrawablyButton
-                          key={`${group}-${enabled}`}
+                        <SketchToggle
+                          key={group}
                           onClick={() => toggleLayer(group)}
                           aria-pressed={enabled}
                           variant={enabled ? "solid" : "outline"}
@@ -2952,14 +3001,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                           stroke={GROUP_COLOR[group]}
                           fill={GROUP_COLOR[group]}
                           width={1.4}
-                          className={
-                            enabled
-                              ? "px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
-                              : "px-3 py-1.5 text-[0.72rem] font-medium tracking-wide opacity-45"
-                          }
+                          // off reads as outline vs solid; no fade, so the label keeps its contrast
+                          className="px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                         >
                           {t.group[group]} · {stats[group] ?? 0}
-                        </DrawablyButton>
+                        </SketchToggle>
                       );
                     })}
                   </div>
@@ -2971,8 +3017,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                     {ALL_KINDS.map((kind) => {
                       const enabled = visibleKinds.has(kind);
                       return (
-                        <DrawablyButton
-                          key={`${kind}-${enabled}`}
+                        <SketchToggle
+                          key={kind}
                           onClick={() => toggleKind(kind)}
                           aria-pressed={enabled}
                           variant={enabled ? "solid" : "outline"}
@@ -2981,7 +3027,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                           className="px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                         >
                           {t.linkKind[kind]} · {kindStats[kind]}
-                        </DrawablyButton>
+                        </SketchToggle>
                       );
                     })}
                   </div>
@@ -2991,8 +3037,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                   <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
                     <p className="mb-3 text-[0.7rem] font-bold opacity-70">{t.view}</p>
                     <div className="flex flex-wrap gap-2">
-                      <DrawablyButton
-                        key={`color-${colorMode}`}
+                      <SketchToggle
                         onClick={toggleColorMode}
                         aria-pressed={colorMode === "group"}
                         variant={colorMode === "group" ? "solid" : "outline"}
@@ -3000,9 +3045,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                         className="atlas-ink-btn px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                       >
                         {colorMode === "group" ? t.colors : t.grey}
-                      </DrawablyButton>
-                      <DrawablyButton
-                        key={`sound-${muted}`}
+                      </SketchToggle>
+                      <SketchToggle
                         onClick={() => setMuted((value) => !value)}
                         aria-pressed={!muted}
                         variant={muted ? "outline" : "solid"}
@@ -3010,7 +3054,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                         className="atlas-ink-btn px-3 py-1.5 text-[0.72rem] font-medium tracking-wide"
                       >
                         {muted ? t.soundOff : t.soundOn}
-                      </DrawablyButton>
+                      </SketchToggle>
                     </div>
                   </div>
                 )}
@@ -3019,8 +3063,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
 
             <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--atlas-hair)" }}>
               <p className="mb-3 text-[0.7rem] font-bold opacity-70">{t.accessibility}</p>
-              <DrawablyButton
-                key={`shapes-${distinctShapes}`}
+              <SketchToggle
                 onClick={toggleShapes}
                 aria-pressed={distinctShapes}
                 variant={distinctShapes ? "solid" : "outline"}
@@ -3029,7 +3072,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                 title={t.shapesTitle}
               >
                 {distinctShapes ? t.shapesOn : t.shapesOff}
-              </DrawablyButton>
+              </SketchToggle>
             </div>
 
             <div
@@ -3059,6 +3102,13 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           </div>
         )}
 
+        <p className="sr-only" role="status">
+          {query.trim()
+            ? results.length === 0
+              ? t.noResults(query.trim())
+              : t.resultsCount(results.length)
+            : ""}
+        </p>
         <p className="sr-only" aria-live="polite">
           {kbdNode
             ? t.kbdAnnounce(kbdNode.label, t.group[kbdNode.group])
@@ -3069,7 +3119,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         {isDesktop && (
         <div className="pointer-events-none absolute bottom-7 left-7 z-10">
           <p className="atlas-pen text-2xl tracking-[-0.02em]">THE CAPA ATLAS</p>
-          <p className="mt-1 max-w-[17rem] text-xs leading-snug opacity-70">
+          <p id="atlas-map-hint" className="mt-1 max-w-[17rem] text-xs leading-snug opacity-70">
             {t.desktopHint}
           </p>
         </div>
@@ -3088,7 +3138,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
               />
             </svg>
             <p className="atlas-pen text-xl leading-none">{t.dragToExplore}</p>
-            <p className="text-xs opacity-65">{t.touchHint}</p>
+            <p className="text-xs opacity-75">{t.touchHint}</p>
           </div>
         )}
 
@@ -3113,7 +3163,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                   aria-pressed={enabled}
                   title={enabled ? t.hideGroup(t.group[group]) : t.showGroup(t.group[group])}
                   className="atlas-legend-item flex items-center gap-2 py-1 text-xs"
-                  style={{ opacity: enabled ? 1 : 0.4 }}
+                  style={{ opacity: enabled ? 1 : 0.7 }}
                 >
                   <GroupGlyph
                     group={group}
@@ -3121,7 +3171,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
                     size={12}
                     color={colorMode === "group" && !selected ? GROUP_COLOR[group] : theme.node}
                   />
-                  <span>{t.group[group]}</span>
+                  <span className={enabled ? undefined : "line-through"}>{t.group[group]}</span>
                 </button>
               </li>
             );
@@ -3151,8 +3201,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
         {/* bottom-center controls (phones get the tab bar below instead) */}
         {isDesktop && (
         <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-2.5">
-          <DrawablyButton
-            key={colorMode}
+          <SketchToggle
             onClick={toggleColorMode}
             aria-pressed={colorMode === "group"}
             title={
@@ -3165,9 +3214,8 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             className="atlas-ink-btn h-10 text-xs tracking-wide"
           >
             {colorMode === "group" ? t.colors : t.grey}
-          </DrawablyButton>
-          <DrawablyButton
-            key={muted ? "muted" : "sound"}
+          </SketchToggle>
+          <SketchToggle
             onClick={() => setMuted((value) => !value)}
             aria-pressed={!muted}
             title={muted ? t.unmuteTitle : t.muteTitle}
@@ -3176,7 +3224,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             className="atlas-ink-btn h-10 text-xs tracking-wide"
           >
             {muted ? t.soundOff : t.soundOn}
-          </DrawablyButton>
+          </SketchToggle>
           <DrawablyButton
             onClick={fit}
             title={t.backToOverview}
@@ -3196,13 +3244,15 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
             style={{ background: "transparent" }}
           >
             <DrawablyButton
-              onClick={() => {
+              onClick={(event) => {
+                openerRef.current = event.currentTarget;
                 play(sound.select);
                 setSheetOpen(true);
               }}
               width={1.4}
               className="atlas-ink-btn h-10 min-w-0 px-4 text-sm"
               aria-label={t.openDetailOf(selected.label)}
+              data-return-focus
             >
               <span className="block max-w-[11rem] truncate">{selected.label}</span>
             </DrawablyButton>
@@ -3276,6 +3326,7 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           nodeById={nodeById}
           distinctShapes={distinctShapes}
           onHoverNode={hoverFromPanel}
+          onReturnFocus={returnFocus}
           portraits={portraits}
           portraitIndex={backdropIndex}
         />
@@ -3289,6 +3340,11 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
           revealedRef.current = true;
           revealAtRef.current = performance.now();
           setRevealed(true);
+          // the map is what the page is: start there, so its keys work at
+          // once (no ring: nobody pressed a key yet)
+          if (document.activeElement === document.body) {
+            stageRef.current?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+          }
           // The simulation cooled while the curtain was up, and the unfurl is a
           // force that only acts on a running one: wake it so the entrance plays
           // now, and let the camera follow it again.

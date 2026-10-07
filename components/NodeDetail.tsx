@@ -31,6 +31,8 @@ interface NodeDetailProps {
   /** Phone sheet only: the portraits and which one this node's category wears. */
   portraits?: Portrait[];
   portraitIndex?: number;
+  /** Closing with focus inside: hand focus back to where it came from. */
+  onReturnFocus?: () => void;
 }
 
 const quoteCache = new Map<string, Quote[]>();
@@ -149,8 +151,9 @@ function ItalianTag({ show }: { show?: boolean }) {
   if (!show || !t.italianTag) return null;
   return (
     <span
+      lang="en"
       title="In Italian"
-      className="mr-1.5 inline-block rounded-sm border px-1 align-[0.12em] font-mono text-[0.55rem] font-bold leading-[1.35] tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_60%,transparent)]"
+      className="mr-1.5 inline-block rounded-sm border px-1 align-[0.12em] font-mono text-[0.55rem] font-bold leading-[1.35] tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]"
       style={{ borderColor: "var(--atlas-hair)" }}
     >
       {t.italianTag}
@@ -164,8 +167,8 @@ function AboutSections({ about, italian }: { about?: { heading: string; text: st
   return (
     <div className="mt-4 space-y-4">
       {about.map((section) => (
-        <section key={section.heading}>
-          <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+        <section key={section.heading} lang={italian ? "it" : undefined}>
+          <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
             <ItalianTag show={italian} />
             {section.heading}
           </h3>
@@ -192,7 +195,7 @@ function AboutSections({ about, italian }: { about?: { heading: string; text: st
  * meta row, hairline rule, title, body blocks and pager each fade up at
  * ~52ms intervals with a soft overshoot ease.
  */
-export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0 }: NodeDetailProps) {
+export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0, onReturnFocus }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
   const t = useT();
   const quotes = useQuotes(node);
@@ -209,6 +212,22 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
     const sketch = drawablyCard(surface, { width: 1.6, roughness: 0.8 });
     return () => sketch.destroy();
   }, [isDesktop]);
+
+  // Keyboard and screen-reader users land on the title whenever the detail
+  // opens or walks to another node (the old content, and whatever opened it,
+  // unmounts). On close, focus goes back to where it came from, unless the
+  // visitor has already put it somewhere else.
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (open) {
+      headingRef.current?.focus({ preventScroll: true });
+    } else if (wasOpenRef.current) {
+      const active = document.activeElement;
+      if (!active || active === document.body || surfaceRef.current?.contains(active)) onReturnFocus?.();
+    }
+    wasOpenRef.current = open;
+  }, [open, node.id, onReturnFocus]);
 
   // Hover lights a node on the map. A mouse only: on touch the sheet covers
   // the map, and a tap fires enter without a matching leave. Cleared when the
@@ -248,13 +267,15 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
+      if (!open) return;
+      if (target?.dataset.atlasStage) return;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       if (event.key === "ArrowRight") goNext();
       if (event.key === "ArrowLeft") goPrev();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [goNext, goPrev]);
+  }, [goNext, goPrev, open]);
 
   const title = node.label;
   const groupLabel = t.group[node.group] ?? node.group;
@@ -278,11 +299,11 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
             className="atlas-reveal flex items-baseline justify-between gap-4 pr-12"
             style={{ "--i": 0 } as React.CSSProperties}
           >
-            <span className="inline-flex items-center gap-2 self-center text-[0.64rem] font-bold uppercase tracking-[0.18em] text-[color-mix(in_oklch,var(--atlas-ink)_64%,transparent)]">
+            <span className="inline-flex items-center gap-2 self-center text-[0.64rem] font-bold uppercase tracking-[0.18em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
               <GroupGlyph group={node.group} size={11} distinct={distinctShapes} />
               {groupLabel}
             </span>
-            <span className="font-mono text-[0.64rem] tabular-nums tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_45%,transparent)]">
+            <span className="font-mono text-[0.64rem] tabular-nums tracking-[0.08em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
               {t.linkCount(linkCount)}
             </span>
           </div>
@@ -290,7 +311,9 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
           <span className="atlas-rule mt-3 sm:mt-5" style={{ "--i": 1 } as React.CSSProperties} />
 
           <h2
-            className="atlas-title-reveal mt-5 font-sans sm:mt-7 text-3xl font-bold leading-[0.98] tracking-[-0.035em] text-balance sm:text-5xl"
+            ref={headingRef}
+            tabIndex={-1}
+            className="atlas-title-reveal mt-5 outline-none font-sans sm:mt-7 text-3xl font-bold leading-[0.98] tracking-[-0.035em] text-balance sm:text-5xl"
             style={{ color: "var(--atlas-ink)" }}
           >
             {title}
@@ -311,7 +334,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                 style={{ boxShadow: "0 10px 30px -14px rgba(0, 0, 0, 0.55)" }}
                 onError={(event) => (event.currentTarget.parentElement!.hidden = true)}
               />
-              <figcaption className="text-[0.7rem] leading-snug text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+              <figcaption className="text-[0.7rem] leading-snug text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                 {node.coverSourceUrl ? (
                   <a
                     href={node.coverSourceUrl}
@@ -339,7 +362,10 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                 {node.release && <span className="block">{t.releaseField} · {node.release}</span>}
               </p>
               {node.description && (
-                <p className="mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                <p
+                  lang={node.italian?.includes("description") ? "it" : undefined}
+                  className="mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]"
+                >
                   <ItalianTag show={node.italian?.includes("description")} />
                   {node.description}
                 </p>
@@ -360,16 +386,16 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
 
           {node.group === "song" && node.quoteCount && (
             <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
-              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                 {t.annotatedQuotes} · {node.quoteCount}
               </p>
               {t.quotesNote && (
-                <p className="mb-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+                <p className="mb-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                   {t.quotesNote}
                 </p>
               )}
               {quotes === null && (
-                <p className="font-mono text-[0.72rem] uppercase tracking-[0.14em] opacity-55">
+                <p className="font-mono text-[0.72rem] uppercase tracking-[0.14em] opacity-70">
                   {t.loading}
                 </p>
               )}
@@ -377,11 +403,11 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                 {(quotes ?? []).map((quote, index) => (
                   <li key={index}>
                     <details className="group rounded-md border" style={{ borderColor: "var(--atlas-hair)" }}>
-                      <summary className="cursor-pointer list-none px-3 py-2.5 text-[0.86rem] font-medium leading-snug marker:content-none">
+                      <summary lang="it" className="cursor-pointer list-none px-3 py-2.5 text-[0.86rem] font-medium leading-snug marker:content-none">
                         {quote.fragment}
                       </summary>
                       <div className="border-t px-3 py-3" style={{ borderColor: "var(--atlas-hair)" }}>
-                        <p className="text-[0.85rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                        <p lang="it" className="text-[0.85rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
                           {quote.annotation}
                         </p>
                         {quote.url && (
@@ -403,9 +429,10 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                 </p>
               )}
               <p
+                lang={node.italian?.includes("description") ? "it" : undefined}
                 className={
                   node.blurb
-                    ? "mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_62%,transparent)]"
+                    ? "mt-3 text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]"
                     : "text-base leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_80%,transparent)]"
                 }
               >
@@ -415,10 +442,13 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               <AboutSections about={node.about} italian={node.italian?.includes("about")} />
               {node.bio && (
                 <div className="mt-5">
-                  <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+                  <h3 className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                     {t.whoIs}
                   </h3>
-                  <p className="text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
+                  <p
+                    lang={node.italian?.includes("bio") ? "it" : undefined}
+                    className="text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]"
+                  >
                     <ItalianTag show={node.italian?.includes("bio")} />
                     {node.bio}
                   </p>
@@ -436,14 +466,14 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
 
           {node.group === "album" && node.tracks && node.tracks.length > 1 && (
             <div className="atlas-reveal mt-7" style={{ "--i": 2.5 } as React.CSSProperties}>
-              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+              <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                 {t.tracks} · {node.tracks.length}
               </p>
               <ol className="flex flex-col">
                 {node.tracks.map((track, index) => {
                   const song = track.id ? nodeById?.get(track.id) : undefined;
                   const number = (
-                    <span className="w-6 flex-none font-mono text-[0.68rem] tabular-nums text-[color-mix(in_oklch,var(--atlas-ink)_45%,transparent)]">
+                    <span className="w-6 flex-none font-mono text-[0.68rem] tabular-nums text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                       {index + 1}
                     </span>
                   );
@@ -475,7 +505,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
           <span className="atlas-rule mt-8" style={{ "--i": 3 } as React.CSSProperties} />
 
           <div className="atlas-reveal mt-6 pb-4" style={{ "--i": 4 } as React.CSSProperties}>
-            <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_46%,transparent)]">
+            <p className="mb-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
               {t.linkedTo}
             </p>
             {/* Same blocks, order and captions as the lens on the map. */}
@@ -485,7 +515,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                 if (block.length === 0) return null;
                 return (
                   <section key={group}>
-                    <h3 className="mb-2 inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+                    <h3 className="mb-2 inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                       <GroupGlyph group={group} size={9} distinct={distinctShapes} />
                       {t.groupPlural[group]} · {block.length}
                     </h3>
@@ -500,7 +530,8 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                           >
                             <span className="atlas-roll">
                               <span>{neighbor.label}</span>
-                              <span>{neighbor.label}</span>
+                              {/* the roll-over copy: drawn, not read */}
+                              <span aria-hidden="true">{neighbor.label}</span>
                             </span>
                           </DrawablyButton>
                         </li>
@@ -511,7 +542,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               })}
             </div>
             {linkCount > neighbors.length && (
-              <p className="mt-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+              <p className="mt-3 text-[0.78rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
                 {t.strongestOnly(neighbors.length, linkCount - neighbors.length)}
               </p>
             )}
@@ -535,6 +566,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
             variant="outline"
             width={1.4}
             className="atlas-pager-arrow h-9 w-9 flex-none p-0 text-base"
+            aria-hidden="true"
           >
             ←
           </DrawablyBadge>
@@ -564,13 +596,14 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
             </span>
             <span className="atlas-roll max-w-full truncate text-[0.82rem] font-medium">
               <span>{neighbors[0]?.label ?? "—"}</span>
-              <span>{neighbors[0]?.label ?? "—"}</span>
+              <span aria-hidden="true">{neighbors[0]?.label ?? "—"}</span>
             </span>
           </span>
           <DrawablyBadge
             variant="outline"
             width={1.4}
             className="atlas-pager-arrow h-9 w-9 flex-none p-0 text-base"
+            aria-hidden="true"
           >
             →
           </DrawablyBadge>
@@ -586,6 +619,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
         className="atlas-panel"
         data-open={open}
         aria-label={t.nodeDetail}
+        inert={!open}
       >
         <DrawablyButton
           onClick={onClose}
@@ -604,10 +638,13 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
   // made the text hard to read and the whole thing confusing.
   return (
     <div
+      ref={surfaceRef as React.RefObject<HTMLDivElement | null>}
       className="atlas-sheet"
       data-open={open}
       role="dialog"
+      aria-modal="true"
       aria-label={t.nodeDetail}
+      inert={!open}
     >
       <div className="atlas-sheet-bar">
         <button onClick={onClose} className="atlas-back">

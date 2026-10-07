@@ -106,7 +106,7 @@ export default function IntroOverlay({
           style={{ background: "var(--atlas-ink)", transform: `scaleX(${progress})` }}
         />
       </div>
-      <p className="relative text-xs opacity-60">
+      <p className="relative text-xs opacity-75">
         {ready ? t.clickToEnter : t.loadingMap}
       </p>
     </div>

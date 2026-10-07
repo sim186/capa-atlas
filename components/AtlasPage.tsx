@@ -36,7 +36,7 @@ export default function AtlasPage({ locale }: { locale: Locale }) {
           <h1 className="mb-2 text-xl font-semibold tracking-[-0.03em] text-[var(--atlas-ink)]">
             {SITE_NAME}
           </h1>
-          <p className="font-mono text-[0.72rem] uppercase tracking-[0.16em] text-[color-mix(in_oklch,var(--atlas-ink)_55%,transparent)]">
+          <p className="font-mono text-[0.72rem] uppercase tracking-[0.16em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
             Nessun dato. Genera il grafo con:
           </p>
           <pre className="mt-3 rounded-lg border border-[var(--atlas-hair)] p-3 text-left font-mono text-xs">
