@@ -474,6 +474,9 @@ const PHONE_MIN_CO_WEIGHT = 6;
 const PRIMARY_LINKS_DESKTOP = 20;
 const PRIMARY_LINKS_PHONE = 10;
 
+// A deep-linked node opens once the entrance has unfurled (see ?node=).
+const DEEP_LINK_DELAY_MS = 1600;
+
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
 
 export default function GraphView({ data, portraits }: { data: GraphData; portraits: Portrait[] }) {
@@ -2233,6 +2236,18 @@ export default function GraphView({ data, portraits }: { data: GraphData; portra
     },
     [allNeighbors, frameLens, lensMembersOf, play, visibleData.nodes, visibleGroups]
   );
+
+  // ?node=<id> (the node pages' "open in the map" link): once the curtain is
+  // up and the entrance has unfurled, open that node as if it were clicked.
+  const deepLinkDoneRef = useRef(false);
+  useEffect(() => {
+    if (!revealed || deepLinkDoneRef.current) return;
+    deepLinkDoneRef.current = true;
+    const node = nodeById.get(new URLSearchParams(window.location.search).get("node") ?? "");
+    if (!node) return;
+    const timer = window.setTimeout(() => focusNode(node), DEEP_LINK_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [revealed, nodeById, focusNode]);
 
   // Keyboard navigation on the map. Arrows hop to the nearest node in that
   // direction on screen, Enter opens it, +/- zoom, Esc lets go. Ignored while

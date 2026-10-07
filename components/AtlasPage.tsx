@@ -1,24 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
+import Link from "next/link";
 import GraphView from "@/components/GraphView";
-import type { GraphData, Portrait } from "@/lib/graph";
+import { loadGraph, nodePath } from "@/lib/atlasData";
+import type { Portrait } from "@/lib/graph";
 import { DICTIONARIES, type Locale } from "@/lib/i18n";
 import { LocaleProvider } from "@/lib/locale";
-import { localizeGraph } from "@/lib/localize";
 import { SITE_COPY, SITE_NAME, siteTitle } from "@/lib/site";
 
 /** The whole atlas in one language; app/(it)/page.tsx and app/(en)/en/page.tsx. */
 export default function AtlasPage({ locale }: { locale: Locale }) {
-  let data: GraphData | null = null;
-  try {
-    const raw = fs.readFileSync(
-      path.join(process.cwd(), "public", "graphData.json"),
-      "utf-8"
-    );
-    data = localizeGraph(JSON.parse(raw) as GraphData, locale);
-  } catch {
-    // no data yet
-  }
+  const data = loadGraph(locale);
 
   let portraits: Portrait[] = [];
   try {
@@ -29,7 +21,7 @@ export default function AtlasPage({ locale }: { locale: Locale }) {
     // no portraits fetched: the atlas just renders without a backdrop
   }
 
-  if (!data || data.nodes.length === 0) {
+  if (!data) {
     return (
       <main className="flex h-full items-center justify-center p-8 text-center">
         <div>
@@ -52,7 +44,8 @@ export default function AtlasPage({ locale }: { locale: Locale }) {
 
   return (
     <main className="h-full">
-      {/* Crawler / screen-reader view of what the canvas draws. */}
+      {/* Crawler / screen-reader view of what the canvas draws. Its links lead
+          to the node pages; kept out of the Tab order, which belongs to the map. */}
       <div className="sr-only">
         <h1>{siteTitle(locale)}</h1>
         <p>{SITE_COPY[locale].description}</p>
@@ -60,18 +53,34 @@ export default function AtlasPage({ locale }: { locale: Locale }) {
         <ul>
           {albums.map((a) => (
             <li key={a.id}>
-              {a.label}
+              <Link href={nodePath(a, locale)} tabIndex={-1}>{a.label}</Link>
               {a.description ? ` — ${a.description}` : ""}
               <ul>
                 {songs
                   .filter((s) => s.album === a.label)
                   .map((s) => (
-                    <li key={s.id}>{s.label}</li>
+                    <li key={s.id}>
+                      <Link href={nodePath(s, locale)} tabIndex={-1}>{s.label}</Link>
+                    </li>
                   ))}
               </ul>
             </li>
           ))}
         </ul>
+        {(["figure", "concept"] as const).map((group) => (
+          <section key={group}>
+            <h2>{DICTIONARIES[locale].groupPlural[group]}</h2>
+            <ul>
+              {data.nodes
+                .filter((n) => n.group === group)
+                .map((n) => (
+                  <li key={n.id}>
+                    <Link href={nodePath(n, locale)} tabIndex={-1}>{n.label}</Link>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        ))}
       </div>
       <LocaleProvider locale={locale}>
         <GraphView data={data} portraits={portraits} />

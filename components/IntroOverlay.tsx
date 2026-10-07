@@ -85,13 +85,14 @@ export default function IntroOverlay({
       {/* same crop as the backdrop that appears when the curtain lifts, but
           at full strength: the opening shot is the face */}
       {portrait && <PortraitBackdrop portraits={[portrait]} index={0} strength={1.9} />}
-      <h1 className="atlas-pen relative flex gap-[0.28em] text-4xl tracking-[-0.02em] sm:text-6xl">
+      {/* the page's <h1> is in the crawler view (AtlasPage); this is the show */}
+      <p aria-hidden className="atlas-pen relative flex gap-[0.28em] text-4xl tracking-[-0.02em] sm:text-6xl">
         {WORDS.map((word, i) => (
           <span key={word} className="atlas-intro-word" style={{ "--i": i } as React.CSSProperties}>
             <span>{word}</span>
           </span>
         ))}
-      </h1>
+      </p>
       <div
         className="relative h-px w-40 overflow-hidden sm:w-56"
         style={{ background: "var(--atlas-hair)" }}

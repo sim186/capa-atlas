@@ -110,6 +110,10 @@ const it = {
   loadingMap: "Carico la mappa…",
   loadingMapLabel: "Caricamento della mappa",
   otherLanguage: { href: "/en", label: "EN", title: "English version" },
+
+  // per-node pages (/canzone/…, /tema/…): the crawlable side of the atlas
+  nodePageTitle: (label: string, group: string) => `${label} · ${group} nell'universo di Caparezza`,
+  openInAtlas: "Apri nella mappa",
 };
 
 export type Dictionary = typeof it;
@@ -214,6 +218,9 @@ const en: Dictionary = {
   loadingMap: "Loading the map…",
   loadingMapLabel: "Loading the map",
   otherLanguage: { href: "/", label: "IT", title: "Versione italiana" },
+
+  nodePageTitle: (label, group) => `${label} · ${group} in Caparezza's universe`,
+  openInAtlas: "Open in the map",
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = { it, en };

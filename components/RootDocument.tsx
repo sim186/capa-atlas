@@ -26,22 +26,40 @@ export const viewport: Viewport = {
   themeColor: "#ececec",
 };
 
-export function siteMetadata(locale: Locale): Metadata {
+/** Google Search Console ownership token (sim186.github.io/capa-atlas/). */
+const GOOGLE_SITE_VERIFICATION = "fDujDsahIdQekx3IEDicvanmcKytu3IboBvKCxmZqTo";
+
+/**
+ * <head> for one page of the atlas. `paths` are the page's site-relative
+ * paths in both languages, so each edition points at the other (hreflang).
+ */
+export function pageMetadata(
+  locale: Locale,
+  {
+    paths,
+    title,
+    description,
+    image,
+  }: {
+    paths: Record<Locale, string>;
+    title: string;
+    description: string;
+    image?: { url: string; alt: string };
+  }
+): Metadata {
   const copy = SITE_COPY[locale];
-  const title = siteTitle(locale);
-  const url = `${SITE_URL}${copy.path}`;
-  const image = { url: `${SITE_URL}/og.jpg`, width: 1200, height: 630, alt: `${title}: ${copy.ogAlt}` };
+  const url = `${SITE_URL}${paths[locale]}`;
+  const ogImage = image ?? { url: `${SITE_URL}/og.jpg`, width: 1200, height: 630, alt: `${title}: ${copy.ogAlt}` };
   return {
     metadataBase: new URL(`${SITE_URL}/`),
     title,
-    keywords: copy.keywords,
-    description: copy.description,
+    description,
     alternates: {
       canonical: url,
       languages: {
-        it: `${SITE_URL}${SITE_COPY.it.path}`,
-        en: `${SITE_URL}${SITE_COPY.en.path}`,
-        "x-default": `${SITE_URL}${SITE_COPY.it.path}`,
+        it: `${SITE_URL}${paths.it}`,
+        en: `${SITE_URL}${paths.en}`,
+        "x-default": `${SITE_URL}${paths.it}`,
       },
     },
     openGraph: {
@@ -49,17 +67,29 @@ export function siteMetadata(locale: Locale): Metadata {
       url,
       siteName: SITE_NAME,
       title,
-      description: copy.description,
+      description,
       locale: copy.ogLocale,
       alternateLocale: locale === "it" ? SITE_COPY.en.ogLocale : SITE_COPY.it.ogLocale,
-      images: [image],
+      images: [ogImage],
     },
     twitter: {
-      card: "summary_large_image",
+      card: image ? "summary" : "summary_large_image",
       title,
-      description: copy.description,
-      images: [image.url],
+      description,
+      images: [ogImage.url],
     },
+  };
+}
+
+export function siteMetadata(locale: Locale): Metadata {
+  return {
+    ...pageMetadata(locale, {
+      paths: { it: SITE_COPY.it.path, en: SITE_COPY.en.path },
+      title: siteTitle(locale),
+      description: SITE_COPY[locale].description,
+    }),
+    keywords: SITE_COPY[locale].keywords,
+    verification: { google: GOOGLE_SITE_VERIFICATION },
   };
 }
 
