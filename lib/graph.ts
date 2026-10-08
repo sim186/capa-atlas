@@ -92,20 +92,20 @@ export interface GraphData {
 // members in the same blocks, in this order, each strongest link first.
 export const LENS_GROUP_ORDER: Group[] = ["album", "figure", "concept", "song"];
 
-// A restrained paper-atlas palette: high contrast enough to navigate, but
-// quiet enough that the structure—not a rainbow of nodes—remains primary.
+// Risograph inks on grey paper: the same family as the sketched chrome, each
+// far enough apart in hue to tell the four kinds of node apart at a glance.
 export const GROUP_COLOR: Record<Group, string> = {
-  album: "#6b3fd1",
-  song: "#005dcc",
-  figure: "#cf302d",
-  concept: "#168b57",
+  album: "#3550d4",
+  song: "#0b8585",
+  figure: "#e0337f",
+  concept: "#e0611a",
 };
 
 export const LINK_COLOR: Record<GraphLink["kind"], string> = {
-  on: "rgba(107,63,209,0.24)",
-  refers: "rgba(22,139,87,0.25)",
-  co_occurs: "rgba(207,48,45,0.2)",
-  album_refers: "rgba(107,63,209,0.2)",
+  on: "rgba(53,80,212,0.24)",
+  refers: "rgba(224,97,26,0.25)",
+  co_occurs: "rgba(224,51,127,0.2)",
+  album_refers: "rgba(53,80,212,0.2)",
 };
 
 // By default every node is a disc and colour carries the category (legend,

@@ -23,35 +23,35 @@ export const MONO_THEME: AtlasTheme = {
 };
 
 // Each theme is the colour the node already wears on the map (GROUP_COLOR in
-// lib/graph.ts): pick a violet disc and the whole page goes violet, not blue.
+// lib/graph.ts): pick a pink disc and the whole page goes pink, not red.
 export const CATEGORY_THEMES: Record<Group, AtlasTheme> = {
   album: {
-    bg: "#2e00aa",
-    ink: "#ece8ff",
-    node: "#a88bd0",
-    line: "rgba(168, 139, 208, 0.16)",
-    lineHi: "rgba(168, 139, 208, 0.55)",
+    bg: "#1b2a7a",
+    ink: "#eceffe",
+    node: "#9fb0f5",
+    line: "rgba(159, 176, 245, 0.16)",
+    lineHi: "rgba(159, 176, 245, 0.55)",
   },
   song: {
-    bg: "#0b3d67",
-    ink: "#eaf3fb",
-    node: "#7fb8ea",
-    line: "rgba(127, 184, 234, 0.16)",
-    lineHi: "rgba(127, 184, 234, 0.55)",
+    bg: "#073f40",
+    ink: "#e6f6f5",
+    node: "#7fd1cc",
+    line: "rgba(127, 209, 204, 0.16)",
+    lineHi: "rgba(127, 209, 204, 0.55)",
   },
   figure: {
-    bg: "#6b1414",
-    ink: "#fdeceb",
-    node: "#f19a97",
-    line: "rgba(241, 154, 151, 0.16)",
-    lineHi: "rgba(241, 154, 151, 0.55)",
+    bg: "#6e1240",
+    ink: "#fdebf3",
+    node: "#f59cc4",
+    line: "rgba(245, 156, 196, 0.16)",
+    lineHi: "rgba(245, 156, 196, 0.55)",
   },
   concept: {
-    bg: "#0f4a30",
-    ink: "#e9f7ee",
-    node: "#8fd6ab",
-    line: "rgba(143, 214, 171, 0.16)",
-    lineHi: "rgba(143, 214, 171, 0.55)",
+    bg: "#6a2a07",
+    ink: "#fdf0e7",
+    node: "#f6ad7c",
+    line: "rgba(246, 173, 124, 0.16)",
+    lineHi: "rgba(246, 173, 124, 0.55)",
   },
 };
 

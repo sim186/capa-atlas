@@ -1299,7 +1299,7 @@ export default function GraphView({
     // subject. idle is per-group: in rgb mode with nothing selected each
     // category keeps its own color instead of one shared tint.
     return {
-      idle: make(0.55),
+      idle: make(0.82),
       hover: make(0.95),
       hi: make(1),
       dim: make(0.09),
@@ -1836,7 +1836,7 @@ export default function GraphView({
         }
         placed.push(candidate);
         shown.add(candidate.entry.node.id);
-        const depthOpacity = 1 - 0.45 * ((shown.size - 1) / budget);
+        const depthOpacity = 1 - 0.3 * ((shown.size - 1) / budget);
         ambientOpacity.set(candidate.entry.node.id, depthOpacity);
       }
       // Fade: a newly placed name eases in, a displaced one eases out where
@@ -2521,7 +2521,7 @@ export default function GraphView({
       const lead = studioAlbums.has(n.id);
       div.style.setProperty(
         "--label-size",
-        `${(lead ? 9 + importance * 3 : 9 + importance * 1).toFixed(1)}px`
+        `${(lead ? 13 + importance * 3 : 11.5 + importance * 1.5).toFixed(1)}px`
       );
       labelLayerRef.current?.appendChild(div);
       const hidden = (): LabelStyle => ({
@@ -2538,7 +2538,7 @@ export default function GraphView({
         node: n,
         tier: lead ? 0 : LABEL_TIER[n.group],
         maxDistance: lead ? Infinity : LABEL_MAX_DISTANCE[n.group],
-        baseOpacity: lead ? 0.6 + importance * 0.35 : 0.5 + importance * 0.2,
+        baseOpacity: lead ? 0.85 + importance * 0.15 : 0.72 + importance * 0.2,
         rank: n.val ?? 2,
         measured: 0,
         pointedClass: false,
@@ -2657,7 +2657,7 @@ export default function GraphView({
         "--atlas-bg": theme.bg,
         "--atlas-ink": theme.ink,
         "--atlas-node": theme.node,
-        "--atlas-label": `color-mix(in oklch, ${theme.ink} 78%, transparent)`,
+        "--atlas-label": `color-mix(in oklch, ${theme.ink} 90%, transparent)`,
         "--atlas-label-hi": theme.ink,
         // The pen strokes follow the theme ink/paper, so sketches recolour
         // together with the canvas when the rgb mode kicks in.
@@ -2920,8 +2920,8 @@ export default function GraphView({
         {isDesktop && trail.length > 0 && selected && (
           <nav
             aria-label={t.trail}
-            className="atlas-trail absolute left-[12.5rem] top-9 z-10 flex items-center gap-1.5 font-mono text-xs"
-            style={{ maxWidth: `calc(100% - 12.5rem - ${desktopPanelWidth()}px - 2rem)` }}
+            className="atlas-trail absolute left-[20rem] top-9 z-10 flex items-center gap-1.5 text-sm"
+            style={{ maxWidth: `calc(100% - 20rem - ${desktopPanelWidth()}px - 2rem)` }}
           >
             <button
               onClick={() => {
@@ -2952,9 +2952,10 @@ export default function GraphView({
           </nav>
         )}
 
-        {/* top-left: one entry point for search + filters (also bound to "/") */}
+        {/* bottom-left, under the legend: one entry point for search +
+            filters (also bound to "/") */}
         {isDesktop && (
-        <div className="absolute left-6 top-6 z-10">
+        <div className="absolute bottom-7 left-6 z-10">
           <SketchToggle
             onClick={() => {
               setControlsOpen((open) => !open);
@@ -2985,7 +2986,7 @@ export default function GraphView({
         {(controlsOpen || searchFocused) && (
           <div
             className={`absolute z-20 ${
-              isDesktop ? "left-6 top-20 w-80" : "left-3 right-3 top-16"
+              isDesktop ? "bottom-[5.5rem] left-6 w-80" : "left-3 right-3 top-16"
             }`}
             // the sketched card has no fill of its own: without this the map
             // shows through the list
@@ -2993,7 +2994,7 @@ export default function GraphView({
           >
           <DrawablyCard
             paper={theme.bg}
-            className="atlas-reveal atlas-controls p-5 font-mono text-xs"
+            className="atlas-reveal atlas-controls p-5 text-[0.8rem]"
             style={{
               "--i": 0,
               boxShadow: "0 16px 50px -20px rgba(0, 0, 0, 0.35)",
@@ -3186,11 +3187,17 @@ export default function GraphView({
             : ""}
         </p>
 
-        {/* brand block — hidden on phones, where the bottom edge is spoken for */}
+        {/* brand block, top-left — hidden on phones, where space is short */}
         {isDesktop && (
-        <div className="pointer-events-none absolute bottom-7 left-7 z-10">
-          <p className="atlas-pen text-2xl tracking-[-0.02em]">THE CAPA ATLAS</p>
-          <p id="atlas-map-hint" className="mt-1 max-w-[17rem] text-xs leading-snug opacity-70">
+        <div className="pointer-events-none absolute left-7 top-7 z-10">
+          <p className="atlas-pen text-3xl tracking-[-0.02em]">THE CAPA ATLAS</p>
+          {/* steps aside while the search card, which opens upward, is out */}
+          <p
+            id="atlas-map-hint"
+            className={`mt-2 max-w-[18rem] text-xs leading-snug transition-opacity duration-300 ${
+              controlsOpen || searchFocused ? "opacity-0" : "opacity-75"
+            }`}
+          >
             {t.desktopHint}
           </p>
         </div>
@@ -3218,7 +3225,7 @@ export default function GraphView({
         <ul
           className={`absolute z-10 flex ${
             isDesktop
-              ? "bottom-32 left-7 flex-col gap-y-0.5"
+              ? "bottom-[5.75rem] left-7 flex-col gap-y-1"
               : `left-3 right-3 flex-wrap gap-x-4 gap-y-0.5 transition-[bottom] duration-300 ${
                   barHidden ? "bottom-3" : "bottom-[4.5rem]"
                 }`
@@ -3233,16 +3240,21 @@ export default function GraphView({
                   onClick={() => toggleLayer(group)}
                   aria-pressed={enabled}
                   title={enabled ? t.hideGroup(t.group[group]) : t.showGroup(t.group[group])}
-                  className="atlas-legend-item flex items-center gap-2 py-1 text-xs"
-                  style={{ opacity: enabled ? 1 : 0.7 }}
+                  className={`atlas-legend-item flex items-center gap-2.5 py-1 ${
+                    isDesktop ? "text-base" : "text-sm"
+                  }`}
+                  style={{ opacity: enabled ? 1 : 0.6 }}
                 >
                   <GroupGlyph
                     group={group}
                     distinct={distinctShapes}
-                    size={12}
+                    size={isDesktop ? 16 : 13}
                     color={colorMode === "group" && !selected ? GROUP_COLOR[group] : theme.node}
                   />
-                  <span className={enabled ? undefined : "line-through"}>{t.group[group]}</span>
+                  <span className={enabled ? "font-semibold" : "line-through"}>{t.group[group]}</span>
+                  {isDesktop && (
+                    <span className="text-xs tabular-nums opacity-60">{stats[group] ?? 0}</span>
+                  )}
                 </button>
               </li>
             );
@@ -3376,7 +3388,7 @@ export default function GraphView({
                       if (tab === "search") window.setTimeout(() => searchRef.current?.focus(), 0);
                     }
                   }}
-                  className="atlas-tab flex-1 py-4 text-sm"
+                  className="atlas-tab flex-1 py-4 text-[0.95rem]"
                 >
                   {label}
                 </button>

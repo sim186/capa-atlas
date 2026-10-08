@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
+/* Comfortaa everywhere: Tailwind's font-sans and font-mono utilities point at
+   it too, so no corner of the site falls back to another face. */
+@theme inline {
+  --font-sans: var(--atlas-font);
+  --font-mono: var(--atlas-font);
+}
+
 :root {
   --atlas-bg: #ececec;
   --atlas-ink: #171717;
   --atlas-node: #1c1c1c;
-  --atlas-label: rgba(23, 23, 23, 0.78);
+  --atlas-label: rgba(23, 23, 23, 0.9);
   --atlas-label-hi: #171717;
   --atlas-hair: color-mix(in oklch, var(--atlas-ink) 16%, transparent);
   --atlas-hair-strong: color-mix(in oklch, var(--atlas-ink) 30%, transparent);
   --atlas-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* the atlas's one typeface (Comfortaa, as on Canva) */
+  --atlas-font: var(--font-comfortaa), "Varela Round", "Arial Rounded MT Bold", sans-serif;
 }
 
 * {
@@ -23,7 +32,7 @@ body {
 body {
   background: var(--atlas-bg);
   color: var(--atlas-ink);
-  font-family: var(--font-geist-sans), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--atlas-font);
 }
 
 ::selection {
@@ -44,17 +53,20 @@ body {
   --drawably-paper: var(--atlas-bg);
 }
 
-/* Keep our typography: drawably's defaults are Inter / Geist Mono. */
+/* drawably's components default to Inter / Geist Mono: keep the page's. */
 .drawably-host,
+.drawably-card,
 .drawably-button,
 .drawably-badge,
-.drawably-card {
+.drawably-inputbox input {
   font-family: inherit;
+  font-feature-settings: normal;
 }
 
-/* Handwritten chrome text (titles, brand, neighbor pills). */
+/* Display text (titles, brand, neighbor pills): same face, heavier. */
 .atlas-pen {
-  font-family: "Drawably Pen", var(--font-geist-sans), sans-serif;
+  font-family: var(--atlas-font);
+  font-weight: 700;
 }
 
 /* drawably's own .drawably-button padding (6px 14px, unlayered) beats
@@ -464,21 +476,23 @@ button:hover .atlas-roll > span {
 /* ------------------------------------------------------------------ */
 
 .atlas-label {
-  /* Set in capitals above the node, small and mono, like a specimen tag:
+  /* Written above the node by hand, like a note pencilled onto a map:
      size follows node weight (--label-size, set per node), opacity follows
      distance (set by the render loop). */
-  font-family: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: var(--label-size, 10px);
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--atlas-font);
+  font-size: var(--label-size, 12px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   color: var(--atlas-label);
-  /* a paper-coloured halo keeps text legible over lines and discs */
+  /* a solid paper-coloured halo keeps text legible over lines, discs and
+     the portrait */
   text-shadow:
-    0 0 3px var(--atlas-bg),
-    0 0 6px var(--atlas-bg);
+    0 0 2px var(--atlas-bg),
+    0 0 2px var(--atlas-bg),
+    0 0 5px var(--atlas-bg),
+    0 0 9px var(--atlas-bg);
 }
 
 /* A name cut short to stay on screen (the render loop sets its max-width).
@@ -504,16 +518,15 @@ button:hover .atlas-roll > span {
   border-radius: 6px;
   white-space: nowrap;
   transition: opacity 0.12s ease;
-  font-family: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--atlas-font);
   color: var(--atlas-ink);
 }
 .atlas-tip-name {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 600;
 }
 .atlas-tip-kind {
-  font-size: 9.5px;
+  font-size: 11px;
   opacity: 0.75;
 }
 
@@ -590,7 +603,7 @@ button:hover .atlas-roll > span {
   top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--atlas-font);
   font-size: 0.55rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -624,6 +637,7 @@ button:hover .atlas-roll > span {
 }
 
 .atlas-legend-item {
+  font-family: var(--atlas-font);
   color: var(--atlas-ink);
   cursor: pointer;
   transition: opacity 0.2s;
@@ -691,14 +705,15 @@ a:focus-visible {
 .atlas-backdrop img {
   position: absolute;
   inset: 0 0 0 auto;
-  width: min(68%, 62rem);
+  width: min(46%, 46rem);
   height: 100%;
   object-fit: cover;
   opacity: 0;
   transition: opacity 1.1s ease;
-  /* horizontal alpha ramp: solid at the right edge, gone before the middle */
-  -webkit-mask-image: linear-gradient(to left, #000 8%, transparent 100%);
-  mask-image: linear-gradient(to left, #000 8%, transparent 100%);
+  /* a strip down the right edge: solid at the edge, eased out to nothing
+     well before the middle, so the map owns the centre of the page */
+  -webkit-mask-image: linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.2) 65%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.2) 65%, transparent 100%);
 }
 
 .atlas-backdrop img[data-active="true"] {
@@ -712,7 +727,7 @@ a:focus-visible {
     mask-image: linear-gradient(to left, #000 35%, rgba(0, 0, 0, 0.25) 100%);
   }
   .atlas-backdrop img[data-active="true"] {
-    opacity: calc(0.42 * var(--strength));
+    opacity: calc(0.3 * var(--strength));
   }
 }
 
@@ -790,13 +805,8 @@ a:focus-visible {
 }
 
 /* A lens member under the cursor: its name stays in the column, underlined. */
-/* Songs read as titles and figures as names, so a list mixing them with
-   themes (a lens) shows what each row is without relying on colour. */
-.atlas-label--song,
-.atlas-label--figure {
-  text-transform: none;
-  letter-spacing: 0.02em;
-}
+/* Songs read as titles, so a list mixing them with themes and figures (a
+   lens) shows what each row is without relying on colour. */
 .atlas-label--song::before {
   content: "«";
 }
@@ -809,12 +819,10 @@ a:focus-visible {
   position: absolute;
   left: 0;
   top: 0;
-  font-family: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 8.5px;
-  font-weight: 600;
+  font-family: var(--atlas-font);
+  font-size: 11px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
   white-space: nowrap;
   color: var(--atlas-label-hi);
   opacity: 0.72;
@@ -828,7 +836,8 @@ a:focus-visible {
 
 /* An album's year leads its name, lighter, so the ring reads as a timeline. */
 .atlas-label-year {
-  opacity: 0.85;
+  font-weight: 400;
+  opacity: 0.8;
   font-variant-numeric: tabular-nums;
 }
 
