@@ -3194,7 +3194,7 @@ export default function GraphView({
           {/* steps aside while the search card, which opens upward, is out */}
           <p
             id="atlas-map-hint"
-            className={`mt-2 max-w-[18rem] text-xs leading-snug transition-opacity duration-300 ${
+            className={`mt-3 max-w-[24rem] text-[0.95rem] leading-snug transition-opacity duration-300 ${
               controlsOpen || searchFocused ? "opacity-0" : "opacity-75"
             }`}
           >
@@ -3216,7 +3216,7 @@ export default function GraphView({
               />
             </svg>
             <p className="atlas-pen text-xl leading-none">{t.dragToExplore}</p>
-            <p className="text-xs opacity-75">{t.touchHint}</p>
+            <p className="text-sm opacity-75">{t.touchHint}</p>
           </div>
         )}
 
