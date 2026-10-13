@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { LENS_GROUP_ORDER, type GraphData, type GraphNode, type Group, type Quote } from "@/lib/graph";
+import type { GraphData, GraphNode, Group, Quote } from "@/lib/graph";
 import type { Locale } from "@/lib/i18n";
 import { localizeGraph } from "@/lib/localize";
 import { SITE_COPY } from "@/lib/site";
@@ -88,22 +88,4 @@ export function findNode(locale: Locale, group: string, slug: string): { graph: 
     (each) => GROUP_SEGMENT[locale][each.group] === group && slugs().get(each.id) === slug
   );
   return graph && node ? { graph, node } : null;
-}
-
-/** A node's neighbours in the drawer's blocks (album, figure, concept, song), strongest link first. */
-export function neighbours(graph: GraphData, node: GraphNode): { group: Group; nodes: GraphNode[] }[] {
-  const byId = new Map(graph.nodes.map((each) => [each.id, each]));
-  const weight = new Map<string, number>();
-  for (const link of graph.links) {
-    const other = link.source === node.id ? link.target : link.target === node.id ? link.source : null;
-    if (!other || !byId.has(other)) continue;
-    weight.set(other, Math.max(weight.get(other) ?? 0, link.weight ?? 1));
-  }
-  return LENS_GROUP_ORDER.map((group) => ({
-    group,
-    nodes: [...weight.keys()]
-      .map((id) => byId.get(id)!)
-      .filter((each) => each.group === group)
-      .sort((a, b) => weight.get(b.id)! - weight.get(a.id)! || a.label.localeCompare(b.label)),
-  })).filter((block) => block.nodes.length > 0);
 }

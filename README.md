@@ -62,6 +62,7 @@ da Wikimedia Commons (crediti nel pannello *Info*).
 ```bash
 npm install
 npm run dev        # http://localhost:3000
+npm test           # vicinato e lente (lib/*.test.ts)
 ```
 
 `public/graphData.json` è già versionato: per sfogliare l'atlas non serve

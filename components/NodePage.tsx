@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import GroupGlyph from "@/components/GroupGlyph";
 import { pageMetadata } from "@/components/RootDocument";
-import { findNode, loadQuotes, neighbours, nodeParams, nodePath } from "@/lib/atlasData";
+import { findNode, loadQuotes, nodeParams, nodePath } from "@/lib/atlasData";
 import { mapUrlKey, type GraphNode } from "@/lib/graph";
 import { DICTIONARIES, type Locale } from "@/lib/i18n";
+import { inBlocks, neighbourhood } from "@/lib/neighbourhood";
 import { SITE_COPY, SITE_NAME } from "@/lib/site";
 
 // One page per node, in plain HTML: what the canvas draws, readable by
@@ -35,7 +36,7 @@ export const metadataFor =
     if (!found) return {};
     const { graph, node } = found;
     const t = DICTIONARIES[locale];
-    const linkCount = neighbours(graph, node).reduce((sum, block) => sum + block.nodes.length, 0);
+    const linkCount = neighbourhood(graph).members(node.id).length;
     return pageMetadata(locale, {
       paths: { [locale]: nodePath(node, locale), [OTHER[locale]]: nodePath(node, OTHER[locale]) } as Record<
         Locale,
@@ -54,7 +55,9 @@ export default async function NodePage({ locale, params }: { locale: Locale; par
   const { graph, node } = found;
   const t = DICTIONARIES[locale];
   const home = SITE_COPY[locale].path;
-  const blocks = neighbours(graph, node);
+  // every link, ranked as the drawer ranks them: each block opens with what
+  // the drawer shows and goes on past its cap
+  const blocks = inBlocks(neighbourhood(graph).members(node.id));
   const quotes = loadQuotes(node);
   const byId = new Map(graph.nodes.map((each) => [each.id, each]));
   const albumNode = node.album

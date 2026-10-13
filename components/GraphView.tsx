@@ -18,7 +18,6 @@ import {
   GraphNode,
   Group,
   GROUP_COLOR,
-  LENS_GROUP_ORDER,
   mapUrlKey,
   Portrait,
 } from "@/lib/graph";
@@ -39,6 +38,8 @@ import PortraitBackdrop from "@/components/PortraitBackdrop";
 import { makeDiscTexture, makeShapeTexture } from "@/lib/shapeTextures";
 import AboutPanel from "@/components/AboutPanel";
 import { albumYears, atlasLayout, studioAlbumIds, LAYOUT_EXTENT, R_ALBUM } from "@/lib/atlasLayout";
+import { Lens, LENS_MAX_MEMBERS, lensExtent, releasePins, type Vec3 } from "@/lib/lens";
+import { neighbourhood } from "@/lib/neighbourhood";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
@@ -141,30 +142,8 @@ const DOUBLE_TAP_MS = 320;
 
 type ColorMode = "mono" | "group";
 
-type Vec3 = { x: number; y: number; z: number };
-
-// A node displaced from its layout position by the selection lens. `home` is
-// where the force layout put it; the spring moves `offset` toward `target`.
-type LensMotion = {
-  node: GraphNode;
-  home: Vec3;
-  offset: Vec3;
-  velocity: Vec3;
-  target: Vec3;
-};
-
-const LENS_SPRING = 42;
-const LENS_DAMPING = 17;
-// Selection lens: the selected node's neighbours leave the tangle and line up
-// on two arcs either side of it, like a pair of brackets facing the camera,
-// with their names pointing outward. Each arc reads top to bottom as a list,
-// one category after another. Units are world units (about 2px each at the
-// lens viewing distance).
-const LENS_SIDE_SLOTS = 16; // per arc
-const LENS_ROW = 13; // vertical spacing between members on an arc
-const LENS_HALF_HEIGHT = 100;
-const LENS_HALF_WIDTH = 72;
-const LENS_MAX_MEMBERS = LENS_SIDE_SLOTS * 2;
+// Lens members share a fixed, smaller dot so the arcs don't overlap (the
+// lens itself is lib/lens.ts).
 const LENS_DOT = 11;
 // Phones: the lens's columns of dots stand this share of the screen's width
 // either side of its middle, leaving the rest for names.
@@ -176,10 +155,6 @@ const HOVER_SOUND_DWELL_MS = 140;
 // Screen px around the cursor within which the nearest node is picked.
 const PICK_RADIUS = 18;
 const IDLE_ORBIT_RESUME_MS = 4000;
-// Splitting a category across the two arcs costs this many rows of
-// imbalance: a block stays whole unless keeping it so leaves one arc far
-// longer than the other.
-const LENS_SPLIT_COST = 4;
 
 /** Width of the desktop detail panel (mirrors .atlas-panel in globals.css). */
 function desktopPanelWidth() {
@@ -247,108 +222,6 @@ function chordBend(a: Vec3, b: Vec3, pull: number) {
   return { curvature: wantedLength / baseLength, rotation };
 }
 
-type LensRow =
-  | { kind: "head"; group: Group; count: number; more: boolean }
-  | { kind: "node"; node: GraphNode }
-  | { kind: "gap" };
-type LensSlot = { x: number; y: number; side: number };
-
-/**
- * The lens as two columns, each read top to bottom like an index: one block
- * per category (a caption, then its members, weightiest first), with an
- * empty row between blocks. The right column takes the first blocks. The
- * split falls between blocks where that keeps the columns about even;
- * otherwise inside the block that straddles the middle, whose second part
- * gets a "segue" caption.
- */
-function lensLayout(nodes: readonly GraphNode[]) {
-  // `nodes` arrive strongest link first (lensMembersOf); each block keeps that order.
-  const blocks = LENS_GROUP_ORDER.map((group) => nodes.filter((n) => n.group === group)).filter(
-    (block) => block.length > 0
-  );
-  const rows: LensRow[] = [];
-  // where each split may fall: the row index the left column starts from,
-  // and whether the cut is inside a block (needs a continuation caption)
-  const cuts: { at: number; inside: Group | null; count: number }[] = [];
-  blocks.forEach((block, b) => {
-    if (b > 0) {
-      cuts.push({ at: rows.length, inside: null, count: 0 });
-      rows.push({ kind: "gap" });
-    }
-    const group = block[0].group;
-    rows.push({ kind: "head", group, count: block.length, more: false });
-    block.forEach((node, i) => {
-      if (i >= 1) cuts.push({ at: rows.length, inside: group, count: block.length });
-      rows.push({ kind: "node", node });
-    });
-  });
-  let best: { at: number; inside: Group | null; count: number } | null = null;
-  let bestScore = Infinity;
-  for (const cut of cuts) {
-    const right = cut.at;
-    // a block boundary drops its gap row; a cut inside adds a caption
-    const left = cut.inside ? rows.length - cut.at + 1 : rows.length - cut.at - 1;
-    const score = Math.abs(right - left) + (cut.inside ? LENS_SPLIT_COST : 0);
-    if (score < bestScore) {
-      bestScore = score;
-      best = cut;
-    }
-  }
-  let columns: LensRow[][];
-  if (!best) columns = [rows, []];
-  else if (best.inside) {
-    columns = [
-      rows.slice(0, best.at),
-      [{ kind: "head", group: best.inside, count: best.count, more: true }, ...rows.slice(best.at)],
-    ];
-  } else columns = [rows.slice(0, best.at), rows.slice(best.at + 1)];
-
-  const members = new Map<string, LensSlot>();
-  const heads: { group: Group; count: number; more: boolean; slot: LensSlot }[] = [];
-  columns.forEach((column, c) => {
-    const side = c === 0 ? 1 : -1;
-    column.forEach((row, j) => {
-      const slot = lensSlot(j, column.length, side);
-      if (row.kind === "node") members.set(row.node.id, slot);
-      else if (row.kind === "head") heads.push({ group: row.group, count: row.count, more: row.more, slot });
-    });
-  });
-  return { members, heads };
-}
-
-/**
- * Slot of the j-th of `rows` rows in one lens column, in lens axes (x right,
- * y up), top to bottom. Columns bulge outward at the middle.
- */
-function lensSlot(j: number, rows: number, side: number): LensSlot {
-  const halfHeight = Math.min(LENS_HALF_HEIGHT, ((rows - 1) * LENS_ROW) / 2);
-  const u = rows === 1 ? 0 : 1 - (2 * j) / (rows - 1);
-  const y = u * halfHeight;
-  const bow = Math.sqrt(Math.max(0, 1 - (y / LENS_HALF_HEIGHT) ** 2));
-  const x = side * LENS_HALF_WIDTH * (0.45 + 0.55 * bow);
-  return { x, y, side };
-}
-
-/** Outer half-width of the lens, for framing the camera. */
-function lensExtent(count: number) {
-  return count === 0 ? 0 : LENS_HALF_WIDTH;
-}
-
-/** Where the force layout put a node, ignoring any lens displacement. */
-function homeOf(motions: Map<string, LensMotion>, node: GraphNode): Vec3 | null {
-  const motion = motions.get(node.id);
-  if (motion) return motion.home;
-  if (node.x === undefined || node.y === undefined || node.z === undefined) return null;
-  return { x: node.x, y: node.y, z: node.z };
-}
-
-/** Place a node and pin it there for the force simulation. */
-function pinAt(node: GraphNode, at: Vec3) {
-  node.x = node.fx = at.x;
-  node.y = node.fy = at.y;
-  node.z = node.fz = at.z;
-}
-
 // The label styles the render loop sets. It keeps the last value written
 // and only touches the DOM when one changes: writing every label's style
 // every frame (even unchanged) recalculated style for the whole layer, and
@@ -396,15 +269,6 @@ function commitLabelStyle(entry: LabelEntry) {
     div.style[key] = wanted[key];
     // a cut-short name ends in an ellipsis
     if (key === "maxWidth") div.classList.toggle("is-trimmed", wanted.maxWidth !== "");
-  }
-}
-
-/** Let go of every pin, so the layout can settle again. */
-function releasePins(nodes: readonly GraphNode[]) {
-  for (const node of nodes) {
-    delete node.fx;
-    delete node.fy;
-    delete node.fz;
   }
 }
 
@@ -690,51 +554,18 @@ export default function GraphView({
   const forcedId =
     selected && !visibleGroups.has(selected.group) ? selected.id : null;
 
-  // Every node's links, strongest first, across all layers and link kinds.
-  const linkStrength = useMemo(() => {
-    const map = new Map<string, Map<string, number>>();
-    const add = (from: string, to: string, weight: number) => {
-      let bucket = map.get(from);
-      if (!bucket) map.set(from, (bucket = new Map()));
-      bucket.set(to, (bucket.get(to) ?? 0) + weight);
-    };
-    for (const link of data.links) {
-      const source = endpointId(link.source);
-      const target = endpointId(link.target);
-      if (source === target) continue;
-      add(source, target, link.weight ?? 1);
-      add(target, source, link.weight ?? 1);
-    }
-    return map;
-  }, [data.links]);
   const nodeById = useMemo(
     () => new Map(data.nodes.map((node) => [node.id, node])),
     [data.nodes]
   );
+  // Every node's links, ranked, across all layers and link kinds.
+  const links = useMemo(() => neighbourhood(data), [data]);
   // The lens shows a node's direct links whatever the layer toggles say: an
   // album whose only links are songs must not open onto an empty ring. Big
   // hubs keep their strongest LENS_MAX_MEMBERS; the panel lists the same.
   const lensMembersOf = useCallback(
-    (id: string) => {
-      // An album is made of its tracks: they take the first slots, in disc
-      // order, and its strongest themes fill the rest.
-      const trackIds = nodeById.get(id)?.tracks?.flatMap((track) => (track.id ? [track.id] : [])) ?? [];
-      const trackIndex = new Map(trackIds.map((trackId, index) => [trackId, index]));
-      const rank = (nodeId: string) => trackIndex.get(nodeId) ?? Infinity;
-      return [...(linkStrength.get(id) ?? new Map<string, number>())]
-        .map(([other, weight]) => ({ node: nodeById.get(other), weight }))
-        .filter((entry): entry is { node: GraphNode; weight: number } => !!entry.node)
-        .sort(
-          (a, b) =>
-            (rank(a.node.id) === rank(b.node.id) ? 0 : rank(a.node.id) < rank(b.node.id) ? -1 : 1) ||
-            b.weight - a.weight ||
-            (b.node.val ?? 1) - (a.node.val ?? 1) ||
-            a.node.label.localeCompare(b.node.label)
-        )
-        .slice(0, LENS_MAX_MEMBERS)
-        .map((entry) => entry.node);
-    },
-    [linkStrength, nodeById]
+    (id: string) => links.members(id).slice(0, LENS_MAX_MEMBERS),
+    [links]
   );
   const selectedNeighbors = useMemo(
     () => (selected ? lensMembersOf(selected.id) : []),
@@ -800,38 +631,6 @@ export default function GraphView({
     }
   }, [visibleData.nodes]);
 
-  // Every link of every node, whatever the layer toggles say.
-  const buildNeighbors = useCallback(
-    (links: readonly { source: unknown; target: unknown }[]) => {
-      const byId = new Map(data.nodes.map((node) => [node.id, node]));
-      const map = new Map<string, Map<string, GraphNode>>();
-      const add = (from: GraphNode, to: GraphNode) => {
-        let bucket = map.get(from.id);
-        if (!bucket) map.set(from.id, (bucket = new Map()));
-        bucket.set(to.id, to);
-      };
-      for (const link of links) {
-        const source = byId.get(endpointId(link.source));
-        const target = byId.get(endpointId(link.target));
-        if (!source || !target || source.id === target.id) continue;
-        add(source, target);
-        add(target, source);
-      }
-      const sorted = new Map<string, GraphNode[]>();
-      for (const [id, bucket] of map) {
-        sorted.set(
-          id,
-          [...bucket.values()].sort((a, b) => (b.val ?? 1) - (a.val ?? 1))
-        );
-      }
-      return sorted;
-    },
-    [data.nodes]
-  );
-  const allNeighbors = useMemo(
-    () => buildNeighbors(data.links),
-    [buildNeighbors, data.links]
-  );
 
   // The drawer lists exactly what the lens draws (same members, same order),
   // so "Collegato a" and the ring around the selection never disagree. The
@@ -841,8 +640,8 @@ export default function GraphView({
     [lensMembersOf, panelNode]
   );
   const panelNodeLinkCount = useMemo(
-    () => (panelNode ? allNeighbors.get(panelNode.id)?.length ?? 0 : 0),
-    [allNeighbors, panelNode]
+    () => (panelNode ? links.members(panelNode.id).length : 0),
+    [links, panelNode]
   );
   const highlightedIds = useMemo(() => {
     const set = new Set<string>();
@@ -879,14 +678,7 @@ export default function GraphView({
   // rebuild the Three scene while the pointer travels across nodes.
   const focusRef = useRef<{ self: string; ids: Set<string> } | null>(null);
   const selectedRef = useRef(selected);
-  const lensMotionRef = useRef(new Map<string, LensMotion>());
-  const lensMotionAtRef = useRef(0);
-  // Screen-aligned axes of the lens, fixed when the selection is made from
-  // the direction the camera will look at the node from.
-  const lensBasisRef = useRef<{ right: Vector3; up: Vector3 } | null>(null);
-  // Which arc each lens member sits on (1 right, -1 left): its label points
-  // away from the selection, toward that side.
-  const lensSideRef = useRef(new Map<string, number>());
+  const lensRef = useRef(new Lens());
   // The open lens's block captions, and where each sits in the world.
   const lensHeadsRef = useRef<{ div: HTMLDivElement; at: Vec3; side: number }[]>([]);
   useEffect(() => {
@@ -1107,62 +899,23 @@ export default function GraphView({
     return () => window.clearInterval(ready);
   }, []);
 
-  // The selection lens. The layout itself never changes (no reheat): the
-  // selected node's neighbours get a spring offset that carries them out of
-  // the tangle onto an ellipse around it, facing the camera. The offsets are
-  // stored apart from the layout, so deselecting returns every node to
-  // exactly where it was.
+  // The selection lens springs the selected node's neighbours out of the
+  // tangle onto two arcs facing the camera; deselecting returns every node
+  // to exactly where it was (lib/lens.ts).
   useEffect(() => {
-    const motions = lensMotionRef.current;
     const visibleIds = new Set(visibleData.nodes.map((node) => node.id));
-    for (const [id, motion] of motions) {
-      if (!visibleIds.has(id)) motions.delete(id);
-      else motion.target = { x: 0, y: 0, z: 0 };
-    }
-    const basis = lensBasisRef.current;
-    if (!selected || !basis) return;
-    const anchorHome = homeOf(motions, selected);
-    if (!anchorHome) return;
-
-    const layout = lensLayout(selectedNeighbors);
-    const sides = lensSideRef.current;
-    sides.clear();
-    const toWorld = (slot: LensSlot) => ({
-      x: anchorHome.x + basis.right.x * slot.x + basis.up.x * slot.y,
-      y: anchorHome.y + basis.right.y * slot.x + basis.up.y * slot.y,
-      z: anchorHome.z + basis.right.z * slot.x + basis.up.z * slot.y,
-    });
+    const placed = lensRef.current.arrange(selected, selectedNeighbors, visibleIds);
     // Block captions: plain HTML labels pinned where a member would sit.
     const layer = labelLayerRef.current;
-    const heads = layout.heads.map(({ group, count, more, slot }) => {
+    const heads = placed.map(({ group, count, more, at, side }) => {
       const div = document.createElement("div");
       div.className = "atlas-lens-head";
       div.textContent = more ? t.lensMore(t.groupPlural[group]) : `${t.groupPlural[group]} · ${count}`;
       div.style.display = "none";
       layer?.appendChild(div);
-      return { div, at: toWorld(slot), side: slot.side };
+      return { div, at, side };
     });
     lensHeadsRef.current = heads;
-    selectedNeighbors.forEach((node) => {
-      const home = homeOf(motions, node);
-      const slot = layout.members.get(node.id);
-      if (!home || !slot) return;
-      let motion = motions.get(node.id);
-      if (!motion) {
-        motion = {
-          node,
-          home,
-          offset: { x: 0, y: 0, z: 0 },
-          velocity: { x: 0, y: 0, z: 0 },
-          target: { x: 0, y: 0, z: 0 },
-        };
-        motions.set(node.id, motion);
-      }
-      motion.node = node;
-      sides.set(node.id, slot.side);
-      const at = toWorld(slot);
-      motion.target = { x: at.x - home.x, y: at.y - home.y, z: at.z - home.z };
-    });
     return () => {
       for (const head of heads) head.div.remove();
       lensHeadsRef.current = [];
@@ -1360,53 +1113,10 @@ export default function GraphView({
       if (!mats) return;
       const focus = focusRef.current;
       const now = performance.now();
-      const dt = Math.min(0.05, lensMotionAtRef.current ? (now - lensMotionAtRef.current) / 1000 : 0.016);
-      lensMotionAtRef.current = now;
-      let motionChanged = false;
-      for (const [id, motion] of lensMotionRef.current) {
-        for (const axis of ["x", "y", "z"] as const) {
-          if (reduceMotionRef.current) {
-            motion.offset[axis] = motion.target[axis];
-            motion.velocity[axis] = 0;
-          } else {
-            const acceleration =
-              (motion.target[axis] - motion.offset[axis]) * LENS_SPRING -
-              motion.velocity[axis] * LENS_DAMPING;
-            motion.velocity[axis] += acceleration * dt;
-            motion.offset[axis] += motion.velocity[axis] * dt;
-          }
-        }
-        const x = motion.home.x + motion.offset.x;
-        const y = motion.home.y + motion.offset.y;
-        const z = motion.home.z + motion.offset.z;
-        if (
-          Math.abs((motion.node.x ?? x) - x) > 0.001 ||
-          Math.abs((motion.node.y ?? y) - y) > 0.001 ||
-          Math.abs((motion.node.z ?? z) - z) > 0.001 ||
-          Math.abs(motion.velocity.x) > 0.01 ||
-          Math.abs(motion.velocity.y) > 0.01 ||
-          Math.abs(motion.velocity.z) > 0.01
-        ) {
-          motionChanged = true;
-        }
-        // the pin moves with it, so a running simulation agrees
-        motion.node.x = motion.node.fx = x;
-        motion.node.y = motion.node.fy = y;
-        motion.node.z = motion.node.fz = z;
-        const returning =
-          motion.target.x === 0 && motion.target.y === 0 && motion.target.z === 0;
-        const settled =
-          Math.abs(motion.offset.x) < 0.01 &&
-          Math.abs(motion.offset.y) < 0.01 &&
-          Math.abs(motion.offset.z) < 0.01 &&
-          Math.abs(motion.velocity.x) < 0.01 &&
-          Math.abs(motion.velocity.y) < 0.01 &&
-          Math.abs(motion.velocity.z) < 0.01;
-        if (returning && settled) lensMotionRef.current.delete(id);
-      }
       // Moving lens members: a running simulation tick moves their objects to
       // the new pins and redraws their links. (refresh() did that by
       // rebuilding every node object and label, every frame.)
+      const motionChanged = lensRef.current.step(now, reduceMotionRef.current);
       if (motionChanged) fgRef.current?.d3ReheatSimulation();
 
       const entranceOver =
@@ -1756,7 +1466,7 @@ export default function GraphView({
           // Lens names point away from the selection, beside their dot, so
           // each arc reads as a list and no name sits on a spoke. A name
           // longer than the room left to the screen's edge is cut short.
-          const side = lensSideRef.current.get(id) ?? 1;
+          const side = lensRef.current.side(id) ?? 1;
           const room = side === 1 ? width - screenX - 10 - LABEL_EDGE : screenX - 10 - LABEL_EDGE;
           const full = measuredHalfWidthOf(entry) * 2;
           const trimmed = full > room;
@@ -1932,7 +1642,7 @@ export default function GraphView({
         // A search result may have been hidden until this selection. Wait for
         // force-graph to assign it a position; focusing its default (0,0,0)
         // would leave the visitor looking into empty space.
-        const target = homeOf(lensMotionRef.current, node);
+        const target = lensRef.current.home(node);
         if (!target && attempts++ < 5) {
           window.setTimeout(moveToNode, 120);
           return;
@@ -2161,62 +1871,21 @@ export default function GraphView({
       // toggles release the pins and let the atlas re-settle.) Displaced lens
       // members are pinned where they are; the render loop moves their pins
       // as they spring to their next place.
-      const motions = lensMotionRef.current;
-      const shown = new Set(visibleData.nodes.map((each) => each.id));
-      const laidOut = (each: GraphNode) => visibleGroups.has(each.group);
-      for (const each of visibleData.nodes) {
-        if (each.x === undefined || each.y === undefined || each.z === undefined) continue;
-        pinAt(each, { x: each.x, y: each.y, z: each.z });
-      }
-      if (!laidOut(node)) {
-        // Not part of the layout: a guest of the current lens re-centres where
-        // it stands; one reached by search lands among its linked nodes.
-        let at: Vec3 = { x: node.x ?? 0, y: node.y ?? 0, z: node.z ?? 0 };
-        if (!shown.has(node.id) || node.x === undefined) {
-          const around = (allNeighbors.get(node.id) ?? []).filter(
-            (other) => laidOut(other) && other.x !== undefined
-          );
-          at = { x: 0, y: 0, z: 0 };
-          for (const other of around) {
-            at.x += (other.x ?? 0) / around.length;
-            at.y += (other.y ?? 0) / around.length;
-            at.z += (other.z ?? 0) / around.length;
-          }
-        }
-        pinAt(node, at);
-        motions.delete(node.id);
-      }
-      // New guests (members from hidden layers) bloom out of the selection.
-      const anchorAt = homeOf(motions, node);
-      if (anchorAt) {
-        for (const member of lensMembersOf(node.id)) {
-          if (laidOut(member) || shown.has(member.id)) continue;
-          pinAt(member, anchorAt);
-          motions.delete(member.id);
-        }
-      }
-
-      // The lens faces the camera from where it is now: the flight below keeps
-      // that viewing direction, so the ring is seen straight on.
       const camera = fgRef.current?.camera();
-      const home = homeOf(motions, node);
-      if (camera && home) {
-        const toCamera = new Vector3(
-          camera.position.x - home.x,
-          camera.position.y - home.y,
-          camera.position.z - home.z
-        ).normalize();
-        const right = new Vector3().crossVectors(camera.up, toCamera).normalize();
-        const up = new Vector3().crossVectors(toCamera, right).normalize();
-        lensBasisRef.current = { right, up };
-      }
+      lensRef.current.open(node, {
+        shown: visibleData.nodes,
+        members: lensMembersOf(node.id),
+        linked: links.members(node.id),
+        laidOut: (each) => visibleGroups.has(each.group),
+        camera: camera && { position: camera.position, up: camera.up },
+      });
       // Stepping to a neighbour extends the breadcrumb; going back to a crumb
       // trims it; anything else (search, a far node) starts a new walk.
       setTrail((previous) => {
         const at = previous.findIndex((crumb) => crumb.id === node.id);
         if (at >= 0) return previous.slice(0, at + 1);
         const last = previous[previous.length - 1];
-        const linked = last && allNeighbors.get(last.id)?.some((n) => n.id === node.id);
+        const linked = last && links.linked(last.id, node.id);
         return linked ? [...previous, node] : [node];
       });
       // A selection is the visitor taking the camera: the start-up framing
@@ -2244,7 +1913,7 @@ export default function GraphView({
       if (window.innerWidth < 800) return;
       window.setTimeout(() => frameLens(node), 100);
     },
-    [allNeighbors, frameLens, lensMembersOf, play, visibleData.nodes, visibleGroups]
+    [frameLens, links, lensMembersOf, play, visibleData.nodes, visibleGroups]
   );
 
   // The address follows the selection: ?n=<group>/<slug>, the node page's
