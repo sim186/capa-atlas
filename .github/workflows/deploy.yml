@@ -29,7 +29,7 @@ jobs:
           # Static export served from sim186.github.io/capa-atlas/
           GH_PAGES: "true"
           # The PostHog project token is a public client-side key by design.
-          NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: phc_BAXTaWMrWoyREmDcnWv6WbeLiHgaod3oZtcxbvwGtfnb
+          NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: phc_tquLs49cJzjF99KmN7vkh44EJj7DVrJqAE4LvPAocYKC
           NEXT_PUBLIC_POSTHOG_HOST: https://eu.i.posthog.com
           # Contact address for the credits panel, split in three so no single
           # value is an address. Repo secrets: Settings > Secrets and variables >
