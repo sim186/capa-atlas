@@ -23,6 +23,10 @@ if (!token) {
     api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
     ui_host: "https://eu.posthog.com",
     defaults: "2026-05-30",
+    // No cookies, no localStorage: the visitor id lives only as long as the
+    // tab, so there is nothing to ask consent for (ePrivacy/GDPR). The cost is
+    // that a returning visitor counts as a new one.
+    persistence: "memory",
     // Error tracking: capture unhandled exceptions.
     capture_exceptions: true,
     // Web analytics: Core Web Vitals and performance timing.

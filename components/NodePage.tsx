@@ -197,6 +197,11 @@ export default async function NodePage({ locale, params }: { locale: Locale; par
                     {quote.fragment}
                   </blockquote>
                   <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{quote.annotation.trim()}</p>
+                  {quote.url && (
+                    <a href={quote.url} rel="noopener" className="mt-1 inline-block text-sm underline">
+                      {t.seeOnGenius} ↗
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

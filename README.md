@@ -44,7 +44,7 @@ quelle di un cantautore.
 ### Nodi
 
 - `album`: copertina e descrizione da Wikipedia
-- `song`: le citazioni annotate stanno dentro il nodo e si leggono nel pannello laterale
+- `song`: le citazioni annotate stanno dentro il nodo e si leggono nel pannello laterale (solo un estratto di ogni annotazione, con il link a Genius per il resto)
 - `concept`: tema ricorrente, classificato dalle keyword
 - `figure`: persona o personaggio citato
 
@@ -100,6 +100,8 @@ quelli di default), ripresa tramite `data/raw/done_ids.json`.
 
 Le keyword si collegano a concetti e figure tramite regole in
 `data/concepts.json`; correzioni manuali in `data/referent_overrides.json`.
+Delle annotazioni si salvano solo i primi ~240 caratteri (`excerpt()` in
+`build_graph.py`): il testo completo resta su Genius.
 Le copertine **non** sono scaricate né committate: si salva solo l'URL
 (Cover Art Archive / iTunes) e il browser le carica da lì.
 
@@ -108,7 +110,7 @@ Le copertine **non** sono scaricate né committate: si salva solo l'URL
 - [Next.js](https://nextjs.org) (App Router, export statico) · React 19 · TypeScript · Tailwind 4
 - [react-force-graph-3d](https://github.com/vasturiano/react-force-graph) di Vasco Asturiano
 - [drawably](https://github.com/Axyl101/drawably) per l'interfaccia disegnata a mano
-- [PostHog](https://posthog.com) per analytics ed error tracking
+- [PostHog](https://posthog.com) per analytics ed error tracking, senza cookie (`persistence: "memory"`)
 
 ## Deploy
 
@@ -132,5 +134,11 @@ GH_PAGES=true npm run build   # genera out/
 - Copertine: Cover Art Archive / MusicBrainz
 - Autore: [sim186](https://github.com/sim186)
 
-I testi e le annotazioni appartengono ai rispettivi autori. Questo progetto non
-li ridistribuisce a scopo commerciale.
+I testi e le annotazioni appartengono ai rispettivi autori: l'atlas ne mostra
+brevi estratti e rimanda a Genius per il resto. Per richieste di rimozione usa
+il pulsante *Segnala un problema* nel pannello Info o apri una issue.
+
+## Licenza
+
+Codice sotto [MIT](LICENSE). La licenza non copre i contenuti mostrati (testi,
+annotazioni, copertine, foto), che restano dei rispettivi titolari.

@@ -215,6 +215,17 @@ def clean(label: str, maxlen: int = 46) -> str:
     return " ".join(label.split())[:maxlen]
 
 
+def excerpt(text: str, maxlen: int = 240) -> str:
+    """The opening of a Genius annotation, cut at a word boundary. The atlas
+    shows only this much and links to Genius for the rest: the annotations
+    belong to their authors, so the site quotes them instead of mirroring them."""
+    text = re.sub(r"\n\s*\n\s*", "\n\n", text.strip())
+    if len(text) <= maxlen:
+        return text
+    cut = text[:maxlen].rsplit(None, 1)[0]
+    return cut.rstrip(" ,;:.-–—(\"“«") + "…"
+
+
 def usage_line(node: dict, songs_cited: list[tuple[dict, int]]) -> str:
     """One factual sentence for a concept/figure node, derived from the graph:
     how many songs touch it, on which albums, over which years, and the song
@@ -303,7 +314,7 @@ def main() -> int:
         seen_kw.add(key)
         song["quotes"].append({
             "fragment": clean(fragment, 200),
-            "annotation": r["annotation"],
+            "annotation": excerpt(r["annotation"]),
             "url": r.get("referentUrl"),
         })
 

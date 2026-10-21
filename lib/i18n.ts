@@ -106,6 +106,10 @@ const it = {
   unofficial: "Progetto fan non ufficiale, non affiliato a Caparezza.",
   coversNote:
     "Le copertine degli album appartengono ai rispettivi titolari e sono mostrate a scopo illustrativo, caricate da Cover Art Archive e iTunes.",
+  annotationsNote:
+    "Delle annotazioni di Genius l'atlas mostra solo un estratto: il testo completo resta su Genius, a cui rimanda ogni citazione.",
+  privacyNote:
+    "Statistiche anonime con PostHog, senza cookie né dati salvati nel browser.",
   clickToEnter: "Clicca per entrare",
   loadingMap: "Carico la mappa…",
   loadingMapLabel: "Caricamento della mappa",
@@ -216,6 +220,10 @@ const en: Dictionary = {
   unofficial: "Unofficial fan project, not affiliated with Caparezza.",
   coversNote:
     "Album covers belong to their respective owners and are shown for illustration, loaded from Cover Art Archive and iTunes.",
+  annotationsNote:
+    "The atlas shows only an excerpt of each Genius annotation: the full text stays on Genius, which every quote links to.",
+  privacyNote:
+    "Anonymous statistics with PostHog, with no cookies and nothing stored in the browser.",
   clickToEnter: "Click to enter",
   loadingMap: "Loading the map…",
   loadingMapLabel: "Loading the map",

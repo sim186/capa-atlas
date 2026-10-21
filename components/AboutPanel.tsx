@@ -302,6 +302,14 @@ export default function AboutPanel({
           <p className="mt-2 text-xs leading-snug opacity-70">
             {t.coversNote}
           </p>
+
+          <p className="mt-2 text-xs leading-snug opacity-70">
+            {t.annotationsNote}
+          </p>
+
+          <p className="mt-2 text-xs leading-snug opacity-70">
+            {t.privacyNote}
+          </p>
         </DrawablyCard>
         </div>
       )}
