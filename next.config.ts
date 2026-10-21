@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
   // This rules out server features (rewrites, route handlers) — PostHog
   // therefore talks directly to eu.i.posthog.com, see instrumentation-client.ts.
   output: "export",
+  // Two root layouts (app/(it), app/(en)) leave no single layout for a 404,
+  // so app/global-not-found.tsx is its own document.
+  experimental: { globalNotFound: true },
   ...(isGhPages ? { basePath: BASE_PATH, assetPrefix: `${BASE_PATH}/` } : {}),
 };
 
