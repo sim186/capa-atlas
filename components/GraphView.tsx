@@ -1,6 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { catchError, type ErrorInfo } from "next/error";
+import posthog from "posthog-js";
 import type { ForceGraphMethods } from "react-force-graph-3d";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -40,6 +43,7 @@ import AboutPanel from "@/components/AboutPanel";
 import { albumYears, atlasLayout, studioAlbumIds, LAYOUT_EXTENT, R_ALBUM } from "@/lib/atlasLayout";
 import { Lens, LENS_MAX_MEMBERS, lensExtent, releasePins, type Vec3 } from "@/lib/lens";
 import { neighbourhood } from "@/lib/neighbourhood";
+import { detectWebGL2, makeDeferredFrame } from "@/lib/webgl";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
   ssr: false,
@@ -344,16 +348,99 @@ const DEEP_LINK_DELAY_MS = 1600;
 
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
 
-export default function GraphView({
-  data,
-  portraits,
-  nodePaths,
-}: {
+type GraphViewProps = {
   data: GraphData;
   portraits: Portrait[];
   /** Node id → its page, e.g. "/canzone/vengo-dalla-luna" (lib/atlasData.ts). */
   nodePaths: Record<string, string>;
-}) {
+};
+
+type GraphFallbackReason = "webgl_unavailable" | "renderer_error";
+
+function GraphFallback({
+  data,
+  nodePaths,
+  reason,
+  retry,
+}: GraphViewProps & { reason: GraphFallbackReason; retry: () => void }) {
+  const t = useT();
+
+  useEffect(() => {
+    posthog.capture("atlas rendering fallback shown", { reason });
+  }, [reason]);
+
+  return (
+    <section className="atlas-webgl-fallback" aria-labelledby="atlas-webgl-title">
+      <div className="atlas-webgl-fallback-copy">
+        <p className="font-mono text-xs uppercase tracking-[0.16em] opacity-65">The Capa Atlas</p>
+        <h1 id="atlas-webgl-title">{t.webglUnavailableTitle}</h1>
+        <p>{t.webglUnavailableBody}</p>
+        <button type="button" className="atlas-webgl-retry" onClick={retry}>
+          {t.webglRetry}
+        </button>
+      </div>
+      <div className="atlas-webgl-index">
+        <h2>{t.webglBrowse}</h2>
+        {ALL_GROUPS.map((group) => (
+          <details key={group} open={group === "album"}>
+            <summary>{t.groupPlural[group]}</summary>
+            <ul>
+              {data.nodes
+                .filter((node) => node.group === group)
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map((node) => (
+                  <li key={node.id}>
+                    <Link href={nodePaths[node.id]}>{node.label}</Link>
+                  </li>
+                ))}
+            </ul>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const GraphSceneBoundary = catchError(function GraphSceneErrorFallback(
+  props: GraphViewProps,
+  { retry }: ErrorInfo
+) {
+  return <GraphFallback {...props} reason="renderer_error" retry={retry} />;
+});
+
+export default function GraphView(props: GraphViewProps) {
+  const t = useT();
+  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null);
+
+  const checkWebGL = useCallback(() => {
+    setWebglAvailable(detectWebGL2(document.createElement("canvas")));
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(checkWebGL);
+    return () => window.cancelAnimationFrame(frame);
+  }, [checkWebGL]);
+
+  if (webglAvailable === null) {
+    return (
+      <div className="atlas-webgl-check" role="status">
+        {t.loadingMap}
+      </div>
+    );
+  }
+
+  if (!webglAvailable) {
+    return <GraphFallback {...props} reason="webgl_unavailable" retry={checkWebGL} />;
+  }
+
+  return (
+    <GraphSceneBoundary {...props}>
+      <GraphViewScene {...props} />
+    </GraphSceneBoundary>
+  );
+}
+
+function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   const t = useT();
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -514,11 +601,28 @@ export default function GraphView({
   // a camera flight, a state change, the layout simulation.
   const awakeUntilRef = useRef(0);
   const renderPausedRef = useRef(false);
+  const deferredResumeRef = useRef<ReturnType<typeof makeDeferredFrame> | null>(null);
+  useEffect(() => {
+    const deferredResume = makeDeferredFrame(
+      {
+        request: window.requestAnimationFrame.bind(window),
+        cancel: window.cancelAnimationFrame.bind(window),
+      },
+      () => fgRef.current?.resumeAnimation()
+    );
+    deferredResumeRef.current = deferredResume;
+    return () => {
+      deferredResume.cancel();
+      deferredResumeRef.current = null;
+    };
+  }, []);
   const wake = useCallback((ms = 600) => {
     awakeUntilRef.current = Math.max(awakeUntilRef.current, performance.now() + ms);
     if (renderPausedRef.current) {
       renderPausedRef.current = false;
-      fgRef.current?.resumeAnimation();
+      // resumeAnimation() immediately calls tickFrame(). Waiting until the next
+      // paint lets react-force-graph finish replacing its force layout first.
+      deferredResumeRef.current?.schedule();
     }
   }, []);
   const hoverFromPanel = useCallback(
@@ -1904,6 +2008,11 @@ export default function GraphView({
       setSearchFocused(false);
       setControlsOpen(false);
       play(sound.select);
+      posthog.capture("atlas node opened", {
+        node_group: node.group,
+        node_id: node.id,
+        input_mode: liteRef.current ? "touch" : "pointer",
+      });
 
       // Never fit after selecting. The point of view belongs to the visitor;
       // selection only re-centers the frame on the node at the zoom level

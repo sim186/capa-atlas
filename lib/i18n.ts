@@ -113,6 +113,11 @@ const it = {
   clickToEnter: "Clicca per entrare",
   loadingMap: "Carico la mappa…",
   loadingMapLabel: "Caricamento della mappa",
+  webglUnavailableTitle: "La mappa 3D non è disponibile",
+  webglUnavailableBody:
+    "Il browser o la scheda grafica non riescono ad avviare WebGL 2. Puoi comunque esplorare tutto l'atlante dall'indice.",
+  webglRetry: "Riprova la mappa 3D",
+  webglBrowse: "Esplora l'indice",
   otherLanguage: { href: "/en", label: "EN", title: "English version" },
 
   // per-node pages (/canzone/…, /tema/…): the crawlable side of the atlas
@@ -227,6 +232,11 @@ const en: Dictionary = {
   clickToEnter: "Click to enter",
   loadingMap: "Loading the map…",
   loadingMapLabel: "Loading the map",
+  webglUnavailableTitle: "The 3D map is unavailable",
+  webglUnavailableBody:
+    "This browser or graphics device cannot start WebGL 2. You can still explore the full atlas from the index.",
+  webglRetry: "Retry the 3D map",
+  webglBrowse: "Browse the index",
   otherLanguage: { href: "/", label: "IT", title: "Versione italiana" },
 
   nodePageTitle: (label, group) => `${label} · ${group} in Caparezza's universe`,
