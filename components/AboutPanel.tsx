@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import { DrawablyCard } from "drawably/react";
 import { sound } from "@/lib/sound";
 import Link from "next/link";
@@ -47,6 +48,12 @@ export default function AboutPanel({
           hrefLang={locale === "it" ? "en" : "it"}
           lang={locale === "it" ? "en" : "it"}
           title={t.otherLanguage.title}
+          onClick={() =>
+            posthog.capture("atlas language changed", {
+              from_locale: locale,
+              to_locale: locale === "it" ? "en" : "it",
+            })
+          }
           className="atlas-circle-btn font-mono text-[0.68rem] font-bold tracking-[0.06em]"
         >
           {t.otherLanguage.label}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import posthog from "posthog-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BASE_PATH } from "@/lib/basePath";
 import GroupGlyph from "@/components/GroupGlyph";
@@ -85,11 +86,22 @@ function WikipediaIcon() {
   );
 }
 
-function GeniusLink({ href, label, className = "" }: { href: string; label: string; className?: string }) {
+function GeniusLink({
+  href,
+  label,
+  className = "",
+  onClick,
+}: {
+  href: string;
+  label: string;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
     <a
       href={href}
       target="_blank"
+      onClick={onClick}
       rel="noreferrer"
       className={`inline-flex items-center gap-1.5 font-mono uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)] ${className}`}
     >
@@ -99,11 +111,20 @@ function GeniusLink({ href, label, className = "" }: { href: string; label: stri
   );
 }
 
-function WikipediaLink({ href, className = "" }: { href: string; className?: string }) {
+function WikipediaLink({
+  href,
+  className = "",
+  onClick,
+}: {
+  href: string;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
     <a
       href={href}
       target="_blank"
+      onClick={onClick}
       rel="noreferrer"
       className={`inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)] ${className}`}
     >
@@ -113,11 +134,20 @@ function WikipediaLink({ href, className = "" }: { href: string; className?: str
   );
 }
 
-function SpotifyLink({ href, className = "" }: { href: string; className?: string }) {
+function SpotifyLink({
+  href,
+  className = "",
+  onClick,
+}: {
+  href: string;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
     <a
       href={href}
       target="_blank"
+      onClick={onClick}
       rel="noreferrer"
       className={`inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)] ${className}`}
     >
@@ -130,12 +160,19 @@ function SpotifyLink({ href, className = "" }: { href: string; className?: strin
 }
 
 /** The song on Caparezza's own YouTube channel (data/youtube.json). */
-function YouTubeLink({ video }: { video: NonNullable<GraphNode["youtube"]> }) {
+function YouTubeLink({
+  video,
+  onClick,
+}: {
+  video: NonNullable<GraphNode["youtube"]>;
+  onClick?: () => void;
+}) {
   const t = useT();
   return (
     <a
       href={`https://www.youtube.com/watch?v=${video.id}`}
       target="_blank"
+      onClick={onClick}
       rel="noreferrer"
       title={t.youtubeTitle}
       className="inline-flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
@@ -283,6 +320,16 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
   const title = node.label;
   const groupLabel = t.group[node.group] ?? node.group;
   const spotifyUrl = spotifySearchUrl(node);
+  const captureOutbound = useCallback(
+    (provider: "genius" | "wikipedia" | "youtube" | "spotify") => {
+      posthog.capture("atlas outbound link opened", {
+        provider,
+        node_id: node.id,
+        node_group: node.group,
+      });
+    },
+    [node.group, node.id]
+  );
 
   const body = (
     <div
@@ -388,13 +435,31 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
               <AboutSections about={node.about} italian={node.italian?.includes("about")} />
               <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
                 {node.url && (
-                  <GeniusLink href={node.url} label={t.openOnGenius} className="text-[0.72rem]" />
+                  <GeniusLink
+                    href={node.url}
+                    label={t.openOnGenius}
+                    className="text-[0.72rem]"
+                    onClick={() => captureOutbound("genius")}
+                  />
                 )}
                 {node.descriptionUrl && (
-                  <WikipediaLink href={node.descriptionUrl} />
+                  <WikipediaLink
+                    href={node.descriptionUrl}
+                    onClick={() => captureOutbound("wikipedia")}
+                  />
                 )}
-                {node.youtube && <YouTubeLink video={node.youtube} />}
-                {spotifyUrl && <SpotifyLink href={spotifyUrl} />}
+                {node.youtube && (
+                  <YouTubeLink
+                    video={node.youtube}
+                    onClick={() => captureOutbound("youtube")}
+                  />
+                )}
+                {spotifyUrl && (
+                  <SpotifyLink
+                    href={spotifyUrl}
+                    onClick={() => captureOutbound("spotify")}
+                  />
+                )}
               </p>
             </div>
           )}
@@ -426,7 +491,12 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                           {quote.annotation}
                         </p>
                         {quote.url && (
-                          <GeniusLink href={quote.url} label={t.seeOnGenius} className="mt-2 text-[0.68rem]" />
+                          <GeniusLink
+                            href={quote.url}
+                            label={t.seeOnGenius}
+                            className="mt-2 text-[0.68rem]"
+                            onClick={() => captureOutbound("genius")}
+                          />
                         )}
                       </div>
                     </details>
@@ -468,14 +538,28 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                     {node.bio}
                   </p>
                   {node.bioUrl && (
-                    <WikipediaLink href={node.bioUrl} className="mt-3" />
+                    <WikipediaLink
+                      href={node.bioUrl}
+                      className="mt-3"
+                      onClick={() => captureOutbound("wikipedia")}
+                    />
                   )}
                 </div>
               )}
               {node.descriptionUrl && (
-                <WikipediaLink href={node.descriptionUrl} className="mt-3" />
+                <WikipediaLink
+                  href={node.descriptionUrl}
+                  className="mt-3"
+                  onClick={() => captureOutbound("wikipedia")}
+                />
               )}
-              {spotifyUrl && <SpotifyLink href={spotifyUrl} className="mt-3" />}
+              {spotifyUrl && (
+                <SpotifyLink
+                  href={spotifyUrl}
+                  className="mt-3"
+                  onClick={() => captureOutbound("spotify")}
+                />
+              )}
             </div>
           )}
 

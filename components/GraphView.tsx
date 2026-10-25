@@ -356,6 +356,15 @@ type GraphViewProps = {
 };
 
 type GraphFallbackReason = "webgl_unavailable" | "renderer_error";
+type NodeOpenSource =
+  | "map"
+  | "keyboard"
+  | "search"
+  | "list"
+  | "breadcrumb"
+  | "related"
+  | "deep_link"
+  | "history";
 
 function GraphFallback({
   data,
@@ -375,7 +384,14 @@ function GraphFallback({
         <p className="font-mono text-xs uppercase tracking-[0.16em] opacity-65">The Capa Atlas</p>
         <h1 id="atlas-webgl-title">{t.webglUnavailableTitle}</h1>
         <p>{t.webglUnavailableBody}</p>
-        <button type="button" className="atlas-webgl-retry" onClick={retry}>
+        <button
+          type="button"
+          className="atlas-webgl-retry"
+          onClick={() => {
+            posthog.capture("atlas rendering retry clicked", { reason });
+            retry();
+          }}
+        >
           {t.webglRetry}
         </button>
       </div>
@@ -545,7 +561,12 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   const tickCountRef = useRef(0);
   const revealedRef = useRef(false);
   const revealAtRef = useRef(0);
+  const sceneStartedAtRef = useRef(0);
+  const readyCapturedRef = useRef(false);
   const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    sceneStartedAtRef.current = performance.now();
+  }, []);
   const sceneReady = sceneMounted && warmTicks >= WARM_TICKS;
   const introProgress = sceneMounted ? 0.4 + 0.6 * Math.min(1, warmTicks / WARM_TICKS) : 0.12;
   useEffect(() => {
@@ -575,6 +596,19 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
     // profile the server rendered with
     liteRef.current = liteDevice();
   }, [lite]);
+  useEffect(() => {
+    if (!sceneReady || readyCapturedRef.current) return;
+    readyCapturedRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    posthog.capture("atlas ready", {
+      load_duration_ms: Math.max(
+        0,
+        Math.round(performance.now() - sceneStartedAtRef.current)
+      ),
+      device_mode: liteRef.current ? "touch" : "desktop",
+      deep_linked: params.has("n") || params.has("node"),
+    });
+  }, [sceneReady]);
   useEffect(() => {
     ghostSongsRef.current = ghostSongs;
   }, [ghostSongs]);
@@ -1854,6 +1888,12 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
 
   const toggleKind = useCallback(
     (kind: LinkKind) => {
+      const enabled = !visibleKinds.has(kind);
+      posthog.capture("atlas filter changed", {
+        filter_type: "link_kind",
+        filter_value: kind,
+        enabled,
+      });
       releasePins(data.nodes);
       refitOnEngineStopRef.current = true;
       window.setTimeout(() => {
@@ -1861,14 +1901,13 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       }, 900);
       setVisibleKinds((previous) => {
         const next = new Set(previous);
-        const willShow = !next.has(kind);
-        if (willShow) next.add(kind);
+        if (enabled) next.add(kind);
         else next.delete(kind);
-        play(() => sound.toggle(willShow));
+        play(() => sound.toggle(enabled));
         return next;
       });
     },
-    [data.nodes, fit, play]
+    [data.nodes, fit, play, visibleKinds]
   );
 
   const listing = query.trim() !== "" || browse;
@@ -1915,22 +1954,27 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   );
 
   const toggleLayer = (group: Group) => {
+    const enabled = !layerOn(group);
+    posthog.capture("atlas filter changed", {
+      filter_type: "node_group",
+      filter_value: group,
+      enabled,
+    });
     if (group !== "song") {
       toggleGroup(group);
       return;
     }
     releasePins(data.nodes);
     refitOnEngineStopRef.current = true;
-    const willShow = lite ? songMode === "focus" : !visibleGroups.has("song");
-    if (willShow) {
+    if (enabled) {
       setVisibleKinds((previous) => new Set([...previous, "on", "refers"]));
     }
     if (lite) {
-      play(() => sound.toggle(willShow));
-      setSongMode(willShow ? "all" : "focus");
+      play(() => sound.toggle(enabled));
+      setSongMode(enabled ? "all" : "focus");
       setVisibleGroups((previous) => {
         const next = new Set(previous);
-        if (willShow) next.add("song");
+        if (enabled) next.add("song");
         else next.delete("song");
         return next;
       });
@@ -1968,7 +2012,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   }, []);
 
   const focusNode = useCallback(
-    (node: GraphNode) => {
+    (node: GraphNode, source: NodeOpenSource = "map") => {
       if (!selectedRef.current) openerRef.current = document.activeElement;
       // Pin the layout where it stands. Opening a lens adds its guests to the
       // graph, which wakes the simulation; pinned, nothing else moves. (Layer
@@ -2012,6 +2056,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
         node_group: node.group,
         node_id: node.id,
         input_mode: liteRef.current ? "touch" : "pointer",
+        source,
       });
 
       // Never fit after selecting. The point of view belongs to the visitor;
@@ -2023,6 +2068,22 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       window.setTimeout(() => frameLens(node), 100);
     },
     [frameLens, links, lensMembersOf, play, visibleData.nodes, visibleGroups]
+  );
+
+  const openListedNode = useCallback(
+    (node?: GraphNode) => {
+      const normalized = query.trim();
+      if (normalized) {
+        posthog.capture("atlas search completed", {
+          query_length: normalized.length,
+          result_count: results.length,
+          outcome: node ? "result_opened" : "no_results",
+          ...(node ? { node_id: node.id, node_group: node.group } : {}),
+        });
+      }
+      if (node) focusNode(node, normalized ? "search" : "list");
+    },
+    [focusNode, query, results.length]
   );
 
   // The address follows the selection: ?n=<group>/<slug>, the node page's
@@ -2058,7 +2119,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       return;
     }
     window.setTimeout(() => {
-      focusNodeRef.current(node);
+      focusNodeRef.current(node, "deep_link");
       urlSyncRef.current = true;
     }, DEEP_LINK_DELAY_MS);
   }, [revealed, nodeFromUrl]);
@@ -2076,7 +2137,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
     const onPop = () => {
       if (!urlSyncRef.current) return;
       const node = nodeFromUrl();
-      if (node && node.id !== selectedRef.current?.id) focusNodeRef.current(node);
+      if (node && node.id !== selectedRef.current?.id) focusNodeRef.current(node, "history");
       else if (!node && selectedRef.current) closeDetailRef.current();
     };
     window.addEventListener("popstate", onPop);
@@ -2133,7 +2194,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       if (event.key === "Enter" || event.key === " ") {
         if (!current) return;
         event.preventDefault();
-        focusNode(current);
+        focusNode(current, "keyboard");
         return;
       }
       const dir: Record<string, [number, number]> = {
@@ -2421,7 +2482,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
 
   const handleNavigate = useCallback(
     (node: GraphNode) => {
-      focusNode(node);
+      focusNode(node, "related");
     },
     [focusNode]
   );
@@ -2717,7 +2778,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
                 <span key={crumb.id} className="flex min-w-0 items-center gap-1.5">
                   <span aria-hidden="true" className="opacity-40">›</span>
                   <button
-                    onClick={() => !current && focusNode(crumb)}
+                    onClick={() => !current && focusNode(crumb, "breadcrumb")}
                     aria-current={current ? "location" : undefined}
                     className="atlas-trail-step truncate"
                     disabled={current}
@@ -2786,7 +2847,10 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" && results[0]) focusNode(results[0]);
+                if (event.key !== "Enter") return;
+                if (!query.trim() && !results[0]) return;
+                event.preventDefault();
+                openListedNode(results[0]);
               }}
               placeholder={t.searchPlaceholder}
               aria-label={t.searchLabel}
@@ -2813,7 +2877,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
                       <li key={node.id}>
                         <button
                           onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => focusNode(node)}
+                          onClick={() => openListedNode(node)}
                           className={`atlas-result flex w-full items-center gap-2.5 px-1 text-left ${
                             isDesktop ? "py-2" : "min-h-11 py-2.5 text-[0.82rem]"
                           }`}
