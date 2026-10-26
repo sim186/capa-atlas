@@ -5,6 +5,7 @@ import "drawably/style.css";
 import "@/app/globals.css";
 import type { Locale } from "@/lib/i18n";
 import { SITE_COPY, SITE_NAME, SITE_URL, siteTitle } from "@/lib/site";
+import { jsonLdString } from "@/lib/structuredData";
 
 // The atlas has one root layout per language (app/(it), app/(en)) so each
 // page is served with its own <html lang>; both are this document.
@@ -107,7 +108,7 @@ export default function RootDocument({ locale, children }: { locale: Locale; chi
         {children}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
         />
       </body>
     </html>
