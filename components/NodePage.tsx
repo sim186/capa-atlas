@@ -8,6 +8,7 @@ import { mapUrlKey, type GraphNode } from "@/lib/graph";
 import { DICTIONARIES, type Locale } from "@/lib/i18n";
 import { inBlocks, neighbourhood } from "@/lib/neighbourhood";
 import { SITE_COPY, SITE_NAME } from "@/lib/site";
+import { jsonLdString, nodeJsonLd } from "@/lib/structuredData";
 
 // One page per node, in plain HTML: what the canvas draws, readable by
 // search engines and shareable as a link. app/(it)/[group]/[slug] and
@@ -251,6 +252,18 @@ export default async function NodePage({ locale, params }: { locale: Locale; par
           </section>
         )}
       </article>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdString(
+            nodeJsonLd(node, locale, {
+              description: summary(node, blocks.reduce((n, block) => n + block.nodes.length, 0), locale),
+              albumNode,
+            })
+          ),
+        }}
+      />
 
       <footer className={`mt-16 border-t border-[var(--atlas-hair)] pt-4 text-xs ${MUTED}`}>
         {t.unofficial}
