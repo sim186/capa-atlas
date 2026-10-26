@@ -6,9 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BASE_PATH } from "@/lib/basePath";
 import GroupGlyph from "@/components/GroupGlyph";
 import PortraitBackdrop from "@/components/PortraitBackdrop";
-import type { GraphNode, Portrait, Quote } from "@/lib/graph";
+import type { GraphNode, Portrait, Quote, QuoteRef } from "@/lib/graph";
 import { LENS_GROUP_ORDER } from "@/lib/graph";
-import { useT } from "@/lib/locale";
+import { useLocale, useT } from "@/lib/locale";
 import { DrawablyBadge, DrawablyButton } from "drawably/react";
 import { drawablyCard } from "drawably";
 import { useIsDesktop } from "@/lib/useIsDesktop";
@@ -37,6 +37,8 @@ interface NodeDetailProps {
   portraitIndex?: number;
   /** Closing with focus inside: hand focus back to where it came from. */
   onReturnFocus?: () => void;
+  /** A quote's reference asked onto the map (lib/refs.ts). */
+  onOpenRef?: (id: string) => void;
 }
 
 const quoteCache = new Map<string, Quote[]>();
@@ -186,6 +188,85 @@ function YouTubeLink({
 }
 
 /** English atlas: marks text still in Italian (no English source for it). */
+/** A quote's ref as this atlas shows it: en.wiki's page on /en when there is one. */
+function localRef(ref: QuoteRef, english: boolean) {
+  if (english && ref.en) return { ...ref, ...ref.en, italian: false };
+  return { ...ref, italian: english && Boolean(ref.bio) };
+}
+
+/**
+ * Who and what a quote's line alludes to: one pill each, opening its
+ * Wikipedia lead in place. One open at a time, so the list stays a list.
+ */
+function QuoteRefs({
+  refs,
+  onOutbound,
+  onOpenRef,
+}: {
+  refs: QuoteRef[];
+  onOutbound: () => void;
+  /** Raise the ref onto the map, among every song that cites it. */
+  onOpenRef?: (id: string) => void;
+}) {
+  const t = useT();
+  const english = useLocale() === "en";
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const shown = refs.map((ref) => localRef(ref, english));
+  const active = openIndex === null ? null : shown[openIndex];
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
+        {t.citedHere}
+      </p>
+      <ul className="flex flex-wrap gap-1.5">
+        {shown.map((ref, index) => (
+          <li key={index}>
+            <button
+              type="button"
+              className="atlas-pill text-[0.76rem]"
+              style={{ padding: "0.2rem 0.65rem" }}
+              data-on={openIndex === index}
+              aria-expanded={openIndex === index}
+              title={t.refType[ref.type]}
+              onClick={() => setOpenIndex(openIndex === index ? null : index)}
+            >
+              {ref.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {active && (
+        <div className="mt-2 rounded-md border px-3 py-2.5" style={{ borderColor: "var(--atlas-hair)" }}>
+          <p className="text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[color-mix(in_oklch,var(--atlas-ink)_68%,transparent)]">
+            {t.refType[active.type]}
+          </p>
+          {active.bio && (
+            <p
+              lang={active.italian || !english ? "it" : "en"}
+              className="mt-1 text-[0.82rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]"
+            >
+              <ItalianTag show={active.italian} />
+              {active.bio}
+            </p>
+          )}
+          <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {onOpenRef && (
+              <button
+                type="button"
+                onClick={() => onOpenRef(active.id)}
+                className="font-mono text-[0.72rem] uppercase tracking-[0.14em] underline decoration-1 underline-offset-4 [text-decoration-color:color-mix(in_oklch,var(--atlas-ink)_38%,transparent)] hover:[text-decoration-color:var(--atlas-ink)]"
+              >
+                {t.showOnMap} →
+              </button>
+            )}
+            {active.url && <WikipediaLink href={active.url} onClick={onOutbound} />}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ItalianTag({ show }: { show?: boolean }) {
   const t = useT();
   if (!show || !t.italianTag) return null;
@@ -235,9 +316,10 @@ function AboutSections({ about, italian }: { about?: { heading: string; text: st
  * meta row, hairline rule, title, body blocks and pager each fade up at
  * ~52ms intervals with a soft overshoot ease.
  */
-export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, pagePath, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0, onReturnFocus }: NodeDetailProps) {
+export default function NodeDetail({ node, neighbors, linkCount = neighbors.length, open, onClose, onNavigate, nodeById, pagePath, distinctShapes = false, onHoverNode, portraits = [], portraitIndex = 0, onReturnFocus, onOpenRef }: NodeDetailProps) {
   const isDesktop = useIsDesktop();
   const t = useT();
+  const english = useLocale() === "en";
   const quotes = useQuotes(node);
   // Back-history for the pager and the direction of the last hop, used to
   // slide content in from the correct side. Both are state so render can
@@ -318,7 +400,7 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
   }, [goNext, goPrev, open]);
 
   const title = node.label;
-  const groupLabel = t.group[node.group] ?? node.group;
+  const groupLabel = node.refType ? t.refType[node.refType] : (t.group[node.group] ?? node.group);
   const spotifyUrl = spotifySearchUrl(node);
   const captureOutbound = useCallback(
     (provider: "genius" | "wikipedia" | "youtube" | "spotify") => {
@@ -485,11 +567,23 @@ export default function NodeDetail({ node, neighbors, linkCount = neighbors.leng
                     <details className="group rounded-md border" style={{ borderColor: "var(--atlas-hair)" }}>
                       <summary lang="it" className="cursor-pointer list-none px-3 py-2.5 text-[0.86rem] font-medium leading-snug marker:content-none">
                         {quote.fragment}
+                        {quote.refs && (
+                          <span className="mt-1 block font-mono text-[0.66rem] font-normal uppercase tracking-[0.1em] text-[color-mix(in_oklch,var(--atlas-ink)_60%,transparent)]">
+                            {quote.refs.map((ref) => localRef(ref, english).name).join(" · ")}
+                          </span>
+                        )}
                       </summary>
                       <div className="border-t px-3 py-3" style={{ borderColor: "var(--atlas-hair)" }}>
                         <p lang="it" className="text-[0.85rem] leading-relaxed text-[color-mix(in_oklch,var(--atlas-ink)_78%,transparent)]">
                           {quote.annotation}
                         </p>
+                        {quote.refs && (
+                          <QuoteRefs
+                            refs={quote.refs}
+                            onOutbound={() => captureOutbound("wikipedia")}
+                            onOpenRef={onOpenRef}
+                          />
+                        )}
                         {quote.url && (
                           <GeniusLink
                             href={quote.url}

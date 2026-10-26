@@ -1,9 +1,24 @@
 export type Group = "album" | "song" | "figure" | "concept";
 
+export type RefType = "person" | "character" | "work" | "group" | "place_event" | "brand";
+
+/** Someone or something a quote's line alludes to, with its Wikipedia lead. */
+export interface QuoteRef {
+  /** "ref:<slug>", its entry in public/refs.json (lib/refs.ts). */
+  id: string;
+  name: string;
+  type: RefType;
+  bio?: string;
+  url?: string;
+  /** en.wiki's page on the same subject, for the English atlas. */
+  en?: { name: string; bio: string; url: string };
+}
+
 export interface Quote {
   fragment: string;
   annotation: string;
   url?: string;
+  refs?: QuoteRef[];
 }
 
 export interface GraphNode {
@@ -54,6 +69,8 @@ export interface GraphNode {
   // per-song file in public/quotes/ that the detail panel fetches on demand.
   quoteCount?: number;
   quotesFile?: string;
+  // a named reference raised onto the map (lib/refs.ts): what it is
+  refType?: RefType;
   // album: track list in disc order (Wikipedia "Tracce", else the songs in
   // the graph); `id` is the song node when that track is in the atlas.
   tracks?: { label: string; id?: string }[];

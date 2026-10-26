@@ -197,6 +197,26 @@ export default async function NodePage({ locale, params }: { locale: Locale; par
                     {quote.fragment}
                   </blockquote>
                   <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{quote.annotation.trim()}</p>
+                  {quote.refs && (
+                    <p className={`mt-2 text-sm ${MUTED}`}>
+                      {t.citedHere}:{" "}
+                      {quote.refs.map((ref, j) => {
+                        const shown = locale === "en" && ref.en ? ref.en : ref;
+                        return (
+                          <span key={j}>
+                            {j > 0 && " · "}
+                            {shown.url ? (
+                              <a href={shown.url} rel="noopener" className="underline" title={t.refType[ref.type]}>
+                                {shown.name}
+                              </a>
+                            ) : (
+                              shown.name
+                            )}
+                          </span>
+                        );
+                      })}
+                    </p>
+                  )}
                   {quote.url && (
                     <a href={quote.url} rel="noopener" className="mt-1 inline-block text-sm underline">
                       {t.seeOnGenius} ↗

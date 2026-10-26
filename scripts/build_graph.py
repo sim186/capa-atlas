@@ -38,6 +38,13 @@ English Wikipedia text from data/wikipedia_en.json (fetch_wikipedia_en.py).
 Fields it lacks fall back to the Italian ones.
 Song nodes carry `youtube` ({id, kind}) from data/youtube.json
 (scripts/fetch_youtube.py) when Caparezza's channel has an upload for them.
+Each quote carries `refs`: the people, characters, works, groups, places/
+events and brands its line alludes to (data/entities.json), with a short
+Wikipedia bio and link from data/entity_wiki.json (fetch_entities.py) and an
+`en` counterpart when en.wiki has the page. They aren't graph nodes: there
+are ~2000 of them, most cited once. public/refs.json indexes them (each ref's
+`id`, name and the songs citing it) so the atlas can raise one onto the
+map on demand, lens and all, and find them in search.
 """
 
 import csv
@@ -55,10 +62,13 @@ WIKIPEDIA_PATH = os.path.join(ROOT, "data", "wikipedia.json")
 COVERS_PATH = os.path.join(ROOT, "data", "covers.json")
 YOUTUBE_PATH = os.path.join(ROOT, "data", "youtube.json")
 WIKIPEDIA_EN_PATH = os.path.join(ROOT, "data", "wikipedia_en.json")
+ENTITIES_PATH = os.path.join(ROOT, "data", "entities.json")
+ENTITY_WIKI_PATH = os.path.join(ROOT, "data", "entity_wiki.json")
 SINGLES = "Singoli / altro"
 SINGLES_EN = "Singles / other"
 OUT = os.path.join(ROOT, "public", "graphData.json")
 QUOTES_DIR = os.path.join(ROOT, "public", "quotes")
+REFS_OUT = os.path.join(ROOT, "public", "refs.json")
 CSV_OUT = os.path.join(ROOT, "data", "keywords.csv")
 
 
@@ -111,6 +121,76 @@ def load_referent_overrides() -> dict[int, list[str]]:
         return {}
     with open(REFERENT_OVERRIDES_PATH, encoding="utf-8") as f:
         return {int(k): v for k, v in json.load(f).items()}
+
+
+GEO_LEAD = re.compile(r"\bè (?:un|una|il|la) (?:comune|frazione|città|centro abitato|località|"
+                      r"regione|quartiere|isola|fiume)\b", re.IGNORECASE)
+
+
+def slugify(text: str) -> str:
+    """lib/atlasData.ts's slugify."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")
+
+
+def load_entity_refs() -> dict[int, list[dict]]:
+    """referentId -> the quote's `refs` (see the module docstring). Entities
+    landing on the same Wikipedia page are one entity, named the way the
+    corpus names it most often; without a page, the name itself is the key."""
+    if not os.path.exists(ENTITIES_PATH):
+        return {}
+    with open(ENTITIES_PATH, encoding="utf-8") as f:
+        entities = {int(k): v for k, v in json.load(f).items()}
+    wiki: dict[str, dict] = {}
+    if os.path.exists(ENTITY_WIKI_PATH):
+        with open(ENTITY_WIKI_PATH, encoding="utf-8") as f:
+            wiki = json.load(f)
+
+    def page_of(e: dict) -> dict:
+        page = wiki.get(e["wiki"] or e["name"]) or {}
+        # a name fallback can land on a namesake town ("Dallas" the series →
+        # the city): only places and events may have a place's page
+        if page and e["type"] != "place_event" and GEO_LEAD.search(page["extract"][:200]):
+            return {}
+        return page
+
+    def key_of(e: dict) -> str:
+        page = page_of(e)
+        return page["title"] if page else e["name"].casefold()
+
+    names: dict[str, dict[str, int]] = {}
+    for ents in entities.values():
+        for e in ents:
+            counts = names.setdefault(key_of(e), {})
+            counts[e["name"]] = counts.get(e["name"], 0) + 1
+    # stable ids, "ref:<slug>", unique even when two keys slugify alike
+    ids: dict[str, str] = {}
+    for key in sorted(names):
+        slug = slugify(key) or "ref"
+        ref_id, n = f"ref:{slug}", 2
+        while ref_id in ids.values():
+            ref_id, n = f"ref:{slug}-{n}", n + 1
+        ids[key] = ref_id
+
+    refs: dict[int, list[dict]] = {}
+    for rid, ents in entities.items():
+        seen: set[str] = set()
+        for e in ents:
+            key = key_of(e)
+            if key in seen:
+                continue
+            seen.add(key)
+            name = max(names[key].items(), key=lambda kv: (kv[1], -len(kv[0])))[0]
+            ref = {"id": ids[key], "name": name, "type": e["type"]}
+            page = page_of(e)
+            if page:
+                ref |= {"bio": page["extract"], "url": page["url"]}
+                en = page.get("en")
+                if en:
+                    ref["en"] = {"name": re.sub(r"\s*\([^)]*\)$", "", en["title"]),
+                                 "bio": en["extract"], "url": en["url"]}
+            refs.setdefault(rid, []).append(ref)
+    return refs
 
 
 # Whole-song semantic overrides: songs read in full where the allegory (not
@@ -282,6 +362,7 @@ def main() -> int:
     covers = load_covers()
     youtube = load_youtube()
     wikipedia_en = load_wikipedia_en()
+    entity_refs = load_entity_refs()
 
     albums: dict[str, dict] = {}
     songs: dict[str, dict] = {}
@@ -312,11 +393,14 @@ def main() -> int:
         if key in seen_kw:
             continue
         seen_kw.add(key)
-        song["quotes"].append({
+        quote = {
             "fragment": clean(fragment, 200),
             "annotation": excerpt(r["annotation"]),
             "url": r.get("referentUrl"),
-        })
+        }
+        if r["referentId"] in entity_refs:
+            quote["refs"] = entity_refs[r["referentId"]]
+        song["quotes"].append(quote)
 
         cids = classify(fragment, r["annotation"], r["songTitle"], concepts)
         for cid in referent_overrides.get(r["referentId"], []):
@@ -468,6 +552,30 @@ def main() -> int:
         song["quotesFile"] = f"{i}.json"
         with open(os.path.join(QUOTES_DIR, song["quotesFile"]), "w", encoding="utf-8") as f:
             json.dump(quotes, f, ensure_ascii=False, separators=(",", ":"))
+
+    # The refs index: one entry per ref, the songs citing it strongest first.
+    # Names only: the lead and link travel in the quote files, and the atlas
+    # reads them from the first song's file when a ref opens. A ref that is
+    # one of the figure nodes (same Wikipedia page) names it as `node`: the
+    # atlas opens the figure instead of raising a twin.
+    figure_by_page = {node["bioUrl"]: node["id"] for node in concepts_final.values() if node.get("bioUrl")}
+    index: dict[str, dict] = {}
+    for song in songs.values():
+        if not song.get("quotesFile"):
+            continue
+        with open(os.path.join(QUOTES_DIR, song["quotesFile"]), encoding="utf-8") as f:
+            for quote in json.load(f):
+                for ref in quote.get("refs", []):
+                    entry = index.setdefault(ref["id"], {
+                        "id": ref["id"], "name": ref["name"], "type": ref["type"], "songs": {},
+                    } | ({"en": ref["en"]["name"]} if "en" in ref else {})
+                      | ({"node": figure_by_page[ref["url"]]} if ref.get("url") in figure_by_page else {}))
+                    entry["songs"][song["id"]] = entry["songs"].get(song["id"], 0) + 1
+    for entry in index.values():
+        entry["songs"] = sorted(entry["songs"].items(), key=lambda kv: (-kv[1], kv[0]))
+    with open(REFS_OUT, "w", encoding="utf-8") as f:
+        json.dump(sorted(index.values(), key=lambda e: e["name"].casefold()), f,
+                  ensure_ascii=False, separators=(",", ":"))
 
     graph = {"nodes": nodes, "links": links}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

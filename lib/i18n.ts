@@ -1,4 +1,4 @@
-import type { Group, GraphLink } from "@/lib/graph";
+import type { Group, GraphLink, RefType } from "@/lib/graph";
 
 /**
  * UI strings for the two atlases: Italian at /, English at /en. The data
@@ -76,6 +76,17 @@ const it = {
   youtubeKind: { video: "Video", lyric: "Lyric video", audio: "Audio" },
   annotatedQuotes: "Citazioni annotate",
   quotesNote: null as string | null,
+  citedHere: "Citati",
+  showOnMap: "Mostra sulla mappa",
+  citedInSongs: (n: number) => (n === 1 ? "Citato in 1 canzone." : `Citato in ${n} canzoni.`),
+  refType: {
+    person: "Persona",
+    character: "Personaggio",
+    work: "Opera",
+    group: "Gruppo",
+    place_event: "Luogo / evento",
+    brand: "Marchio",
+  } as Record<RefType, string>,
   loading: "Carico…",
   fallbackDescription: (n: number) => `Un elemento dell'atlante Caparezza, collegato a ${n} ${n === 1 ? "nodo" : "nodi"}.`,
   whoIs: "Chi è",
@@ -196,6 +207,17 @@ const en: Dictionary = {
   youtubeKind: { video: "Video", lyric: "Lyric video", audio: "Audio" },
   annotatedQuotes: "Annotated quotes",
   quotesNote: "Lyrics and Genius annotations are in Italian.",
+  citedHere: "Cited",
+  showOnMap: "Show on the map",
+  citedInSongs: (n) => (n === 1 ? "Cited in 1 song." : `Cited in ${n} songs.`),
+  refType: {
+    person: "Person",
+    character: "Character",
+    work: "Work",
+    group: "Group",
+    place_event: "Place / event",
+    brand: "Brand",
+  },
   loading: "Loading…",
   fallbackDescription: (n) => `Part of the Caparezza atlas, linked to ${n} ${n === 1 ? "node" : "nodes"}.`,
   whoIs: "About",

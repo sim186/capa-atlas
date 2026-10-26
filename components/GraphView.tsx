@@ -24,7 +24,7 @@ import {
   mapUrlKey,
   Portrait,
 } from "@/lib/graph";
-import { useT } from "@/lib/locale";
+import { useLocale, useT } from "@/lib/locale";
 import GroupGlyph from "@/components/GroupGlyph";
 import {
   DrawablyButton,
@@ -43,6 +43,8 @@ import AboutPanel from "@/components/AboutPanel";
 import { albumYears, atlasLayout, studioAlbumIds, LAYOUT_EXTENT, R_ALBUM } from "@/lib/atlasLayout";
 import { Lens, LENS_MAX_MEMBERS, lensExtent, releasePins, type Vec3 } from "@/lib/lens";
 import { neighbourhood } from "@/lib/neighbourhood";
+import { isRefNode, loadRefs, refFromQuotes, refGraph, type RefEntry } from "@/lib/refs";
+import { BASE_PATH } from "@/lib/basePath";
 import { detectWebGL2, makeDeferredFrame } from "@/lib/webgl";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
@@ -347,6 +349,9 @@ const PRIMARY_LINKS_PHONE = 10;
 const DEEP_LINK_DELAY_MS = 1600;
 
 const GROUP_ORDER: Group[] = ["album", "song", "figure", "concept"];
+// stable empties, so an idle selection never hands force-graph new data
+const NO_NODES: GraphNode[] = [];
+const NO_LINKS: GraphLink[] = [];
 
 type GraphViewProps = {
   data: GraphData;
@@ -364,7 +369,8 @@ type NodeOpenSource =
   | "breadcrumb"
   | "related"
   | "deep_link"
-  | "history";
+  | "history"
+  | "reference";
 
 function GraphFallback({
   data,
@@ -458,6 +464,7 @@ export default function GraphView(props: GraphViewProps) {
 
 function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   const t = useT();
+  const locale = useLocale();
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const searchRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<GraphNode | null>(null);
@@ -692,12 +699,54 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   const forcedId =
     selected && !visibleGroups.has(selected.group) ? selected.id : null;
 
-  const nodeById = useMemo(
+  const baseNodeById = useMemo(
     () => new Map(data.nodes.map((node) => [node.id, node])),
     [data.nodes]
   );
+  // A named reference (lib/refs.ts) asked onto the map: one node and its
+  // links to the songs citing it, part of the graph until the detail closes
+  // or another reference takes its place. The layout never counts it (see
+  // focusNode): the lens places it and its songs.
+  const [refOnMap, setRefOnMap] = useState<ReturnType<typeof refGraph> | null>(null);
+  // The refs index (lib/refs.ts), loaded once the curtain is up: small, and
+  // in hand before the first song opens, so its guests arrive with the lens.
+  const [refIndex, setRefIndex] = useState<RefEntry[] | null>(null);
+  // An open song brings its references along: every ref is in the graph,
+  // linked to the songs that cite it, but none is drawn (see visibleData)
+  // unless it is a lens member, so a song's refs join its lens and leave
+  // with it, through the same door as any other lens guest. They come after
+  // the album and the themes: a ref's link weighs a thousandth of a quote,
+  // so it ranks last and the lens cap trims it first. Clicking one raises it
+  // for real (openRef). One node object per ref for as long as the index
+  // and language hold, so a guest keeps its place from one opening to the
+  // next; search lists the same objects.
+  const refNodes = useMemo(
+    () => new Map((refIndex ?? []).map((entry) => [entry.id, refGraph(entry, locale).node])),
+    [locale, refIndex]
+  );
+  const graph = useMemo(() => {
+    if (!refOnMap && !refIndex) return data;
+    const nodes = [...data.nodes];
+    const links = [...data.links];
+    if (refOnMap) {
+      nodes.push(refOnMap.node);
+      links.push(...refOnMap.links);
+    }
+    for (const entry of refIndex ?? []) {
+      if (entry.id === refOnMap?.node.id || entry.node) continue;
+      nodes.push(refNodes.get(entry.id)!);
+      for (const [song, quotes] of entry.songs) {
+        links.push({ source: entry.id, target: song, kind: "refers", weight: quotes / 1000 });
+      }
+    }
+    return { nodes, links };
+  }, [data, refIndex, refNodes, refOnMap]);
+  const nodeById = useMemo(
+    () => new Map(graph.nodes.map((node) => [node.id, node])),
+    [graph.nodes]
+  );
   // Every node's links, ranked, across all layers and link kinds.
-  const links = useMemo(() => neighbourhood(data), [data]);
+  const links = useMemo(() => neighbourhood(graph), [graph]);
   // The lens shows a node's direct links whatever the layer toggles say: an
   // album whose only links are songs must not open onto an empty ring. Big
   // hubs keep their strongest LENS_MAX_MEMBERS; the panel lists the same.
@@ -706,16 +755,36 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
     [links]
   );
   const selectedNeighbors = useMemo(
-    () => (selected ? lensMembersOf(selected.id) : []),
+    () => (selected ? lensMembersOf(selected.id) : NO_NODES),
     [lensMembersOf, selected]
   );
+  // What the map draws starts from the atlas and the raised ref, never the
+  // whole refs index: the index arriving must not hand force-graph new data
+  // (it would stir the settling layout). Refs reach the map as lens guests.
+  const shownGraph = useMemo(
+    () =>
+      refOnMap
+        ? { nodes: [...data.nodes, refOnMap.node], links: [...data.links, ...refOnMap.links] }
+        : data,
+    [data, refOnMap]
+  );
+  // The links tying the selection to its lens members, from every layer.
+  const guestLinks = useMemo(() => {
+    if (!selected) return NO_LINKS;
+    const members = new Set(selectedNeighbors.map((node) => node.id));
+    return graph.links.filter((link) => {
+      const source = String(link.source);
+      const target = String(link.target);
+      return (source === selected.id && members.has(target)) || (target === selected.id && members.has(source));
+    });
+  }, [graph, selected, selectedNeighbors]);
 
   const visibleData = useMemo(() => {
-    const nodes = data.nodes.filter(
+    const nodes = shownGraph.nodes.filter(
       (node) => visibleGroups.has(node.group) || node.id === forcedId
     );
     const ids = new Set(nodes.map((node) => node.id));
-    const links = data.links.filter(
+    const links = shownGraph.links.filter(
       (link) =>
         // Phone default hides the songs, which are the only hubs for `on` and
         // `refers`: album-to-theme and theme-to-theme edges keep the map connected.
@@ -730,25 +799,14 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
     // for as long as the lens is open, with the links that tie them to it.
     // The layout is pinned while they're here (see focusNode), so their
     // arrival doesn't stir the rest of the atlas.
-    if (selected) {
-      const members = new Set(selectedNeighbors.map((node) => node.id));
-      for (const node of selectedNeighbors) {
-        if (ids.has(node.id)) continue;
-        nodes.push(node);
-        ids.add(node.id);
-      }
-      const present = new Set(links);
-      for (const link of data.links) {
-        if (present.has(link)) continue;
-        const source = String(link.source);
-        const target = String(link.target);
-        if (
-          (source === selected.id && members.has(target)) ||
-          (target === selected.id && members.has(source))
-        ) {
-          links.push(link);
-        }
-      }
+    for (const node of selectedNeighbors) {
+      if (ids.has(node.id)) continue;
+      nodes.push(node);
+      ids.add(node.id);
+    }
+    const present = new Set(links);
+    for (const link of guestLinks) {
+      if (!present.has(link)) links.push(link);
     }
     return {
       nodes,
@@ -756,7 +814,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       // must not mutate the source dataset or subsequent filtering loses links.
       links: links.map((link) => ({ ...link })),
     };
-  }, [data, forcedId, visibleGroups, visibleKinds, ghostSongs, selected, selectedNeighbors]);
+  }, [shownGraph, forcedId, visibleGroups, visibleKinds, ghostSongs, selectedNeighbors, guestLinks]);
 
   // Labels are a projected HTML overlay rather than children of the Three
   // scene. Clean entries only when their data node is truly filtered out.
@@ -1855,7 +1913,10 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       fit();
     }
     // Keep the node mounted through the slide-out transition (~620ms).
-    closeTimerRef.current = window.setTimeout(() => setPanelNode(null), 700);
+    closeTimerRef.current = window.setTimeout(() => {
+      setPanelNode(null);
+      setRefOnMap(null);
+    }, 700);
   }, [fit, play]);
 
   useEffect(() => {
@@ -1911,22 +1972,34 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   );
 
   const listing = query.trim() !== "" || browse;
+  // Search reaches the named references too. Listing without a query doesn't:
+  // 2000-odd names would bury the atlas's own nodes.
+  useEffect(() => {
+    if (refIndex || !revealed) return;
+    let live = true;
+    void loadRefs().then((entries) => live && setRefIndex(entries));
+    return () => {
+      live = false;
+    };
+  }, [refIndex, revealed]);
+  // a ref that is a figure is found as the figure itself
+  const refResults = useMemo(
+    () => (refIndex ?? []).flatMap((entry) => (entry.node ? [] : [refNodes.get(entry.id)!])),
+    [refIndex, refNodes]
+  );
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized && !browse) return [];
-    return data.nodes
+    const rank = (node: GraphNode) => (isRefNode(node) ? ALL_GROUPS.length : ALL_GROUPS.indexOf(node.group));
+    return [...data.nodes, ...(normalized.length >= 2 ? refResults : [])]
       .filter((node) => !normalized || node.label.toLowerCase().includes(normalized))
       .sort((a, b) => {
         const starts = (node: GraphNode) =>
           normalized && node.label.toLowerCase().startsWith(normalized) ? 0 : 1;
-        return (
-          starts(a) - starts(b) ||
-          ALL_GROUPS.indexOf(a.group) - ALL_GROUPS.indexOf(b.group) ||
-          a.label.localeCompare(b.label)
-        );
+        return starts(a) - starts(b) || rank(a) - rank(b) || a.label.localeCompare(b.label);
       })
       .slice(0, 150);
-  }, [data, query, browse]);
+  }, [data, query, browse, refResults]);
 
   // Songs are evidence, not overview structure. They start hidden on every
   // device and become a regular graph layer only when the visitor asks for
@@ -2011,8 +2084,54 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
     document.querySelector<HTMLElement>("[data-return-focus]")?.focus();
   }, []);
 
+  // Raising a reference: find it in the index, give it the lead its quotes
+  // carry, start it among its songs' albums, and put it in the graph. It is
+  // focused once the graph has it (the effect below), since the lens reads
+  // its members from the graph.
+  const pendingRefRef = useRef<{ node: GraphNode; source: NodeOpenSource } | null>(null);
+  const openRef = useCallback(
+    async (id: string, source: NodeOpenSource = "reference") => {
+      const entry = (await loadRefs()).find((each) => each.id === id);
+      if (!entry) return;
+      const raised = refGraph(entry, locale);
+      const { node } = raised;
+      node.description = t.citedInSongs(entry.songs.length);
+      const songs = entry.songs.flatMap(([songId]) => baseNodeById.get(songId) ?? []);
+      const file = songs[0]?.quotesFile;
+      if (file) {
+        const quotes = await fetch(`${BASE_PATH}/quotes/${file}`)
+          .then((res) => (res.ok ? res.json() : []))
+          .catch(() => []);
+        const ref = refFromQuotes(quotes, id);
+        const shown = ref && (locale === "en" && ref.en ? ref.en : ref);
+        if (shown?.bio) {
+          node.bio = shown.bio;
+          node.bioUrl = shown.url;
+          if (locale === "en" && !ref?.en) node.italian = ["bio"];
+        }
+      }
+      const albums = songs.flatMap(
+        (song) => data.nodes.find((each) => each.group === "album" && each.label === song.album) ?? []
+      ).filter((album) => album.x !== undefined);
+      if (albums.length) {
+        node.x = albums.reduce((sum, album) => sum + (album.x ?? 0), 0) / albums.length;
+        node.y = albums.reduce((sum, album) => sum + (album.y ?? 0), 0) / albums.length;
+        node.z = albums.reduce((sum, album) => sum + (album.z ?? 0), 0) / albums.length;
+      }
+      pendingRefRef.current = { node, source };
+      setRefOnMap(raised);
+    },
+    [baseNodeById, data.nodes, locale, t]
+  );
+
   const focusNode = useCallback(
     (node: GraphNode, source: NodeOpenSource = "map") => {
+      // a song's guest reference, or one that has left the map (the back
+      // button, a crumb), is raised for real: linked to all its songs
+      if (isRefNode(node) && refOnMap?.node !== node) {
+        void openRef(node.id, source);
+        return;
+      }
       if (!selectedRef.current) openerRef.current = document.activeElement;
       // Pin the layout where it stands. Opening a lens adds its guests to the
       // graph, which wakes the simulation; pinned, nothing else moves. (Layer
@@ -2024,7 +2143,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
         shown: visibleData.nodes,
         members: lensMembersOf(node.id),
         linked: links.members(node.id),
-        laidOut: (each) => visibleGroups.has(each.group),
+        laidOut: (each) => visibleGroups.has(each.group) && !isRefNode(each),
         camera: camera && { position: camera.position, up: camera.up },
       });
       // Stepping to a neighbour extends the breadcrumb; going back to a crumb
@@ -2067,8 +2186,24 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
       if (window.innerWidth < 800) return;
       window.setTimeout(() => frameLens(node), 100);
     },
-    [frameLens, links, lensMembersOf, play, visibleData.nodes, visibleGroups]
+    [frameLens, links, lensMembersOf, openRef, play, refOnMap, visibleData.nodes, visibleGroups]
   );
+  // The panel's "show on the map": a ref that is one of the figures opens it.
+  const showRef = useCallback(
+    async (id: string) => {
+      const entry = (await loadRefs()).find((each) => each.id === id);
+      const figure = entry?.node && baseNodeById.get(entry.node);
+      if (figure) focusNode(figure, "reference");
+      else void openRef(id);
+    },
+    [baseNodeById, focusNode, openRef]
+  );
+  useEffect(() => {
+    const pending = pendingRefRef.current;
+    if (!pending || nodeById.get(pending.node.id) !== pending.node) return;
+    pendingRefRef.current = null;
+    focusNode(pending.node, pending.source);
+  }, [focusNode, nodeById]);
 
   const openListedNode = useCallback(
     (node?: GraphNode) => {
@@ -2081,9 +2216,10 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
           ...(node ? { node_id: node.id, node_group: node.group } : {}),
         });
       }
-      if (node) focusNode(node, normalized ? "search" : "list");
+      if (node && isRefNode(node)) void openRef(node.id, "search");
+      else if (node) focusNode(node, normalized ? "search" : "list");
     },
-    [focusNode, query, results.length]
+    [focusNode, openRef, query, results.length]
   );
 
   // The address follows the selection: ?n=<group>/<slug>, the node page's
@@ -2414,8 +2550,8 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
   }, [wake]);
 
   const groupById = useMemo(
-    () => new Map(data.nodes.map((node) => [node.id, node.group])),
-    [data.nodes]
+    () => new Map(graph.nodes.map((node) => [node.id, node.group])),
+    [graph.nodes]
   );
 
   // On touch the sprite hit-test alone is too fiddly: when a tap misses
@@ -2889,6 +3025,11 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
                               {node.album}
                             </span>
                           )}
+                          {node.refType && (
+                            <span className="max-w-[40%] shrink-0 truncate opacity-70">
+                              {t.refType[node.refType]}
+                            </span>
+                          )}
                         </button>
                       </li>
                     ))}
@@ -3253,6 +3394,7 @@ function GraphViewScene({ data, portraits, nodePaths }: GraphViewProps) {
           distinctShapes={distinctShapes}
           onHoverNode={hoverFromPanel}
           onReturnFocus={returnFocus}
+          onOpenRef={showRef}
           portraits={portraits}
           portraitIndex={backdropIndex}
         />

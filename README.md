@@ -44,7 +44,7 @@ quelle di un cantautore.
 ### Nodi
 
 - `album`: copertina e descrizione da Wikipedia
-- `song`: le citazioni annotate stanno dentro il nodo e si leggono nel pannello laterale (solo un estratto di ogni annotazione, con il link a Genius per il resto)
+- `song`: le citazioni annotate stanno dentro il nodo e si leggono nel pannello laterale (solo un estratto di ogni annotazione, con il link a Genius per il resto). Ogni citazione elenca chi e cosa nomina (persone, personaggi, opere, gruppi, luoghi ed eventi, marchi: ~2300 riferimenti) con una breve bio da Wikipedia. Non sono nodi fissi del grafo: si cercano dalla barra di ricerca o dal pannello ("Mostra sulla mappa"), e solo allora uno sale sulla mappa con la lente sulle canzoni che lo citano (indice in `public/refs.json`)
 - `concept`: tema ricorrente, classificato dalle keyword
 - `figure`: persona o personaggio citato
 
@@ -87,7 +87,8 @@ npm run fetch:all    # intera discografia (qualche minuto, riprendibile)
 | 1. Raccolta | `scripts/fetch_capa.py` | `data/raw/referents.jsonl` |
 | 2. Wikipedia | `scripts/fetch_wikipedia.py` | `data/wikipedia.json` |
 | 3. Immagini | `scripts/fetch_images.py` | `data/covers.json`, `data/portraits.json`, `public/portraits/` |
-| 4. Grafo | `scripts/build_graph.py` | `public/graphData.json`, `data/keywords.csv` |
+| 4. Riferimenti | `scripts/fetch_entities.py` | `data/entity_wiki.json` |
+| 5. Grafo | `scripts/build_graph.py` | `public/graphData.json`, `data/keywords.csv` |
 
 Come funziona la raccolta:
 
@@ -100,6 +101,9 @@ quelli di default), ripresa tramite `data/raw/done_ids.json`.
 
 Le keyword si collegano a concetti e figure tramite regole in
 `data/concepts.json`; correzioni manuali in `data/referent_overrides.json`.
+I riferimenti nominati di ogni citazione stanno in `data/entities.json`: li ha
+estratti una lettura LLM di tutte le annotazioni (una tantum, versionata), e
+`fetch_entities.py` verifica i titoli Wikipedia proposti invece di fidarsi.
 Delle annotazioni si salvano solo i primi ~240 caratteri (`excerpt()` in
 `build_graph.py`): il testo completo resta su Genius.
 Le copertine **non** sono scaricate né committate: si salva solo l'URL
